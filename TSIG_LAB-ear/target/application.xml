@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/application_8.xsd" version="8">
+  <description>This is the EAR POM file</description>
+  <display-name>TSIG_LAB-ear</display-name>
+  <module>
+    <ejb>TSIG_LAB-ejb.jar</ejb>
+  </module>
+  <module>
+    <web>
+      <web-uri>TSIG_LAB-web.war</web-uri>
+      <context-root>/TSIG_LAB-web</context-root>
+    </web>
+  </module>
+  <library-directory>lib</library-directory>
+</application>

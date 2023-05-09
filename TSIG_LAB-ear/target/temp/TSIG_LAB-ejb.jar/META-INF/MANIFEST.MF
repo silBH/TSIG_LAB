@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Created-By: Maven EJB Plugin 3.1.0
+Build-Jdk-Spec: 11
+Class-Path: lib/postgresql.jar lib/checker-qual.jar lib/hibernate-entity
+ manager.jar lib/jboss-logging.jar lib/hibernate-core.jar lib/javassist.
+ jar lib/antlr.jar lib/jandex.jar lib/dom4j.jar lib/hibernate-commons-an
+ notations.jar lib/byte-buddy.jar lib/jakarta.persistence-api.jar lib/ja
+ karta.transaction-api.jar lib/classmate.jar lib/jakarta.xml.bind-api.ja
+ r lib/jakarta.activation-api.jar lib/jaxb-runtime.jar lib/txw2.jar lib/
+ istack-commons-runtime.jar lib/jakarta.activation.jar lib/jakarta.injec
+ t-api.jar lib/antlr4-runtime.jar
+
