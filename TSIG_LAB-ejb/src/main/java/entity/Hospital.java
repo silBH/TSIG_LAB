@@ -5,16 +5,23 @@ import java.awt.Point;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
+import org.postgresql.util.PGobject;
+
 @Entity
 public class Hospital {
 	@Id
 	private String nombre;
-	private Point ubicacion;
+	//private org.postgis.Point ubicacion;
+	private PGobject ubicacion;
+	
+	public Hospital() {
+		super();
+	}
 
-	public Hospital(String nombre, Point ubicacion) {
+	public Hospital(String nombre, PGobject objeto) {
 		super();
 		this.nombre = nombre;
-		this.ubicacion = ubicacion;
+		this.ubicacion = objeto;
 	}
 
 	public String getNombre() {
@@ -25,11 +32,11 @@ public class Hospital {
 		this.nombre = nombre;
 	}
 
-	public Point getUbicacion() {
+	public PGobject getUbicacion() {
 		return ubicacion;
 	}
 
-	public void setUbicacion(Point ubicacion) {
+	public void setUbicacion(PGobject ubicacion) {
 		this.ubicacion = ubicacion;
 	}
 

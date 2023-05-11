@@ -1,3 +1,6 @@
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Hospital.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\persistence\Conexion.java
+D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\HospitalBusiness.java
+D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\HospitalBusinessRemote.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\HospitalDAO.java
+D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\HospitalBusinessLocal.java
