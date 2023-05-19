@@ -11,14 +11,13 @@ import org.postgresql.util.PGobject;
 public class Hospital {
 	@Id
 	private String nombre;
-	//private org.postgis.Point ubicacion;
-	private PGobject ubicacion;
+	private Point ubicacion;
 	
 	public Hospital() {
 		super();
 	}
 
-	public Hospital(String nombre, PGobject objeto) {
+	public Hospital(String nombre, Point objeto) {
 		super();
 		this.nombre = nombre;
 		this.ubicacion = objeto;
@@ -32,11 +31,11 @@ public class Hospital {
 		this.nombre = nombre;
 	}
 
-	public PGobject getUbicacion() {
+	public Point getUbicacion() {
 		return ubicacion;
 	}
 
-	public void setUbicacion(PGobject ubicacion) {
+	public void setUbicacion(Point ubicacion) {
 		this.ubicacion = ubicacion;
 	}
 

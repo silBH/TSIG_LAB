@@ -1,0 +1,106 @@
+
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "id": "punto.1",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -7587821.1364,
+            -1862992.7245
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "descripcion": "primer punto"
+        },
+        "bbox": [
+          -7587821.1364,
+          -1862992.7245,
+          -7587821.1364,
+          -1862992.7245
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "punto.2",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -7587121.1364,
+            -1862192.7245
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "descripcion": "segundo punto"
+        },
+        "bbox": [
+          -7587121.1364,
+          -1862192.7245,
+          -7587121.1364,
+          -1862192.7245
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "punto.3",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -7587321.1364,
+            -1862392.7245
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "descripcion": "tercer punto"
+        },
+        "bbox": [
+          -7587321.1364,
+          -1862392.7245,
+          -7587321.1364,
+          -1862392.7245
+        ]
+      },
+      {
+        "type": "Feature",
+        "id": "punto.4",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -7587421.1364,
+            -1862492.7245
+          ]
+        },
+        "geometry_name": "geom",
+        "properties": {
+          "descripcion": "cuarto punto"
+        },
+        "bbox": [
+          -7587421.1364,
+          -1862492.7245,
+          -7587421.1364,
+          -1862492.7245
+        ]
+      }
+    ],
+    "totalFeatures": 1,
+    "numberMatched": 1,
+    "numberReturned": 1,
+    "timeStamp": "2022-03-29T18:21:36.386Z",
+    "crs": {
+      "type": "name",
+      "properties": {
+        "name": "urn:ogc:def:crs:EPSG::3857"
+      }
+    },
+    "bbox": [
+      -7587821.1364,
+      -1862992.7245,
+      -7587821.1364,
+      -1862992.7245
+    ]
+  }

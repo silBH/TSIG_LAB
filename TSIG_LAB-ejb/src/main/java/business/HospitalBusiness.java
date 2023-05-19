@@ -20,12 +20,4 @@ public class HospitalBusiness implements HospitalBusinessRemote, HospitalBusines
 	@EJB HospitalDAO data;
 	
 	public HospitalBusiness() {}
-	
-	public void agregarDatos() throws SQLException {
-		data.agregarDatos();
-	}
-	
-	public Point getUbicacionHospital(String nombre) throws SQLException {
-		return data.getUbicacionHospital(nombre);
-	}
 }
