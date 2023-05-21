@@ -2,10 +2,11 @@ package entity;
 
 import java.awt.Point;
 
+//import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import org.postgresql.util.PGobject;
+//import org.hibernate.annotations.Type;
 
 @Entity
 public class Hospital {

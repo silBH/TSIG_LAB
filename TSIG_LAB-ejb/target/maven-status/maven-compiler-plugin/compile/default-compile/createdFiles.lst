@@ -3,4 +3,6 @@ persistence\Conexion.class
 business\HospitalBusiness.class
 business\HospitalBusinessLocal.class
 business\HospitalBusinessRemote.class
+dao\HospitalDAORemote.class
+dao\HospitalDAOLocal.class
 entity\Hospital.class

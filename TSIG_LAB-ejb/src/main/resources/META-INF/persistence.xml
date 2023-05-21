@@ -8,10 +8,11 @@
       <jta-data-source>java:/TSIG</jta-data-source>
       <class>entity.Hospital</class>
       <properties>
-         <property name="javax.persistence.schema-generation.database.action" value="drop-and-create"/>
+         <property name="javax.persistence.schema-generation.database.action" value=""/>
          <property name="javax.persistence.schema-generation.create-source" value="metadata"/>
          <property name="javax.persistence.schema-generation.drop-source" value="metadata"/>
-         <property name="hibernate.show_sql" value="false" />
+         <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+         <property name="hibernate.show_sql" value="false" />     
       </properties>
    </persistence-unit>
 </persistence>

@@ -16,16 +16,16 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
     listaLayers.push(lyrOSM);
 
 	var lyrDepartamentos = new ol.layer.Tile({
-        title:'ft_00_departamento',
+        title:'hospital',
         visible: false,
         baseLayer:true,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8585/geoserver/tsig/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:ft_00_departamento'
+                LAYERS:'tsig:hospital'
             }
         })
     });
@@ -41,15 +41,15 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
     var listaLayers = [];
     
 	var lyrLinea = new ol.layer.Tile({
-        title:'Linea',
+        title:'hospital',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8585/geoserver/tsig/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:lineas'
+                LAYERS:'tsig:lineas'
             }
         })
     })
