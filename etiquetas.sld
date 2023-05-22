@@ -29,7 +29,7 @@
               <ogc:PropertyName>nombre</ogc:PropertyName>
             </se:Label>
             <se:Font>
-              <se:SvgParameter name="font-family">Open Sans</se:SvgParameter>
+              <se:SvgParameter name="font-family">Tahoma</se:SvgParameter>
               <se:SvgParameter name="font-size">13</se:SvgParameter>
             </se:Font>
             <se:LabelPlacement>
@@ -43,7 +43,22 @@
             <se:Fill>
               <se:SvgParameter name="fill">#323232</se:SvgParameter>
             </se:Fill>
+            <se:Graphic>
+              <se:Mark>
+                <se:WellKnownName>square</se:WellKnownName>
+                <se:Fill>
+                  <se:SvgParameter name="fill">#ffffff</se:SvgParameter>
+                </se:Fill>
+                <se:Stroke>
+                  <se:SvgParameter name="stroke">#808080</se:SvgParameter>
+                  <se:SvgParameter name="stroke-width">0.5</se:SvgParameter>
+                </se:Stroke>
+              </se:Mark>
+              <se:Size>5</se:Size>
+            </se:Graphic>
             <se:VendorOption name="maxDisplacement">1</se:VendorOption>
+            <se:VendorOption name="graphic-resize">stretch</se:VendorOption>
+            <se:VendorOption name="graphic-margin">5 3</se:VendorOption>
           </se:TextSymbolizer>
         </se:Rule>
       </se:FeatureTypeStyle>
