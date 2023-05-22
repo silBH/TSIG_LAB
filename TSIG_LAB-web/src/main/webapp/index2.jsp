@@ -59,7 +59,7 @@
 			})
 		});
 
-		// Crear una interacción de dibujo de puntos
+		// Crear una interacciï¿½n de dibujo de puntos
 		var drawInteraction = new ol.interaction.Draw({
 			type : 'Point',
 			source : markerSource
@@ -70,12 +70,12 @@
 		proj4.defs("EPSG:32721", "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs");
 
 		
-		// Función para transformar las coordenadas
+		// Funciï¿½n para transformar las coordenadas
 		function transformCoordinates(coordinates) {
 		    return proj4('EPSG:3857', 'EPSG:32721', coordinates);
 		}
 		
-		// Manejar el evento de finalización del dibujo para obtener las coordenadas del punto marcado
+		// Manejar el evento de finalizaciï¿½n del dibujo para obtener las coordenadas del punto marcado
 		drawInteraction.on('drawend', function(event) {
 			var feature = event.feature;
 			var coordinates = feature.getGeometry().getCoordinates();			
@@ -90,12 +90,12 @@
 			savePointToGeoServer2(coordinates);
 		});
 
-		// Agregar la interacción de dibujo al mapa
+		// Agregar la interacciï¿½n de dibujo al mapa
 		map.addInteraction(drawInteraction);
 
-		// Función para enviar las coordenadas a GeoServer
+		// Funciï¿½n para enviar las coordenadas a GeoServer
 		function savePointToGeoServer2(coordinates) {
-		    // Mostrar ventana de diálogo para ingresar el valor del nombre
+		    // Mostrar ventana de diï¿½logo para ingresar el valor del nombre
 		    Swal.fire({
 		        title: 'Ingresar nombre',
 		        input: 'text',
@@ -144,7 +144,7 @@
 		                .then(response => response.text())
 		                .then(data => {
 		                    console.log('Respuesta del servidor:', data);
-		                    // Procesar la respuesta del servidor aquí
+		                    // Procesar la respuesta del servidor aquï¿½
 		                })
 		                .catch(error => {
 		                    console.error('Error al realizar la solicitud WFS:', error);
