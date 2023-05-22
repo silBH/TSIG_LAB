@@ -5,52 +5,46 @@ import java.util.List;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+
+import entity.ServicioEmergencia;
 import persistence.Conexion;
-import entity.Hospital;
 
 //estas funciones solo se usan desde la interfaz local
 
 @Stateless
 @LocalBean
-public class HospitalDAO implements HospitalDAOLocal {
+public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
 
 	Conexion conexion = Conexion.getInstancia();
-	private EntityManager em = conexion.getEntityManager(); 
+	private EntityManager em = conexion.getEntityManager();
 	
-    public HospitalDAO() {}
+    public ServicioEmergenciaDAO() {}
     
     @Override
-	public List<Hospital> listar(){
+	public List<ServicioEmergencia> listar(){
 		//completar
 		return null;
 	}
     
     @Override
-	public Hospital obtenerPorId(Long id) {
+	public ServicioEmergencia obtenerPorId(Long id) {
 		//completar
 		return null;
 	}
     
     @Override
-	public Hospital obtenerPorNombre(String nombre) {
-		//completar
-		return null;
-	}
-    
-    @Override
-	public void crear(Hospital hospital) {
+	public void crear(ServicioEmergencia servicio) {
 		//completar
 	}
     
     @Override
-	public void editar(Hospital hospital) {
+	public void editar(ServicioEmergencia servicio) {
 		//completar
 	}
     
     @Override
-	public void eliminar(Hospital hospital) {
+	public void eliminar(ServicioEmergencia servicio) {
 		//completar
 	}
-
-
+    
 }
