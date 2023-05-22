@@ -3,9 +3,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.20.1/ol.css" type="text/css">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.20.1/ol.css"
+	type="text/css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.20.1/ol.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.1/proj4.js"></script> <!-- se incluye para transformar coordenadas en 32721 -->
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.1/proj4.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- se incluye para transformar coordenadas en 32721 -->
 <style>
 #map {
 	width: 100%;
@@ -89,45 +94,64 @@
 		map.addInteraction(drawInteraction);
 
 		// Función para enviar las coordenadas a GeoServer
-		function savePointToGeoServer2(coordinates){
-
-			//nueva insersion del punto
-			//var geometry = new ol.geom.Point(coordinates);
-			var geometry = new ol.geom.Point(coordinates);
-			var feature = new ol.Feature({
-				  ubicacion: geometry
-			});
-
-			  feature.setProperties({
-			    nombre: 'Nuevo Punto'
-			  });
-
-			var wfs = new ol.format.WFS();
-
-			var insertRequest = wfs.writeTransaction([feature], null, null, {
-			  featureType: 'hospital2',
-			  featureNS: 'tsig',
-			  srsName: 'EPSG:3857',
-			  version: '1.1.0'
-			});
-
-			fetch('http://localhost:8585/geoserver/tsig/wfs', {
-			  method: 'POST',
-			  headers: {
-			    'Content-Type': 'text/xml'
-			  },
-			  body: new XMLSerializer().serializeToString(insertRequest)
-			})
-			  .then(response => response.text())
-			  .then(data => {
-			    console.log('Respuesta del servidor:', data);
-			    // Procesar la respuesta del servidor aquí
-			  })
-			  .catch(error => {
-			    console.error('Error al realizar la solicitud WFS:', error);
-			  });
-		}
+		function savePointToGeoServer2(coordinates) {
+		    // Mostrar ventana de diálogo para ingresar el valor del nombre
+		    Swal.fire({
+		        title: 'Ingresar nombre',
+		        input: 'text',
+		        inputPlaceholder: 'Ingrese el nombre',
+		        showCancelButton: true,
+		        confirmButtonText: 'Guardar',
+		        cancelButtonText: 'Cancelar',
+		        inputValidator: (value) => {
+		            if (!value) {
+		                return 'Debe ingresar un nombre';
+		            }
+		        }
+		    }).then((result) => {
+		        if (result.isConfirmed) {
+		            // Obtener el valor del nombre ingresado por el usuario
+		            var nombre = result.value;
 		
+		            //nueva insersion del punto
+		            //var geometry = new ol.geom.Point(coordinates);
+		            var geometry = new ol.geom.Point(coordinates);
+		            var feature = new ol.Feature({
+		                ubicacion: geometry,
+		                nombre: nombre
+		            });
+		
+		            feature.setProperties({
+		                // nombre: 'Nuevo Punto'
+		            });
+		
+		            var wfs = new ol.format.WFS();
+		
+		            var insertRequest = wfs.writeTransaction([feature], null, null, {
+		                featureType: 'hospital2',
+		                featureNS: 'tsig',
+		                srsName: 'EPSG:3857',
+		                version: '1.1.0'
+		            });
+		
+		            fetch('http://localhost:8585/geoserver/tsig/wfs', {
+		                method: 'POST',
+		                headers: {
+		                    'Content-Type': 'text/xml'
+		                },
+		                body: new XMLSerializer().serializeToString(insertRequest)
+		            })
+		                .then(response => response.text())
+		                .then(data => {
+		                    console.log('Respuesta del servidor:', data);
+		                    // Procesar la respuesta del servidor aquí
+		                })
+		                .catch(error => {
+		                    console.error('Error al realizar la solicitud WFS:', error);
+		                });
+		        }
+		    });	
+		}
 	</script>
 </body>
 </html>
