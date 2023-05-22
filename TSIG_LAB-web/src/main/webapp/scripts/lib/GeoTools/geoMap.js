@@ -1,6 +1,7 @@
 proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs");
 proj4.defs("EPSG:32721", "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs");
 
+
 var sourceCoords = [-6256081.2225, -4133147.1273437506]; // Coordenadas en EPSG:3857
 var targetCoords = proj4('EPSG:3857', 'EPSG:32721', sourceCoords);
 
@@ -142,24 +143,84 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
             source:this.vector.getSource()
         })
     });
-	
+	//////////////////////////////////////////////////
 	controlPunto.getInteraction().on('drawend', function(event) {
-    var feature = event.feature;
-    var coords3857 = feature.getGeometry().getCoordinates();
-    
-    // Convertir las coordenadas de EPSG:3857 a EPSG:32721
-    var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
-    
-    // Formatear las coordenadas en un texto legible
-    var formattedCoords = coords32721.join(', ');
-    
-    // Mostrar las coordenadas en un cuadro de diálogo personalizado
-    Swal.fire({
-        title: 'Coordenadas en EPSG:32721',
-        text: formattedCoords,
-        showConfirmButton: true
-    });
-});
+		var feature = event.feature;
+		var coords3857 = feature.getGeometry().getCoordinates();
+	  
+		// Convertir las coordenadas de EPSG:3857 a EPSG:32721
+		var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+
+		console.log(coords3857);
+	  
+		// Mostrar ventana de diálogo para ingresar el valor del nombre
+		Swal.fire({
+		title: 'Ingresar nombre',
+		input: 'text',
+		inputPlaceholder: 'Ingrese el nombre',
+		showCancelButton: true,
+		confirmButtonText: 'Guardar',
+		cancelButtonText: 'Cancelar',
+		inputValidator: (value) => {
+		  if (!value) {
+			return 'Debe ingresar un nombre';
+		  }
+		}
+	  }).then((result) => {
+		if (result.isConfirmed) {
+		  // Obtener el valor del nombre ingresado por el usuario
+		  var nombre = result.value;
+
+		  // Crear la geometría de punto
+		  var geometry = new ol.geom.Point(coords3857);
+
+		  // Crear la característica con la geometría y el nombre
+		  var feature = new ol.Feature({
+			nombre: nombre,
+			ubicacion: geometry
+		  });
+
+		  // Asignar cualquier otro atributo a la característica si es necesario
+		  feature.setProperties({
+			name: 'Nuevo Punto'
+		  });
+
+		  // Crear una transacción WFS para insertar la característica
+		  var wfs = new ol.format.WFS();
+		  var insertRequest = wfs.writeTransaction([feature], null, null, {
+			featureType: 'hospital',
+			featureNS: 'tsig2023',
+			srsName: 'EPSG:3857',
+			version: '1.1.0'
+		  });
+
+		  // Enviar la solicitud WFS al servidor
+		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'text/xml'
+			},
+			body: new XMLSerializer().serializeToString(insertRequest)
+		  })
+			.then(response => response.text())
+			.then(data => {
+			  console.log('Respuesta del servidor:', data);
+			  // Procesar la respuesta del servidor aquí
+			  // Formatear las coordenadas en un texto legible
+			  var formattedCoords = coords32721.join(', ');
+			  // Mostrar las coordenadas en un cuadro de diálogo personalizado
+			  Swal.fire({
+				title: 'Coordenadas en EPSG:32721',
+				text: formattedCoords,
+				showConfirmButton: true
+			  });
+			})
+			.catch(error => {
+			  console.error('Error al realizar la solicitud WFS:', error);
+			});
+		}
+	  });	
+	});
 	
     barraDibujo.addControl(controlPunto);
 
@@ -192,29 +253,86 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
     });
 	
 	controlLinea.getInteraction().on('drawend', function(event) {
-		var feature = event.feature;
-		var coords3857 = feature.getGeometry().getCoordinates();
-		
-		// Convertir las coordenadas de EPSG:3857 a EPSG:32721
-		var coords32721 = coords3857.map(function(coord) {
-			return proj4('EPSG:3857', 'EPSG:32721', coord);
-		});
-		
-		// Formatear las coordenadas en un texto legible
-		var formattedCoords = coords32721.map(function(coord) {
-			return coord.join(', ');
-		}).join('\n\n');
-		
-		// Mostrar las coordenadas en un cuadro de diálogo personalizado
-		Swal.fire({
-			title: 'Coordenadas en EPSG:32721',
-			text: formattedCoords,
-			showConfirmButton: true
-		});
+	  var feature = event.feature;
+	  var coords3857 = feature.getGeometry().getCoordinates();
+	  console.log(coords3857);
+	  // Convertir las coordenadas de EPSG:3857 a EPSG:32721
+	  var coords32721 = coords3857.map(function(coord) {
+		return proj4('EPSG:3857', 'EPSG:32721', coord);
+	  });
+
+	  // Mostrar ventana de diálogo para ingresar el valor del nombre
+	  Swal.fire({
+		title: 'Ingresar nombre',
+		input: 'text',
+		inputPlaceholder: 'Ingrese el nombre',
+		showCancelButton: true,
+		confirmButtonText: 'Guardar',
+		cancelButtonText: 'Cancelar',
+		inputValidator: (value) => {
+		  if (!value) {
+			return 'Debe ingresar un nombre';
+		  }
+		}
+	  }).then((result) => {
+		if (result.isConfirmed) {
+		  // Obtener el valor del nombre ingresado por el usuario
+		  var nombre = result.value;
+
+		  // Crear la geometría de línea
+		  var geometry = new ol.geom.LineString(coords3857);
+
+		  // Crear la característica con la geometría y el nombre
+		  var feature = new ol.Feature({
+			recorrido: nombre,
+			ubicacion: geometry
+		  });
+
+		  // Asignar cualquier otro atributo a la característica si es necesario
+		  feature.setProperties({
+			name: 'Nueva Línea'
+		  });
+
+		  // Crear una transacción WFS para insertar la característica
+		  var wfs = new ol.format.WFS();
+		  var insertRequest = wfs.writeTransaction([feature], null, null, {
+			featureType: 'recorridos',
+			featureNS: 'tsig2023',
+			srsName: 'EPSG:3857',
+			version: '1.1.0'
+		  });
+
+		  // Enviar la solicitud WFS al servidor
+		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'text/xml'
+			},
+			body: new XMLSerializer().serializeToString(insertRequest)
+		  })
+		  .then(response => response.text())
+		  .then(data => {
+			console.log('Respuesta del servidor:', data);
+			// Procesar la respuesta del servidor aquí
+			// Formatear las coordenadas en un texto legible
+			var formattedCoords = coords32721.map(function(coord) {
+			  return coord.join(', ');
+			}).join('\n\n');
+			// Mostrar las coordenadas en un cuadro de diálogo personalizado
+			Swal.fire({
+			  title: 'Coordenadas en EPSG:32721',
+			  text: formattedCoords,
+			  showConfirmButton: true
+			});
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la solicitud WFS:', error);
+		  });
+		}
+	  });
 	});
 
-	
-    barraDibujo.addControl(controlLinea);
+	barraDibujo.addControl(controlLinea);
 
     var controlPoligono =  new ol.control.Toggle({
         title:'Dibujar polígono',
@@ -247,8 +365,76 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	
 	controlPoligono.getInteraction().on('drawend', function(event) {
 	  var feature = event.feature;
-	  var coords = feature.getGeometry().getCoordinates();
-	  console.log('Coordenadas:', coords);
+	  var coords3857 = feature.getGeometry().getCoordinates();
+	  console.log(coords3857);
+	  
+	  // Mostrar ventana de diálogo para ingresar el valor del nombre
+	  Swal.fire({
+		title: 'Ingresar nombre',
+		input: 'text',
+		inputPlaceholder: 'Ingrese el nombre',
+		showCancelButton: true,
+		confirmButtonText: 'Guardar',
+		cancelButtonText: 'Cancelar',
+		inputValidator: (value) => {
+		  if (!value) {
+			return 'Debe ingresar un nombre';
+		  }
+		}
+	  }).then((result) => {
+		if (result.isConfirmed) {
+		  // Obtener el valor del nombre ingresado por el usuario
+		  var nombre = result.value;
+
+		  // Crear la geometría de Zona
+		  var geometry = new ol.geom.Polygon(coords3857);
+
+		  // Crear la característica con la geometría y el nombre
+		  var feature = new ol.Feature({
+			zona: nombre,
+			ubicacion: geometry
+		  });
+
+		  // Asignar cualquier otro atributo a la característica si es necesario
+		  feature.setProperties({
+			name: 'Nueva Zona'
+		  });
+
+		  // Crear una transacción WFS para insertar la característica
+		  var wfs = new ol.format.WFS();
+		  var insertRequest = wfs.writeTransaction([feature], null, null, {
+			featureType: 'zonas',
+			featureNS: 'tsig2023',
+			srsName: 'EPSG:3857',
+			version: '1.1.0'
+		  });
+
+		  // Enviar la solicitud WFS al servidor
+		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'text/xml'
+			},
+			body: new XMLSerializer().serializeToString(insertRequest)
+		  })
+		  .then(response => response.text())
+		  .then(data => {
+			console.log('Respuesta del servidor:', data);
+			// Procesar la respuesta del servidor aquí
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la solicitud WFS:', error);
+		  });
+		}
+	  });
+	  
+	  
+	  
+	  
+	  
+	  
+	  
+	  
 	});
 	
     barraDibujo.addControl(controlPoligono);
