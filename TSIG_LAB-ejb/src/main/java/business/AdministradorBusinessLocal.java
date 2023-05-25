@@ -12,5 +12,5 @@ public interface AdministradorBusinessLocal {
 	public void crear(DtAdministrador administrador) throws Exception;
 	public void editar(DtAdministrador administrador) throws Exception;
 	public void eliminar(Long id) throws Exception;
-	//public DtAdministrador login(DtAdministrador administrador) throws Exception;
+	public DtAdministrador login(DtAdministrador administrador) throws Exception;
 }

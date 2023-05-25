@@ -26,7 +26,7 @@ public class ServicioEmergencia implements Serializable{
 	private Integer totalCamas;
 	private Integer camasDisponibles;
 	
-	@Type(type = "org.hibernate.spatial.GeometryType")
+	//@Type(type = "org.hibernate.spatial.GeometryType")
 	private Point ubicacion;
 
 	public ServicioEmergencia() {
