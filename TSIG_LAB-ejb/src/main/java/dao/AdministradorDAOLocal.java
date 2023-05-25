@@ -12,7 +12,7 @@ public interface AdministradorDAOLocal {
 	public Administrador obtenerPorId(Long id);
 	public Administrador obtenerPorUsername(String username);
 	//crear si son necesarias
-	public void crear(Administrador admin);
-	public void editar(Administrador admin);
-	public void eliminar(Administrador admin);
+	//public void crear(Administrador admin);
+	//public void editar(Administrador admin);
+	//public void eliminar(Administrador admin);
 }
