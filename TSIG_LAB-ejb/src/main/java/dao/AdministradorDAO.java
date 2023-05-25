@@ -29,19 +29,37 @@ public class AdministradorDAO implements AdministradorDAOLocal {
 	}
     
     @Override
-	public Administrador obtenerPorId(Long id) {
-    	//completar
-		return null;
-	}
-    
+    public Administrador obtenerPorId(Long id) {
+        Query query = em.createQuery("SELECT a FROM Administrador a WHERE a.id = :id", Administrador.class);
+        query.setParameter("id", id);
+        List<Administrador> result = query.getResultList();
+        if (!result.isEmpty()) {
+            return result.get(0);
+        }
+        return null;
+    }
+
     @Override
-	public Administrador obtenerPorUsername(String username) {
-    	//completar
-    	return null;
+    public Administrador obtenerPorUsername(String username) {
+        Query query = em.createQuery("SELECT a FROM Administrador a WHERE a.username = :username", Administrador.class);
+        query.setParameter("username", username);
+        List<Administrador> result = query.getResultList();
+        if (!result.isEmpty()) {
+            return result.get(0);
+        }
+        return null;
     }
 	
 	//crear si son necesarias porque no se pide modificaciones del administrador
-	//public void crear(Administrador admin);
-	//public void editar(Administrador admin);
-	//public void eliminar(Administrador admin);
+    public void crear(Administrador admin) {
+        em.persist(admin);
+    }
+
+    public void editar(Administrador admin) {
+        em.merge(admin);
+    }
+
+    public void eliminar(Administrador admin) {
+        em.remove(admin);
+    }
 }
