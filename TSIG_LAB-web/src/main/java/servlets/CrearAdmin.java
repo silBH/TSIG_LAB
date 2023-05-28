@@ -1,8 +1,8 @@
 package servlets;
 
 import javax.ejb.EJB;
-import entity.Administrador;
-import dao.AdministradorDAOLocal;
+import business.AdministradorBusiness;
+import datatype.DtAdministrador;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -39,7 +39,7 @@ public class CrearAdmin extends HttpServlet {
 	 */
 	
 	@EJB
-    private AdministradorDAOLocal administradorDAO;
+    private AdministradorBusiness administradorB;
 	
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		 // Obtener los parámetros del formulario
@@ -49,14 +49,19 @@ public class CrearAdmin extends HttpServlet {
         String password = request.getParameter("password");
 
         // Crear un nuevo administrador
-        Administrador administrador = new Administrador();
+        DtAdministrador administrador = new DtAdministrador();
         administrador.setNombre(nombre);
         administrador.setApellido(apellido);
         administrador.setUsername(username);
         administrador.setPassword(password);
 
         // Guardar el administrador en la base de datos
-        administradorDAO.crear(administrador);
+        try {
+			administradorB.crear(administrador);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
      // Configurar el mensaje de éxito
         String mensaje = "Administrador creado exitosamente.";
