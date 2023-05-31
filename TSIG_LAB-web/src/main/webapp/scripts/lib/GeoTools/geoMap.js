@@ -196,134 +196,79 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
         interaction: new ol.interaction.Draw({
             type:'Point',
             source:this.vector.getSource()
-        }),
-		bar: new ol.control.Bar({
-            controls:[
-                new ol.control.TextButton({
-                    title:'Crear Hospital',
-                    html:'Crear',
-                    handleClick:function(){
-						controlPunto.getInteraction().on('drawend', function(event) {
-							var feature = event.feature;
-							var coords3857 = feature.getGeometry().getCoordinates();
-						  
-							// Convertir las coordenadas de EPSG:3857 a EPSG:32721
-							var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
-
-							console.log(coords3857);
-							
-							// Mostrar ventana de diálogo para ingresar el valor del nombre
-							Swal.fire({
-								title: 'Ingresar nombre',
-								input: 'text',
-								inputPlaceholder: 'Ingrese el nombre',
-								showCancelButton: true,
-								confirmButtonText: 'Guardar',
-								cancelButtonText: 'Cancelar',
-								inputValidator: (value) => {
-								  if (!value) {
-									return 'Debe ingresar un nombre';
-								  }
-								}
-							}).then((result) => {
-								if (result.isConfirmed) {
-								  // Obtener el valor del nombre ingresado por el usuario
-								  var nombre = result.value;
-
-								  // Crear la geometría de punto
-								  var geometry = new ol.geom.Point(coords3857);
-
-								  // Asignar cualquier otro atributo a la característica si es necesario
-								  feature.setProperties({
-									name: 'Nuevo Punto'
-								  });
-
-								  // Crear una transacción WFS para insertar la característica
-								  var wfs = new ol.format.WFS();
-								  var insertRequest = wfs.writeTransaction([feature], null, null, {
-									featureType: 'hospital',
-									featureNS: 'tsig2023',
-									srsName: 'EPSG:3857',
-									version: '1.1.0'
-								  });
-
-								  // Enviar la solicitud WFS al servidor
-								  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-									method: 'POST',
-									headers: {
-									  'Content-Type': 'text/xml'
-									},
-									body: new XMLSerializer().serializeToString(insertRequest)
-								  })
-									.then(response => response.text())
-									.then(data => {
-									  console.log('Respuesta del servidor:', data);
-									  // Procesar la respuesta del servidor aquí
-									})
-									/////////////////////////////////////////
-									.catch(error => {
-									  console.error('Error al realizar la solicitud WFS:', error);
-									});
-								}
-							});	
-						});
-					}
-				}),
-				new ol.control.TextButton({
-				  title: 'Eliminar Hospital',
-				  html: 'Eliminar',
-				  handleClick: function() {
-					// Activar una interacción de selección para seleccionar el hospital a eliminar
-					var selectInteraction = new ol.interaction.Select();
-					this.map.addInteraction(selectInteraction);
-
-					// Escuchar el evento 'select' para obtener la característica seleccionada
-					selectInteraction.on('select', function(event) {
-					  var selectedFeatures = event.target.getFeatures();
-
-					  // Verificar si se ha seleccionado alguna característica
-					  if (selectedFeatures.getLength() > 0) {
-						// Obtener la característica seleccionada
-						var feature = selectedFeatures.item(0);
-
-						// Crear una transacción WFS para eliminar la característica
-						var wfs = new ol.format.WFS();
-						var deleteRequest = wfs.writeTransaction(null, null, [feature], {
-						  featureType: 'hospital',
-						  featureNS: 'tsig2023',
-						  srsName: 'EPSG:3857',
-						  version: '1.1.0',
-						  handle: 'hospital_' + feature.getId() // Asignar un identificador único para manejar la respuesta
-						}, 'delete');
-
-						// Enviar la solicitud WFS al servidor
-						fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-						  method: 'POST',
-						  headers: {
-							'Content-Type': 'text/xml'
-						  },
-						  body: new XMLSerializer().serializeToString(deleteRequest)
-						})
-						.then(response => response.text())
-						.then(data => {
-						  console.log('Respuesta del servidor:', data);
-						  // Procesar la respuesta del servidor aquí
-						})
-						.catch(error => {
-						  console.error('Error al realizar la solicitud WFS:', error);
-						});
-
-						// Remover la interacción de selección y deseleccionar la característica
-						this.map.removeInteraction(selectInteraction);
-						selectedFeatures.clear();
-					  }
-					}.bind(this));
-				  }.bind(this)
-				})
-			]
-		})
+        }),			
     });
-	
+	controlPunto.getInteraction().on('drawend', function(event) {
+		var feature = event.feature;
+		var coords3857 = feature.getGeometry().getCoordinates();
+
+		// Convertir las coordenadas de EPSG:3857 a EPSG:32721
+		var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+
+		console.log(coords3857);
+
+		// Mostrar ventana de diálogo para ingresar el valor del nombre
+		Swal.fire({
+		title: 'Ingresar nombre',
+		input: 'text',
+		inputPlaceholder: 'Ingrese el nombre',
+		showCancelButton: true,
+		confirmButtonText: 'Guardar',
+		cancelButtonText: 'Cancelar',
+		inputValidator: (value) => {
+		  if (!value) {
+			return 'Debe ingresar un nombre';
+		  }
+		}
+	  }).then((result) => {
+		if (result.isConfirmed) {
+		  // Obtener el valor del nombre ingresado por el usuario
+		  var nombre = result.value;
+
+		  // Crear la geometría de punto
+		  var geometry = new ol.geom.Point(coords3857);
+
+		  // Crear la característica con la geometría y el nombre
+		  var feature = new ol.Feature({
+			nombre: nombre,
+			ubicacion: geometry
+		  });
+
+		  // Asignar cualquier otro atributo a la característica si es necesario
+		  feature.setProperties({
+			name: 'Nuevo Punto'
+		  });
+
+		  // Crear una transacción WFS para insertar la característica
+		  var wfs = new ol.format.WFS();
+		  var insertRequest = wfs.writeTransaction([feature], null, null, {
+			featureType: 'hospital',
+			featureNS: 'tsig2023',
+			srsName: 'EPSG:3857',
+			version: '1.1.0'
+		  });
+
+		  // Enviar la solicitud WFS al servidor
+		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'text/xml'
+			},
+			body: new XMLSerializer().serializeToString(insertRequest)
+		  })
+			.then(response => response.text())
+			.then(data => {
+			  console.log('Respuesta del servidor:', data);
+			  // Procesar la respuesta del servidor aquí
+			})
+			.catch(error => {
+			  console.error('Error al realizar la solicitud WFS:', error);
+			});
+		}
+	  });	
+	});
+
+    barraDibujo.addControl(controlPunto);
 	
 
     barraDibujo.addControl(controlPunto);
