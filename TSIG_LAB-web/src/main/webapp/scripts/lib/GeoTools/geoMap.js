@@ -2,6 +2,7 @@ proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0
 proj4.defs("EPSG:32721", "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs");
 
 
+
 var sourceCoords = [-6256081.2225, -4133147.1273437506]; // Coordenadas en EPSG:3857
 var targetCoords = proj4('EPSG:3857', 'EPSG:32721', sourceCoords);
 
@@ -12,16 +13,77 @@ function GeoMap(){
     this.mainBarCustom  =null;
     this.vector = null;
 }
-
-GeoMap.prototype.CrearMapa= function(target,layers,center,zoom){
+////CAPAS//////////
+var lyrOSM = new ol.layer.Tile({
+        title:'Open Street Map',
+        visible: true,
+        baseLayer:true,
+        source: new ol.source.OSM()
+    });
+	
+var lyrLinea = new ol.layer.Tile({
+        title:'Recorrido',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:recorridos'
+            }
+        })
+})
+var lyrPunto = new ol.layer.Tile({
+        title:'Hospital',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                STYLES:'puntoGeneral',
+                LAYERS:'tsig2023:hospital'
+            }
+        })
+})
+var lyrZonas = new ol.layer.Tile({
+        title:'zonas',
+        visible: true,
+		opacity: 0.4,
+        source: new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:zonas'
+            }
+        })
+});
+var lyrUsuario = new ol.layer.Tile({
+        title:'Usuario',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:usuario'
+            }
+        })
+})
+////CAPAS//////////
+GeoMap.prototype.CrearMapa= function(target,center,zoom){
     var _target = target || 'map',
-    _layers = layers || [],	
     _center = center || [-56.1645, -34.8339],
     _zoom = zoom || 10;
 
     this.map = new ol.Map({
         target: _target,
-        layers: _layers,
+        layers: [lyrOSM,lyrLinea,lyrPunto,lyrZonas,lyrUsuario],
         view : new ol.View({
             center: ol.proj.fromLonLat(_center),
             zoom:_zoom
@@ -37,6 +99,12 @@ GeoMap.prototype.CrearMapa= function(target,layers,center,zoom){
     this.map.addControl(layerSwitcher);
 	
     map = this.map;
+};
+
+GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
+  lyrPunto.getSource().updateParams({
+    'CQL_FILTER': cqlFilter
+  });
 };
 
 GeoMap.prototype.CrearControlBarra= function(){
@@ -107,6 +175,20 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
 
               vectorLayer.getSource().clear();
               vectorLayer.getSource().addFeature(marker);
+			 // Obtener las coordenadas del marcador
+				// Obtener las coordenadas del marcador en EPSG:3857
+				var coords3857 = marker.getGeometry().getCoordinates();
+				
+				// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
+				var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+
+				// Mostrar las coordenadas transformadas en la consola
+				console.log('Coordenadas transformadas:', coords32721);
+
+				// Construir el filtro CQL utilizando las coordenadas transformadas
+				var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords32721[0] + " " + coords32721[1] + "), 1000, meters)";
+				self.updateGeoserverLayer(cqlFilter);
+			  
             } else {
               alert('No se pudo encontrar la dirección.');
             }
@@ -260,6 +342,14 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			.then(data => {
 			  console.log('Respuesta del servidor:', data);
 			  // Procesar la respuesta del servidor aquí
+			   // Formatear las coordenadas en un texto legible
+			  var formattedCoords = coords32721.join(', ');
+			  // Mostrar las coordenadas en un cuadro de diálogo personalizado
+			  Swal.fire({
+				title: 'Coordenadas en EPSG:32721',
+				text: formattedCoords,
+				showConfirmButton: true
+			  });
 			})
 			.catch(error => {
 			  console.error('Error al realizar la solicitud WFS:', error);

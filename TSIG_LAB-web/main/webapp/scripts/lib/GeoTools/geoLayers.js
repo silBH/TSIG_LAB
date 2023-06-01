@@ -101,6 +101,35 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         })
     });
     listaLayers.push(lyrEjes);
+	
+	var lyrUsuario = new ol.layer.Tile({
+        title:'Usuario',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:usuario'
+            }
+        })
+    })
+    listaLayers.push(lyrUsuario);
+	
+	var lyrConsulta = new ol.layer.Tile({
+		title:'Consulta',
+		visible:false,
+		source : new ol.source.TileWMS({
+			url : 'http://localhost:8586/geoserver/tsig2023/wms?',
+			params : {
+				'LAYERS' : 'tsig:hospital', //'LAYERS' : 'tsig:hospital2',
+				'TILED' : true
+			},
+			serverType : 'geoserver'
+		})
+	});
+	listaLayers.push(lyrConsulta);
 
     return new ol.layer.Group({
         title:'Capas Sopbrepuestas',
