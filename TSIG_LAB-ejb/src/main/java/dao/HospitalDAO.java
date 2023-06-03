@@ -1,34 +1,64 @@
 package dao;
 
+import java.util.List;
+
+import javax.ejb.LocalBean;
+import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
-import entity.Hospital;
 import persistence.Conexion;
+import entity.Administrador;
+import entity.Hospital;
 
-public class HospitalDAO{
+//estas funciones solo se usan desde la interfaz local
 
-	@SuppressWarnings("unused")
-	private EntityManager em; 
-	
-    public HospitalDAO() {
-    	Conexion conexion = Conexion.getInstancia();
-    	conexion.getEntityManager();
-    }
+@Stateless
+@LocalBean
+public class HospitalDAO implements HospitalDAOLocal {
 
-    public void guardar(Hospital hospital) {
+	Conexion conexion = Conexion.getInstancia();
+	private EntityManager em = conexion.getEntityManager();
 
-    }
+	public HospitalDAO() {
+	}
 
-    public Hospital obtenerPorId(int id) {
+	@Override
+	public List<Hospital> listar() {
+		Query q = em.createQuery("SELECT h FROM Hospital h", Hospital.class);
+		List<Hospital> result = q.getResultList();
+		return result;
+	}
 
-        return null;
-    }
+	@Override
+	public Hospital obtenerPorId(Long id) {
+		return em.find(Hospital.class, id);
+	}
 
-    public void actualizar(Hospital hospital) {
+	@Override
+	public Hospital obtenerPorNombre(String nombre) {
+		Query query = em.createQuery("SELECT h FROM Hospital h WHERE h.nombre = :nombre", Hospital.class);
+		query.setParameter("nombre", nombre);
+		List<Hospital> result = query.getResultList();
+		if (!result.isEmpty()) {
+			return result.get(0);
+		}
+		return null;
+	}
 
-    }
+	@Override
+	public void crear(Hospital hospital) {
+		em.persist(hospital);
+	}
 
-    public void eliminar(Hospital hospital) {
+	@Override
+	public void editar(Hospital hospital) {
+		em.merge(hospital);
+	}
 
-    }
+	@Override
+	public void eliminar(Hospital hospital) {
+		em.remove(em.merge(hospital));
+	}
+
 }

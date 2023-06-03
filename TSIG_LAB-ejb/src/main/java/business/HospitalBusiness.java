@@ -1,17 +1,127 @@
 package business;
 
-//import javax.ejb.EJB;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
-//import dao.HospitalDAO;
 
+import dao.AmbulanciaDAOLocal;
+import dao.HospitalDAOLocal;
+import dao.ServicioEmergenciaDAOLocal;
+import datatype.DtAdministrador;
+import datatype.DtAmbulancia;
+import datatype.DtHospital;
+import datatype.DtServicioEmergencia;
+import entity.Administrador;
+import entity.Ambulancia;
+import entity.Hospital;
+import entity.ServicioEmergencia;
+
+//estas funciones son usadas desde la interfaz HospitalBusinessLocal
 
 @Stateless
 @LocalBean
-public class HospitalBusiness implements HospitalBusinessRemote, HospitalBusinessLocal {
+public class HospitalBusiness implements HospitalBusinessLocal {
 
-	//@EJB HospitalDAO data;
-	
+	@EJB HospitalDAOLocal hospitalData;
+	@EJB ServicioEmergenciaDAOLocal servicioData;
+	@EJB AmbulanciaDAOLocal ambulanciaData;
+
 	public HospitalBusiness() {}
 
+	@Override
+	public List<DtHospital> listar() throws Exception {
+		List<Hospital> hospitales = hospitalData.listar();
+		List<DtHospital> dtHospitales = new ArrayList<>();
+		for (Hospital hosp : hospitales) {
+			dtHospitales.add(new DtHospital(hosp));
+		}
+		return dtHospitales;
+	}
+
+	@Override
+	public DtHospital obtenerPorId(Long id) throws Exception {
+		Hospital hospital = hospitalData.obtenerPorId(id);
+		if (hospital != null) {
+			return new DtHospital(hospital);
+		}
+		return null;
+	}
+
+	@Override
+	public DtHospital obtenerPorNombre(String nombre) throws Exception {
+		Hospital hospital = hospitalData.obtenerPorNombre(nombre);
+		if (hospital != null) {
+			return new DtHospital(hospital);
+		}
+		return null;
+	}
+
+	@Override
+	public void crear(DtHospital hospital) throws Exception {
+		Hospital nuevo = new Hospital(hospital.getNombre(), hospital.getTipo(), 
+				null, null);
+		hospitalData.crear(nuevo);
+	}
+	
+	@Override
+	public void eliminar(DtHospital hospital) throws Exception {
+		List<DtServicioEmergencia> servicios = hospital.getServicios();
+		for (DtServicioEmergencia servicio : servicios) {
+			servicioData.eliminar(servicioData.obtenerPorId(servicio.getId()));
+		}
+		List<DtAmbulancia> ambulancias = hospital.getAmbulancias();
+		for (DtAmbulancia ambulancia : ambulancias) {
+			ambulanciaData.eliminar(ambulanciaData.obtenerPorId(ambulancia.getId()));
+		}
+		hospitalData.eliminar(hospitalData.obtenerPorId(hospital.getId()));
+	}
+
+	@Override
+	public void editar(DtHospital hospital) throws Exception{
+		Hospital existeHosp = hospitalData.obtenerPorId(hospital.getId());
+		if (existeHosp != null) {
+			existeHosp.setNombre(hospital.getNombre());
+			existeHosp.setTipo(hospital.getTipo());
+		}
+	}
+	
+	@Override
+	public void agregarServicioEmergencia(DtHospital hospital, DtServicioEmergencia servicio ) throws Exception{
+		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
+		List<ServicioEmergencia> servicios = hosp.getServicios();
+		servicios.add(new ServicioEmergencia(hosp, servicio.getTotalCamas(), servicio.getCamasDisponibles(),
+				servicio.getUbicacion()));
+	}
+	
+	@Override
+	public void agregarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception{
+		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
+		List<Ambulancia> ambulancias = hosp.getAmbulancias();
+		ambulancias.add(new Ambulancia(hosp, ambulancia.getRecorrido(),
+				ambulancia.getDistancia(), ambulancia.getZona()));
+	}
+	
+	@Override
+	public void eliminarServicioEmergencia(DtHospital hospital, DtServicioEmergencia servicio ) throws Exception{
+		//elimina el servicio de la lista y de la base de datos
+		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
+		List<ServicioEmergencia> servicios = hosp.getServicios();
+		ServicioEmergencia serv = servicioData.obtenerPorId(servicio.getId());
+		servicios.remove(serv);
+		servicioData.eliminar(serv);
+	}
+	
+	@Override
+	public void eliminarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception{
+		//elimina la ambulancia de la lista y de la base de datos
+		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
+		List<Ambulancia> ambulancias = hosp.getAmbulancias();
+		Ambulancia amb = ambulanciaData.obtenerPorId(ambulancia.getId());
+		ambulancias.remove(amb);
+		ambulanciaData.eliminar(amb);
+	}
+	
 }

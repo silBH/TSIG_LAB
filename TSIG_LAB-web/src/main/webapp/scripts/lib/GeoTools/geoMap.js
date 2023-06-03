@@ -2,6 +2,7 @@ proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0
 proj4.defs("EPSG:32721", "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs");
 
 
+
 var sourceCoords = [-6256081.2225, -4133147.1273437506]; // Coordenadas en EPSG:3857
 var targetCoords = proj4('EPSG:3857', 'EPSG:32721', sourceCoords);
 
@@ -12,16 +13,77 @@ function GeoMap(){
     this.mainBarCustom  =null;
     this.vector = null;
 }
-
-GeoMap.prototype.CrearMapa= function(target,layers,center,zoom){
+////CAPAS//////////
+var lyrOSM = new ol.layer.Tile({
+        title:'Open Street Map',
+        visible: true,
+        baseLayer:true,
+        source: new ol.source.OSM()
+    });
+	
+var lyrLinea = new ol.layer.Tile({
+        title:'Recorrido',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:recorridos'
+            }
+        })
+})
+var lyrPunto = new ol.layer.Tile({
+        title:'Hospital',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                STYLES:'puntoGeneral',
+                LAYERS:'tsig2023:hospital'
+            }
+        })
+})
+var lyrZonas = new ol.layer.Tile({
+        title:'zonas',
+        visible: true,
+		opacity: 0.4,
+        source: new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:zonas'
+            }
+        })
+});
+var lyrUsuario = new ol.layer.Tile({
+        title:'Usuario',
+        visible:true,
+        source:new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:usuario'
+            }
+        })
+})
+////CAPAS//////////
+GeoMap.prototype.CrearMapa= function(target,center,zoom){
     var _target = target || 'map',
-    _layers = layers || [],	
     _center = center || [-56.1645, -34.8339],
     _zoom = zoom || 10;
 
     this.map = new ol.Map({
         target: _target,
-        layers: _layers,
+        layers: [lyrOSM,lyrLinea,lyrPunto,lyrZonas,lyrUsuario],
         view : new ol.View({
             center: ol.proj.fromLonLat(_center),
             zoom:_zoom
@@ -39,14 +101,20 @@ GeoMap.prototype.CrearMapa= function(target,layers,center,zoom){
     map = this.map;
 };
 
+GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
+  lyrPunto.getSource().updateParams({
+    'CQL_FILTER': cqlFilter
+  });
+};
+
 GeoMap.prototype.CrearControlBarra= function(){
     var mainBar = new ol.control.Bar();
     this.map.addControl(mainBar);
-
     mainBar.addControl(new ol.control.FullScreen());
     mainBar.addControl(new ol.control.Rotate());	
     mainBar.addControl(new ol.control.ZoomToExtent({extent:[-6276100,-4132519, -6241733,-4132218]}));
     mainBar.setPosition('top-left');
+	
 }
 
 GeoMap.prototype.CrearBarraBusquedaCalle = function () {
@@ -58,29 +126,100 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
     this.mainBarCustom.setPosition('top');
   }
 
-  var controlBusquedaCalle = new ol.control.SearchNominatim({
-	title:'Busqueda',
-    provider: 'osm',
-    property: 'street',
-    placeholder: 'Buscar por calle en Montevideo',
-    countryCode: 'UY',
-    limit: 5,
-    bounded: true,
-    viewbox: [-56.414795, -34.954466, -56.059239, -34.815044], // Coordenadas del área de Montevideo
-    excludePlaceIds: [23424769], // Excluir el área metropolitana de Montevideo
-    showButton: true, // Mostrar el botón de búsqueda
+  var vectorLayer = new ol.layer.Vector({
+    source: new ol.source.Vector(),
+    style: new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 6,
+        fill: new ol.style.Fill({
+          color: 'red',
+        }),
+      }),
+    }),
   });
 
-  controlBusquedaCalle.on('select', function (e) {
-    var p = e.coordinate;
-    self.map.getView().animate({ center: p, zoom: 19 });
-  });
+  this.map.addLayer(vectorLayer);
 
-  // Limpiar el historial de búsqueda al cargar la página
-  controlBusquedaCalle.clearHistory();
+  var buscarDireccion = function () {
+    var direccionInput = document.getElementById('direccion-input').value;
+    if (direccionInput) {
+      var direccion = direccionInput.trim();
 
-  this.mainBarCustom.addControl(controlBusquedaCalle);
+      // Validar el formato de la dirección
+      var direccionRegExp = /^([\w\s]+),\s*(\d+)$/;
+      var match = direccion.match(direccionRegExp);
+      if (match) {
+        var nombreCalle = match[1].trim();
+        var numeroPuerta = match[2].trim();
+
+        // Realizar la solicitud de geocodificación
+        var direccionGeocodificada = nombreCalle + ', ' + numeroPuerta;
+        var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(direccionGeocodificada) + '&format=json&addressdetails=1';
+        fetch(url)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            if (data.length > 0) {
+              var latitud = parseFloat(data[0].lat);
+              var longitud = parseFloat(data[0].lon);
+
+              // Centrar el mapa en la ubicación encontrada
+              self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
+              self.map.getView().setZoom(19);
+
+              // Crear el marcador en la ubicación encontrada
+              var marker = new ol.Feature({
+                geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
+              });
+
+              vectorLayer.getSource().clear();
+              vectorLayer.getSource().addFeature(marker);
+			 // Obtener las coordenadas del marcador
+				// Obtener las coordenadas del marcador en EPSG:3857
+				var coords3857 = marker.getGeometry().getCoordinates();
+				
+				// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
+				var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+
+				// Mostrar las coordenadas transformadas en la consola
+				console.log('Coordenadas transformadas:', coords32721);
+
+				// Construir el filtro CQL utilizando las coordenadas transformadas
+				var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords32721[0] + " " + coords32721[1] + "), 1000, meters)";
+				self.updateGeoserverLayer(cqlFilter);
+			  
+            } else {
+              alert('No se pudo encontrar la dirección.');
+            }
+          })
+          .catch(function (error) {
+            console.error('Error al realizar la solicitud de geocodificación:', error);
+            alert('Error al buscar la dirección.');
+          });
+      } else {
+        alert('El formato de la dirección no es válido. Utiliza el formato "nombre de calle, número de puerta".');
+      }
+    }
+  };
+
+  var inputElement = document.createElement('input');
+  inputElement.setAttribute('id', 'direccion-input');
+  inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
+  inputElement.setAttribute('type', 'text');
+
+  var buttonElement = document.createElement('button');
+  buttonElement.textContent = 'Buscar';
+  buttonElement.addEventListener('click', buscarDireccion);
+  buttonElement.style.width = '100%'; // Ajusta el ancho del botón al 100%
+  buttonElement.style.padding = '6px'; // Ajusta el relleno del botón
+
+  this.mainBarCustom.element.appendChild(inputElement);
+  this.mainBarCustom.element.appendChild(buttonElement);
 };
+
+
+
 
 GeoMap.prototype.CrearControlBarraDibujo=function(){
     
@@ -92,7 +231,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
         this.mainBarCustom.setPosition('top');
     }
 
-    
     var estiloDibujo = new ol.style.Style({
         fill: new ol.style.Fill({
             color:'rgba(35, 163, 12, 0.5)'
@@ -133,26 +271,24 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
     var controlModificar = new ol.interaction.Modify({source:this.vector.getSource()});
     this.map.addInteraction(controlModificar);
 	
-	
-
+//////////////////////////////////////////////////
     var controlPunto =  new ol.control.Toggle({
         title:'Dibujar punto',
         html:'<i class="fa fa-map-marker"></i>',
         interaction: new ol.interaction.Draw({
             type:'Point',
             source:this.vector.getSource()
-        })
+        }),			
     });
-	//////////////////////////////////////////////////
 	controlPunto.getInteraction().on('drawend', function(event) {
 		var feature = event.feature;
 		var coords3857 = feature.getGeometry().getCoordinates();
-	  
+
 		// Convertir las coordenadas de EPSG:3857 a EPSG:32721
 		var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
 
 		console.log(coords3857);
-	  
+
 		// Mostrar ventana de diálogo para ingresar el valor del nombre
 		Swal.fire({
 		title: 'Ingresar nombre',
@@ -206,7 +342,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			.then(data => {
 			  console.log('Respuesta del servidor:', data);
 			  // Procesar la respuesta del servidor aquí
-			  // Formatear las coordenadas en un texto legible
+			   // Formatear las coordenadas en un texto legible
 			  var formattedCoords = coords32721.join(', ');
 			  // Mostrar las coordenadas en un cuadro de diálogo personalizado
 			  Swal.fire({
@@ -221,9 +357,12 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		}
 	  });	
 	});
-	
-    barraDibujo.addControl(controlPunto);
 
+    barraDibujo.addControl(controlPunto);
+	
+
+    barraDibujo.addControl(controlPunto);
+//////////////////////////////////////////////////////////
     var controlLinea =  new ol.control.Toggle({
         title:'Dibujar línea',
         html:'<i class="fa fa-share-alt"></i>',
@@ -246,7 +385,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
                     handleClick:function(){
                         controlLinea.getInteraction().finishDrawing();
                     }
-
                 })
             ]
         })
@@ -314,16 +452,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  .then(data => {
 			console.log('Respuesta del servidor:', data);
 			// Procesar la respuesta del servidor aquí
-			// Formatear las coordenadas en un texto legible
-			var formattedCoords = coords32721.map(function(coord) {
-			  return coord.join(', ');
-			}).join('\n\n');
-			// Mostrar las coordenadas en un cuadro de diálogo personalizado
-			Swal.fire({
-			  title: 'Coordenadas en EPSG:32721',
-			  text: formattedCoords,
-			  showConfirmButton: true
-			});
 		  })
 		  .catch(error => {
 			console.error('Error al realizar la solicitud WFS:', error);
@@ -356,11 +484,9 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
                     handleClick:function(){
                         controlPoligono.getInteraction().finishDrawing();
                     }
-
                 })
             ]
         })
-
     });
 	
 	controlPoligono.getInteraction().on('drawend', function(event) {
@@ -426,93 +552,8 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			console.error('Error al realizar la solicitud WFS:', error);
 		  });
 		}
-	  });
-	  
-	  
-	  
-	  
-	  
-	  
-	  
-	  
+	  });  
 	});
 	
     barraDibujo.addControl(controlPoligono);
-
-    var controlSelect = new ol.control.Toggle({
-		title: 'Seleccionar dibujo',
-		html: '<i class="fa fa-hand-pointer-o"></i>',
-		interaction: new ol.interaction.Select(),
-		bar: new ol.control.Bar({
-			controls: [
-				new ol.control.TextButton({
-					title: 'Eliminar dibujo',
-					html: 'Eliminar',
-					handleClick: function () {
-						var features = controlSelect.getInteraction().getFeatures();
-						if (!features.getLength()) {
-							alert('Debe seleccionar primero un dibujo.');
-						} else {
-							for (var i = 0, f; (f = features.item(i)); i++) {
-								self.vector.getSource().removeFeature(f);
-							}
-							controlSelect.getInteraction().getFeatures().clear();
-						}
-					}
-				}),
-				new ol.control.TextButton({
-					title: 'Coordenadas',
-					html: 'Coordenadas',
-					handleClick: function () {
-						var features = controlSelect.getInteraction().getFeatures();
-						if (!features.getLength()) {
-							alert('Debe seleccionar primero un dibujo.');
-						} else {
-							var selectedFeature = features.item(0); // Obtener la primera característica seleccionada
-							var coords = selectedFeature.getGeometry().getCoordinates(); // Obtener las coordenadas de la geometría
-							var message = 'Coordenadas: ' + coords;
-							alert(message);
-						}
-					}
-				})
-			]
-		})
-	});
-    barraDibujo.addControl(controlSelect);
-
-
-
-
-}
-
-GeoMap.prototype.CrearBarraBusquedaGeoJson= function(vectorLayerGeoJson){
-
-    var self = this;
-
-    if(!this.mainBarCustom){
-        this.mainBarCustom = new ol.control.Bar();
-        this.map.addControl(this.mainBarCustom);
-        this.mainBarCustom.setPosition('top');  
-    }
-
-    var select = new ol.interaction.Select({});
-    this.map.addInteraction(select);
-
-    if(vectorLayerGeoJson){
-        var controlBusqueda = new ol.control.SearchFeature({
-            source:vectorLayerGeoJson,
-            property:'descripcion'
-        });
-        this.map.addControl(controlBusqueda);
-
-        controlBusqueda.on('select', function(e){
-            select.getFeatures().clear();
-            select.getFeatures().push(e.search);
-            var p = e.search.getGeometry().getFirstCoordinate();
-            self.map.getView().animate({center: p, zoom:19});            
-        });
-
-
-    }
-    
 }

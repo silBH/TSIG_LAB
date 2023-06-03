@@ -1,13 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1" %>
-	<!DOCTYPE html>
-	<html>
-
+<!DOCTYPE html>
+<html>
 	<head>
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.20.1/ol.css" type="text/css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/ol3/3.20.1/ol.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.6.1/proj4.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-		
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>		
 		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- para ajax -->
 		
@@ -129,6 +127,7 @@
 						var wfs = new ol.format.WFS();
 
 						var insertRequest = wfs.writeTransaction([feature], null, null, {
+
 							featureType: 'hospital2',
 							featureNS: 'tsig',
 							srsName: 'EPSG:3857',
@@ -157,6 +156,7 @@
 			function hospitalesCercanos(coordinates) {
 				  console.log("0 - " + coordinates[0]);					
 				  console.log("1 - " + coordinates[1]);
+
 				  var cqlFilter = "DWITHIN(ubicacion, POINT(" + coordinates[0] + " " + coordinates[1] + "), 1000, meters)";
 				  //var cqlFilter = "DWITHIN(ubicacion, POINT(-56.195653 -34.906141), 1000, meters)";
 				  updateGeoserverLayer(cqlFilter);
