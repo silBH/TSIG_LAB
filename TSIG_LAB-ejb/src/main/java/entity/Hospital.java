@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 
 import datatype.TipoHospital;
 
@@ -20,15 +21,18 @@ public class Hospital implements Serializable {
 	private Long id;
 	private String nombre;
 	private TipoHospital tipo;
+	
+	@OneToMany
 	private List<ServicioEmergencia> servicios;
+	
+	@OneToMany
 	private List<Ambulancia> ambulancias;
 	
 	public Hospital() {
 		super();
 	}
 
-	public Hospital(String nombre, TipoHospital tipo, List<ServicioEmergencia> servicios, 
-			List<Ambulancia> ambulancias) {
+	public Hospital(String nombre, TipoHospital tipo, List<ServicioEmergencia> servicios, List<Ambulancia> ambulancias) {
 		super();
 		this.nombre = nombre;
 		this.tipo = tipo;

@@ -37,6 +37,7 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 		List<DtHospital> dtHospitales = new ArrayList<>();
 		for (Hospital hosp : hospitales) {
 			dtHospitales.add(new DtHospital(hosp));
+			System.out.println("----listar ----- hospital" + hosp.getNombre());
 		}
 		return dtHospitales;
 	}
@@ -45,6 +46,7 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	public DtHospital obtenerPorId(Long id) throws Exception {
 		Hospital hospital = hospitalData.obtenerPorId(id);
 		if (hospital != null) {
+			System.out.println("----obtener por id---- hospital" + hospital.getNombre());
 			return new DtHospital(hospital);
 		}
 		return null;
@@ -54,16 +56,26 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	public DtHospital obtenerPorNombre(String nombre) throws Exception {
 		Hospital hospital = hospitalData.obtenerPorNombre(nombre);
 		if (hospital != null) {
+			System.out.println("----obtener por nombre---- hospital" + hospital.getNombre());
 			return new DtHospital(hospital);
 		}
 		return null;
 	}
-
+	
+	@Override
+	public Hospital obtenerPorIdObjeto(Long id) throws Exception{
+		Hospital hospital = hospitalData.obtenerPorId(id);
+		if (hospital != null) {
+			return hospital;
+		}
+		return null;
+	}
+	
 	@Override
 	public void crear(DtHospital hospital) throws Exception {
-		Hospital nuevo = new Hospital(hospital.getNombre(), hospital.getTipo(), 
-				null, null);
+		Hospital nuevo = new Hospital(hospital.getNombre(), hospital.getTipo(), null, null);
 		hospitalData.crear(nuevo);
+		System.out.println("---- crear ---- hospital" + nuevo.getNombre());
 	}
 	
 	@Override
@@ -86,6 +98,7 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 		if (existeHosp != null) {
 			existeHosp.setNombre(hospital.getNombre());
 			existeHosp.setTipo(hospital.getTipo());
+			System.out.println("----editar---- hospital" + existeHosp.getNombre());
 		}
 	}
 	

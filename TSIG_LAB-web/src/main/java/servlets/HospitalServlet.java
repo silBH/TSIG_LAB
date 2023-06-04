@@ -35,8 +35,9 @@ public class HospitalServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 
-		String action = request.getServletPath();
-
+		String action = request.getParameter("action");
+		System.out.println(action);
+		
 		try {
 			if (action == null) {
 				throw new Exception("No se proporcionó una acción válida.");
@@ -83,14 +84,14 @@ public class HospitalServlet extends HttpServlet {
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		doGet(request, response);
+		doGet(request, response);		
 	}
 
 	private void listarHospitales(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
 		List<DtHospital> hospitales = hospBusiness.listar();
 		request.setAttribute("hospitales", hospitales);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("listarHospitales.jsp"); //--------- crear JSP
+		RequestDispatcher dispatcher = request.getRequestDispatcher("hospitalLista.jsp"); 
 	    dispatcher.forward(request, response);		
 	}
 
@@ -99,8 +100,15 @@ public class HospitalServlet extends HttpServlet {
 		Long id = Long.parseLong(request.getParameter("id"));
 		DtHospital hospital = hospBusiness.obtenerPorId(id);
 		request.setAttribute("hospital", hospital);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("mostrarHospital.jsp"); //--------- crear JSP
+		if(hospital.getTipo()==null) {
+			request.setAttribute("hospitalTipo", "MUTUALISTA");
+		}else {
+			request.setAttribute("hospitalTipo", hospital.getTipo());
+		}
+		
+		RequestDispatcher dispatcher = request.getRequestDispatcher("hospitalMostrar.jsp"); 
         dispatcher.forward(request, response);
+        
 	}
 
 	private void obtenerHospitalPorNombre(HttpServletRequest request, HttpServletResponse response)
@@ -108,7 +116,7 @@ public class HospitalServlet extends HttpServlet {
 		String nombre = request.getParameter("nombre");
 		DtHospital hospital = hospBusiness.obtenerPorNombre(nombre);
 		request.setAttribute("hospital", hospital);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("mostrarHospital.jsp"); 
+		RequestDispatcher dispatcher = request.getRequestDispatcher("hospitalMostrar.jsp"); 
         dispatcher.forward(request, response);
 	}
 
@@ -117,16 +125,16 @@ public class HospitalServlet extends HttpServlet {
 		String nombre = request.getParameter("nombre");
 		String t = request.getParameter("tipo");
 		TipoHospital tipo = null; 
-		if(t.equals("MUTUALISTA")) {
+		if(t.equals("Mutualista")) {
 			tipo = TipoHospital.MUTUALISTA;
-		}else if(t.equals("SEGURO_PRIVADO")) {
+		}else if(t.equals("Seguro Privado")) {
 			tipo = TipoHospital.SEGURO_PRIVADO;
-		}else if(t.equals("SERVICIO_ESTATAL")){
+		}else if(t.equals("Servicio Estatal")){
 			tipo = TipoHospital.SERVICIO_ESTATAL;			
 		}
 		DtHospital hospital = new DtHospital(null, nombre, tipo, null, null);
 		hospBusiness.crear(hospital);
-		response.sendRedirect("funcionesHospitales.jsp"); //--------- crear JSP
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void editarHospital(HttpServletRequest request, HttpServletResponse response)
@@ -135,31 +143,31 @@ public class HospitalServlet extends HttpServlet {
 		String nombre = request.getParameter("nombre");
 		String t = request.getParameter("tipo");
 		TipoHospital tipo = null; 
-		if(t.equals("MUTUALISTA")) {
+		if(t.equals("Mutualista")) {
 			tipo = TipoHospital.MUTUALISTA;
-		}else if(t.equals("SEGURO_PRIVADO")) {
+		}else if(t.equals("Seguro Privado")) {
 			tipo = TipoHospital.SEGURO_PRIVADO;
-		}else if(t.equals("SERVICIO_ESTATAL")){
+		}else if(t.equals("Servicio Estatal")){
 			tipo = TipoHospital.SERVICIO_ESTATAL;			
 		}
 		DtHospital hospital = new DtHospital(id, nombre, tipo, null, null);
 		hospBusiness.editar(hospital);
-		response.sendRedirect("funcionesHospitales.jsp");
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void eliminarHospital(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
 		Long id = Long.parseLong(request.getParameter("id"));
 		hospBusiness.eliminar(id);
-		response.sendRedirect("funcionesHospitales.jsp");		
+		response.sendRedirect("hospitalMenu.jsp");		
 	}
 
 	private void agregarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+			throws Exception {
 		
 		//---------------REVISAR FALTA TERMINAR
 		Long idHospital = Long.parseLong(request.getParameter("id"));
-		Hospital hospital = hospBusiness.obtenerPorId(idHospital);
+		Hospital hospital = hospBusiness.obtenerPorIdObjeto(idHospital);
 		
 		Integer totalCamas = Integer.parseInt(request.getParameter("totalCamas"));
 		Integer camasDisponibles = Integer.parseInt(request.getParameter("camasDisponibles"));
@@ -175,21 +183,21 @@ public class HospitalServlet extends HttpServlet {
 		ServicioEmergencia nuevo = servicioBusiness.obtenerPorIdObjeto(dt.getId()); //ver si esta bien usar asi....		
 		List<ServicioEmergencia> listado = hospital.getServicios();
 		listado.add(nuevo);
-		response.sendRedirect("funcionesHospitales.jsp");
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("funcionesHospitales.jsp");
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void eliminarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("funcionesHospitales.jsp");
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void eliminarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("funcionesHospitales.jsp");
+		response.sendRedirect("hospitalMenu.jsp");
 	}
 }
