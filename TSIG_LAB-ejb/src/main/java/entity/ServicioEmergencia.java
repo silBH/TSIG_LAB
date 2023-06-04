@@ -41,6 +41,16 @@ public class ServicioEmergencia implements Serializable{
 		this.camasDisponibles = camasDisponibles;
 		this.ubicacion = ubicacion;
 	}
+	
+	public ServicioEmergencia(Long id, Hospital hospital, Integer totalCamas, Integer camasDisponibles,
+			Point ubicacion) {
+		super();
+		this.id = id;
+		this.hospital = hospital;
+		this.totalCamas = totalCamas;
+		this.camasDisponibles = camasDisponibles;
+		this.ubicacion = ubicacion;
+	}
 
 	public Long getId() {
 		return id;

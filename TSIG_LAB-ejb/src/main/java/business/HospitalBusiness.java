@@ -67,14 +67,15 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	}
 	
 	@Override
-	public void eliminar(DtHospital hospital) throws Exception {
-		List<DtServicioEmergencia> servicios = hospital.getServicios();
-		for (DtServicioEmergencia servicio : servicios) {
-			servicioData.eliminar(servicioData.obtenerPorId(servicio.getId()));
+	public void eliminar(Long id) throws Exception {
+		Hospital hospital = hospitalData.obtenerPorId(id);
+		List<ServicioEmergencia> servicios = hospital.getServicios();
+		for (ServicioEmergencia servicio : servicios) {
+			servicioData.eliminar(servicio);
 		}
-		List<DtAmbulancia> ambulancias = hospital.getAmbulancias();
-		for (DtAmbulancia ambulancia : ambulancias) {
-			ambulanciaData.eliminar(ambulanciaData.obtenerPorId(ambulancia.getId()));
+		List<Ambulancia> ambulancias = hospital.getAmbulancias();
+		for (Ambulancia ambulancia : ambulancias) {
+			ambulanciaData.eliminar(ambulancia);
 		}
 		hospitalData.eliminar(hospitalData.obtenerPorId(hospital.getId()));
 	}

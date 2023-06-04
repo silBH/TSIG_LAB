@@ -14,7 +14,7 @@ public interface HospitalBusinessLocal {
 	public DtHospital obtenerPorId(Long id) throws Exception;
 	public DtHospital obtenerPorNombre(String nombre) throws Exception;
 	public void crear(DtHospital hospital) throws Exception;
-	public void eliminar(DtHospital hospital) throws Exception;
+	public void eliminar(Long id) throws Exception;
 	public void editar(DtHospital hospital) throws Exception; //nombre y tipo
 	public void agregarServicioEmergencia(DtHospital hospital, DtServicioEmergencia servicio ) throws Exception;
 	public void agregarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception;
