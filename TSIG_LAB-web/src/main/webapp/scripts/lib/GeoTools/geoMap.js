@@ -1,12 +1,9 @@
-proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs");
+// Carga las definiciones de proyección EPSG:32721 y EPSG:3857
 proj4.defs("EPSG:32721", "+proj=utm +zone=21 +south +datum=WGS84 +units=m +no_defs");
+proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs");
 
-
-
-var sourceCoords = [-6256081.2225, -4133147.1273437506]; // Coordenadas en EPSG:3857
-var targetCoords = proj4('EPSG:3857', 'EPSG:32721', sourceCoords);
-
-console.log('Coordenadas en EPSG:32721:', targetCoords);
+// Registra las definiciones de proyección en OpenLayers
+ol.proj.proj4.register(proj4);
 
 function GeoMap(){
     this.map=null;
@@ -19,6 +16,20 @@ var lyrOSM = new ol.layer.Tile({
         visible: true,
         baseLayer:true,
         source: new ol.source.OSM()
+    });
+
+var lyrEjes = new ol.layer.Tile({
+        title:'ft_01_ejes',
+        visible: false,
+        source: new ol.source.TileWMS({
+            url:'http://localhost:8586/geoserver/wms?',
+            params:{
+                VERSION:'1.1.1',
+                FORMAT:'image/png',
+                TRANSPARENT:true,
+                LAYERS:'tsig2023:ft_01_ejes'
+            }
+        })
     });
 	
 var lyrLinea = new ol.layer.Tile({
@@ -83,14 +94,13 @@ GeoMap.prototype.CrearMapa= function(target,center,zoom){
 
     this.map = new ol.Map({
         target: _target,
-        layers: [lyrOSM,lyrLinea,lyrPunto,lyrZonas,lyrUsuario],
+        layers: [lyrOSM,lyrLinea,lyrPunto,lyrZonas,lyrUsuario,lyrEjes],
         view : new ol.View({
             center: ol.proj.fromLonLat(_center),
             zoom:_zoom
         })
     });
-
-    
+  
     var layerSwitcher = new ol.control.LayerSwitcher({
         tipLabel: 'Leyenda', 
         groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
@@ -98,7 +108,42 @@ GeoMap.prototype.CrearMapa= function(target,center,zoom){
 
     this.map.addControl(layerSwitcher);
 	
-    map = this.map;
+	// Obtén los datos de la capa Hospital como JSON
+	var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:hospital&outputFormat=application/json';
+
+	fetch(url)
+	  .then(function(response) {
+		return response.json();
+	  })
+	  .then(function(data) {
+		// Crea la fuente de vector con los datos obtenidos
+		var vectorSource = new ol.source.Vector({
+		  features: new ol.format.GeoJSON().readFeatures(data)
+		});
+
+		// Transforma las coordenadas de EPSG:32721 a EPSG:3857 para poder visualizarlas correctamente
+		vectorSource.forEachFeature(function(feature) {
+		  var geometry = feature.getGeometry();
+		  var coordinates = geometry.getCoordinates();
+		  var transformedCoordinates = ol.proj.transform(coordinates, 'EPSG:32721', 'EPSG:3857');
+		  geometry.setCoordinates(transformedCoordinates);
+		});
+
+		// Crea la capa de mapa de calor
+		var heatmapLayer = new ol.layer.Heatmap({
+		  title:'Mapa de Calor',
+		  visible:false,
+		  source: vectorSource,
+		  blur: 15,
+		  radius: 10,
+		  weight: 'weight',
+		  gradient: ['rgba(0, 0, 255, 0)', 'rgba(0, 0, 255, 1)']
+		});
+
+		// Agrega la capa de mapa de calor al mapa existente
+		this.map.addLayer(heatmapLayer);
+	  });
+	map = this.map;
 };
 
 GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
@@ -114,7 +159,6 @@ GeoMap.prototype.CrearControlBarra= function(){
     mainBar.addControl(new ol.control.Rotate());	
     mainBar.addControl(new ol.control.ZoomToExtent({extent:[-6276100,-4132519, -6241733,-4132218]}));
     mainBar.setPosition('top-left');
-	
 }
 
 GeoMap.prototype.CrearBarraBusquedaCalle = function () {
@@ -218,9 +262,6 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
   this.mainBarCustom.element.appendChild(buttonElement);
 };
 
-
-
-
 GeoMap.prototype.CrearControlBarraDibujo=function(){
     
     var self = this;
@@ -287,7 +328,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		// Convertir las coordenadas de EPSG:3857 a EPSG:32721
 		var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
 
-		console.log(coords3857);
+		console.log('Coordenadas en SRID 3857:',coords3857);
 
 		// Mostrar ventana de diálogo para ingresar el valor del nombre
 		Swal.fire({
@@ -344,12 +385,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			  // Procesar la respuesta del servidor aquí
 			   // Formatear las coordenadas en un texto legible
 			  var formattedCoords = coords32721.join(', ');
-			  // Mostrar las coordenadas en un cuadro de diálogo personalizado
-			  Swal.fire({
-				title: 'Coordenadas en EPSG:32721',
-				text: formattedCoords,
-				showConfirmButton: true
-			  });
+			  console.log('Coordenadas en SRID 32721:',formattedCoords);
 			})
 			.catch(error => {
 			  console.error('Error al realizar la solicitud WFS:', error);
@@ -357,9 +393,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		}
 	  });	
 	});
-
-    barraDibujo.addControl(controlPunto);
-	
 
     barraDibujo.addControl(controlPunto);
 //////////////////////////////////////////////////////////
@@ -556,4 +589,111 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	});
 	
     barraDibujo.addControl(controlPoligono);
+
+
+	var controlSeleccionar = new ol.control.Toggle({
+	  title: 'Seleccionar',
+	  html: '<i class="fa fa-mouse-pointer"></i>',
+	  interaction: new ol.interaction.Select({
+		layers: [this.vector]
+	  }),
+	  bar: new ol.control.Bar({
+		controls: [
+		  new ol.control.TextButton({
+			title: 'Ver Información',
+			html: 'Info',
+			handleClick: function() {
+				// Obtén los datos de la capa Hospital como GML
+				var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Ahospital';
+
+				fetch(url)
+				  .then(function(response) {
+					return response.text(); // Utiliza response.text() en lugar de response.json()
+				  })
+				  .then(function(data) {
+					// Crea la fuente de vector con los datos obtenidos
+					vectorSource = new ol.source.Vector({
+					  features: new ol.format.WFS().readFeatures(data) // Utiliza ol.format.WFS() para leer los datos en formato GML
+					});
+
+					// Transforma las coordenadas de EPSG:32721 a EPSG:3857 para poder visualizarlas correctamente
+					vectorSource.forEachFeature(function(feature) {
+					  var geometry = feature.getGeometry();
+					  var coordinates = geometry.getCoordinates();
+					  var transformedCoordinates = ol.proj.transform(coordinates, 'EPSG:32721', 'EPSG:3857');
+					  geometry.setCoordinates(transformedCoordinates);
+					});
+
+					// Agrega la fuente de vector a la capa vectorial existente
+					if (self.vector) {
+					  self.vector.setSource(vectorSource);
+					}
+				  })
+				  .catch(function(error) {
+					console.error('Error al obtener los datos de la capa Hospital:', error);
+				  });	
+			}
+		  }),
+		  new ol.control.TextButton({
+			title: 'Eliminar',
+			  html: 'Eliminar',
+			  handleClick: function() {
+				var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+				if (selectedFeatures.getLength() > 0) {
+				  var selectedFeature = selectedFeatures.item(0);
+				  var nombre = selectedFeature.get('nombre');
+				  var id = selectedFeature.getId();
+
+				  // Mostrar el mensaje de confirmación
+				  Swal.fire({
+					title: 'Eliminar',
+					html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonText: 'Eliminar',
+					cancelButtonText: 'Cancelar'
+				  }).then(function(result) {
+					if (result.isConfirmed) {
+					  eliminarEntidad(selectedFeature);
+					}
+				  });
+				}
+			  }
+		  })
+		]
+	  })
+	});
+
+	// Función para eliminar una entidad
+	function eliminarEntidad(feature) {
+	  // Crear una transacción WFS para eliminar 
+	  var wfs = new ol.format.WFS();
+	  var deleteRequest = wfs.writeTransaction(null, null, [feature], {
+		featureType: 'hospital',
+		featureNS: 'tsig2023',
+		srsName: 'EPSG:3857',
+		version: '1.1.0',
+		handle: 'Delete'
+	  });
+
+	  // Enviar la solicitud WFS al servidor
+	  fetch('http://localhost:8586/geoserver/tsig2023/ows', {
+		method: 'POST',
+		headers: {
+		  'Content-Type': 'text/xml'
+		},
+		body: new XMLSerializer().serializeToString(deleteRequest)
+	  })
+		.then(response => response.text())
+		.then(data => {
+		  console.log('Respuesta del servidor:', data);
+		  // Procesar la respuesta del servidor aquí
+		})
+		.catch(error => {
+		  console.error('Error al realizar la solicitud WFS:', error);
+		});
+	}
+
+	barraDibujo.addControl(controlSeleccionar);
+
 }
