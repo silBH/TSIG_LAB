@@ -14,7 +14,7 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
         source: new ol.source.OSM()
     });
     listaLayers.push(lyrOSM);
-/*
+
 	var lyrDepartamentos = new ol.layer.Tile({
         title:'ft_00_departamento',
         visible: false,
@@ -29,7 +29,7 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
             }
         })
     });
-    listaLayers.push(lyrDepartamentos);*/
+    listaLayers.push(lyrDepartamentos);
 
     return new ol.layer.Group({
         title:'Capas Base',
@@ -40,7 +40,7 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
 GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
     var listaLayers = [];
     
-	/*var lyrLinea = new ol.layer.Tile({
+	var lyrLinea = new ol.layer.Tile({
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
@@ -53,8 +53,8 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
             }
         })
     })
-    listaLayers.push(lyrLinea);*/
-/*
+    listaLayers.push(lyrLinea);
+
     var lyrPunto = new ol.layer.Tile({
         title:'Hospital',
         visible:true,
@@ -69,9 +69,9 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
             }
         })
     })
-    listaLayers.push(lyrPunto);*/
+    listaLayers.push(lyrPunto);
 	
-/*	var lyrZonas = new ol.layer.Tile({
+	var lyrZonas = new ol.layer.Tile({
         title:'zonas',
         visible: true,
 		opacity: 0.4,
@@ -85,9 +85,9 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
             }
         })
     });
-    listaLayers.push(lyrZonas);*/
+    listaLayers.push(lyrZonas);
 	
-/*	var lyrEjes = new ol.layer.Tile({
+	var lyrEjes = new ol.layer.Tile({
         title:'ft_01_ejes',
         visible: false,
         source: new ol.source.TileWMS({
@@ -100,7 +100,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
             }
         })
     });
-    listaLayers.push(lyrEjes);*/
+    listaLayers.push(lyrEjes);
 	
 	var lyrUsuario = new ol.layer.Tile({
         title:'Usuario',
@@ -116,7 +116,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         })
     })
     listaLayers.push(lyrUsuario);
-	/*
+	
 	var lyrConsulta = new ol.layer.Tile({
 		title:'Consulta',
 		visible:false,
@@ -129,7 +129,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
 			serverType : 'geoserver'
 		})
 	});
-	listaLayers.push(lyrConsulta);*/
+	listaLayers.push(lyrConsulta);
 
     return new ol.layer.Group({
         title:'Capas Sopbrepuestas',
