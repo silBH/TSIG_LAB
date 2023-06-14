@@ -25,7 +25,7 @@ var lyrLinea = new ol.layer.Tile({
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -38,7 +38,7 @@ var lyrPunto = new ol.layer.Tile({
         title:'Hospital',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -53,7 +53,7 @@ var lyrZonas = new ol.layer.Tile({
         visible: true,
 		opacity: 0.4,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -66,7 +66,7 @@ var lyrUsuario = new ol.layer.Tile({
         title:'Usuario',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -331,7 +331,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -441,7 +441,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -536,7 +536,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'

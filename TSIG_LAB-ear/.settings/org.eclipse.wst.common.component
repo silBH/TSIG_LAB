@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-                                
+                                    
+    
     
     
     
@@ -7,7 +8,8 @@
     
     
     <wb-module deploy-name="TSIG_LAB">
-                                                                
+                                                                        
+        
         
         
         
@@ -15,7 +17,8 @@
         
         
         <wb-resource deploy-path="/" source-path="/target/m2e-wtp/ear-resources"/>
-                                                                
+                                                                        
+        
         
         
         
@@ -26,10 +29,7 @@
         <dependent-module archiveName="TSIG_LAB-ejb.jar" deploy-path="/" handle="module:/resource/TSIG_LAB-ejb/TSIG_LAB-ejb">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-        <dependent-module archiveName="postgresql.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar">
-            <dependency-type>uses</dependency-type>
-        </dependent-module>
-        <dependent-module archiveName="checker-qual.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/checkerframework/checker-qual/3.31.0/checker-qual-3.31.0.jar">
+        <dependent-module archiveName="postgresql.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/postgresql/postgresql/42.2.6/postgresql-42.2.6.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
         <dependent-module archiveName="hibernate-entitymanager.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/hibernate/hibernate-entitymanager/5.3.24.Final/hibernate-entitymanager-5.3.24.Final.jar">
@@ -110,7 +110,8 @@
         <dependent-module archiveName="TSIG_LAB-web.war" deploy-path="/" handle="module:/resource/TSIG_LAB-web/TSIG_LAB-web">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-                                                            
+                                                                    
+    
     
     
     
@@ -118,7 +119,8 @@
     
     
     </wb-module>
-                            
+                                
+
 
 
 

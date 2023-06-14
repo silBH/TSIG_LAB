@@ -24,12 +24,12 @@ public class Ambulancia implements Serializable {
 	@ManyToOne
 	private Hospital hospital;
 	
-	//@Type(type = "org.hibernate.spatial.GeometryType")
+	@Type(type = "org.hibernate.spatial.GeometryType")
 	private MultiLineString recorrido; //ver si está bien el tipo de dato
 	
 	private Integer distancia;
 	
-	//@Type(type = "org.hibernate.spatial.GeometryType")
+	@Type(type = "org.hibernate.spatial.GeometryType")
 	private Polygon zona; //---------- ver si este es un atributo calculado con distancia??
 
 	public Ambulancia() {

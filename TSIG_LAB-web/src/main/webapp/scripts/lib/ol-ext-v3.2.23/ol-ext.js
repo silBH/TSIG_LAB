@@ -1201,7 +1201,6 @@ ol.ext.getVectorContextStyle = function(e, s) {
     s = s.clone();
     var img = s.getImage();
     img.setScale(img.getScale()*ratio);
-    /* BUG anchor don't use ratio */
     var anchor = img.getAnchor();
     if (img.setDisplacement) {
       var disp = img.getDisplacement();
@@ -30990,7 +30989,6 @@ ol.layer.Geoportail = function(layer, options, tileoptions) {
     options.source.getTileGrid().minZoom = tileoptions.minZoom;
   }
   ol.layer.Tile.call (this, options);
-  // BUG GPP: Attributions constraints are not set properly :(
 /** /
   // Set attribution according to the originators
   var counter = 0;

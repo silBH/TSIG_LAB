@@ -20,7 +20,7 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
         visible: false,
         baseLayer:true,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -44,7 +44,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -59,7 +59,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Hospital',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -76,7 +76,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         visible: true,
 		opacity: 0.4,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -91,7 +91,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'ft_01_ejes',
         visible: false,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -106,7 +106,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Usuario',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8586/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -121,7 +121,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
 		title:'Consulta',
 		visible:false,
 		source : new ol.source.TileWMS({
-			url : 'http://localhost:8586/geoserver/tsig2023/wms?',
+			url : 'http://localhost:8082/geoserver/tsig2023/wms?',
 			params : {
 				'LAYERS' : 'tsig:hospital', //'LAYERS' : 'tsig:hospital2',
 				'TILED' : true
