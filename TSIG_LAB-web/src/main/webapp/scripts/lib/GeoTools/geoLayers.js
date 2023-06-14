@@ -20,12 +20,16 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
         visible: false,
         baseLayer:true,
         source: new ol.source.TileWMS({
+<<<<<<< HEAD
             url:'http://localhost:8082/geoserver/wms?',
+=======
+            url: 'http://localhost:8585/geoserver/tsig/wms?', //'http://localhost:8585/geoserver/tsig/wms?',
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:ft_00_departamento'
+                LAYERS: 'tsig:ft_00departamento'  //'tsig2023:ft_00_departamento'
             }
         })
     });
@@ -44,12 +48,16 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
+<<<<<<< HEAD
             url:'http://localhost:8082/geoserver/wms?',
+=======
+            url:'http://localhost:8585/geoserver/tsig/wms?',
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:recorridos'
+                LAYERS: 'tsig:recorridos' //'tsig2023:recorridos'
             }
         })
     })
@@ -59,13 +67,17 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Hospital',
         visible:true,
         source:new ol.source.TileWMS({
+<<<<<<< HEAD
             url:'http://localhost:8082/geoserver/wms?',
+=======
+            url:'http://localhost:8585/geoserver/tsig/wms?',
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                STYLES:'puntoGeneral',
-                LAYERS:'tsig2023:hospital'
+                //STYLES:'puntoGeneral',
+                LAYERS: 'tsig:hospital2' //tsig2023:hospital'
             }
         })
     })
@@ -76,12 +88,16 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         visible: true,
 		opacity: 0.4,
         source: new ol.source.TileWMS({
+<<<<<<< HEAD
             url:'http://localhost:8082/geoserver/wms?',
+=======
+            url:'http://localhost:8585/geoserver/tsig/wms?',
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:zonas'
+                LAYERS: 'tsig:zonas' //'tsig2023:zonas'
             }
         })
     });
@@ -91,12 +107,16 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'ft_01_ejes',
         visible: false,
         source: new ol.source.TileWMS({
+<<<<<<< HEAD
             url:'http://localhost:8082/geoserver/wms?',
+=======
+            url:'http://localhost:8585/geoserver/tsig/wms?',
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:ft_01_ejes'
+                LAYERS: 'tsig:ft_01ejes' //'tsig2023:ft_01_ejes'
             }
         })
     });

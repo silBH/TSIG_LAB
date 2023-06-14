@@ -7,7 +7,10 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
 import dao.ServicioEmergenciaDAOLocal;
+import datatype.DtHospital;
 import datatype.DtServicioEmergencia;
+import entity.Hospital;
+import entity.ServicioEmergencia;
 
 
 @Stateless
@@ -30,6 +33,15 @@ public class ServicioEmergenciaBusiness implements ServicioEmergenciaBusinessLoc
 		return null;
 	}
 	
+    @Override
+    public ServicioEmergencia obtenerPorIdObjeto(Long id) {
+    	ServicioEmergencia servicio = servicioData.obtenerPorId(id);
+		if (servicio != null) {
+			return servicio;
+		}
+		return null;
+    }
+    
     @Override
 	public void crear(DtServicioEmergencia servicio) {
     	//completar

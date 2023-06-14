@@ -22,18 +22,17 @@ public class Hospital implements Serializable {
 	private String nombre;
 	private TipoHospital tipo;
 	
-	@OneToMany(mappedBy = "hospital")
+	@OneToMany
 	private List<ServicioEmergencia> servicios;
 	
-	@OneToMany(mappedBy = "hospital")
+	@OneToMany
 	private List<Ambulancia> ambulancias;
 	
 	public Hospital() {
 		super();
 	}
 
-	public Hospital(String nombre, TipoHospital tipo, List<ServicioEmergencia> servicios,
-			List<Ambulancia> ambulancias) {
+	public Hospital(String nombre, TipoHospital tipo, List<ServicioEmergencia> servicios, List<Ambulancia> ambulancias) {
 		super();
 		this.nombre = nombre;
 		this.tipo = tipo;

@@ -11,15 +11,15 @@ public class DtHospital {
 	private Long id;
 	private String nombre;
 	private TipoHospital tipo;
-	private List<ServicioEmergencia> servicios;
-	private List<Ambulancia> ambulancias;
+	private List<DtServicioEmergencia> servicios;
+	private List<DtAmbulancia> ambulancias;
 	
 	public DtHospital() {
 		super();
 	}
 		
-	public DtHospital(Long id, String nombre, TipoHospital tipo, List<ServicioEmergencia> servicios,
-			List<Ambulancia> ambulancias) {
+	public DtHospital(Long id, String nombre, TipoHospital tipo, List<DtServicioEmergencia> servicios,
+			List<DtAmbulancia> ambulancias) {
 		super();
 		this.id = id;
 		this.nombre = nombre;
@@ -67,22 +67,22 @@ public class DtHospital {
 	}
 
 
-	public List<ServicioEmergencia> getServicios() {
+	public List<DtServicioEmergencia> getServicios() {
 		return servicios;
 	}
 
 
-	public void setServicios(List<ServicioEmergencia> servicios) {
+	public void setServicios(List<DtServicioEmergencia> servicios) {
 		this.servicios = servicios;
 	}
 
 
-	public List<Ambulancia> getAmbulancias() {
+	public List<DtAmbulancia> getAmbulancias() {
 		return ambulancias;
 	}
 
 
-	public void setAmbulancias(List<Ambulancia> ambulancias) {
+	public void setAmbulancias(List<DtAmbulancia> ambulancias) {
 		this.ambulancias = ambulancias;
 	}
 		

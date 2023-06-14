@@ -324,14 +324,18 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  // Crear una transacción WFS para insertar la característica
 		  var wfs = new ol.format.WFS();
 		  var insertRequest = wfs.writeTransaction([feature], null, null, {
-			featureType: 'hospital',
-			featureNS: 'tsig2023',
+			featureType: 'hospital2',
+			featureNS: 'tsig', //'tsig2023',
 			srsName: 'EPSG:3857',
 			version: '1.1.0'
 		  });
 
 		  // Enviar la solicitud WFS al servidor
+<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
+=======
+		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -435,13 +439,17 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  var wfs = new ol.format.WFS();
 		  var insertRequest = wfs.writeTransaction([feature], null, null, {
 			featureType: 'recorridos',
-			featureNS: 'tsig2023',
+			featureNS: 'tsig',
 			srsName: 'EPSG:3857',
 			version: '1.1.0'
 		  });
 
 		  // Enviar la solicitud WFS al servidor
+<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
+=======
+		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -530,13 +538,17 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  var wfs = new ol.format.WFS();
 		  var insertRequest = wfs.writeTransaction([feature], null, null, {
 			featureType: 'zonas',
-			featureNS: 'tsig2023',
+			featureNS: 'tsig',
 			srsName: 'EPSG:3857',
 			version: '1.1.0'
 		  });
 
 		  // Enviar la solicitud WFS al servidor
+<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
+=======
+		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
+>>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
