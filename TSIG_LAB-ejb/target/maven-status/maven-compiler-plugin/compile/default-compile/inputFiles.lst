@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\DtAmbulancia.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Ambulancia.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AdministradorDAOLocal.java
@@ -25,31 +24,3 @@ C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\Se
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\TipoHospital.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Hospital.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\AdministradorBusiness.java
-=======
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\ServicioEmergenciaDAO.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AdministradorDAO.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\DtAdministrador.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Ambulancia.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\DtHospital.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\persistence\Conexion.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AdministradorDAOLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\AdministradorBusiness.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\ServicioEmergenciaBusiness.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\AmbulanciaBusiness.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\HospitalDAOLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\DtAmbulancia.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\ServicioEmergenciaDAOLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\DtServicioEmergencia.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\HospitalBusiness.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\ServicioEmergencia.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AmbulanciaDAO.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\AmbulanciaBusinessLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\HospitalBusinessLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\AdministradorBusinessLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Hospital.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\ServicioEmergenciaBusinessLocal.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Administrador.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\TipoHospital.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\HospitalDAO.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AmbulanciaDAOLocal.java
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb

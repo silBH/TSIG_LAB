@@ -14,26 +14,22 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
         source: new ol.source.OSM()
     });
     listaLayers.push(lyrOSM);
-
+/*
 	var lyrDepartamentos = new ol.layer.Tile({
         title:'ft_00_departamento',
         visible: false,
         baseLayer:true,
         source: new ol.source.TileWMS({
-<<<<<<< HEAD
-            url:'http://localhost:8082/geoserver/wms?',
-=======
-            url: 'http://localhost:8585/geoserver/tsig/wms?', //'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
+            url: 'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:ft_00departamento'  //'tsig2023:ft_00_departamento'
+                LAYERS: 'tsig2023:ft_00departamento'
             }
         })
     });
-    listaLayers.push(lyrDepartamentos);
+    listaLayers.push(lyrDepartamentos);*/
 
     return new ol.layer.Group({
         title:'Capas Base',
@@ -44,89 +40,73 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
 GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
     var listaLayers = [];
     
-	var lyrLinea = new ol.layer.Tile({
+	/*var lyrLinea = new ol.layer.Tile({
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
-<<<<<<< HEAD
-            url:'http://localhost:8082/geoserver/wms?',
-=======
-            url:'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
+            url:'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:recorridos' //'tsig2023:recorridos'
+                LAYERS: 'tsig2023:recorridos'
             }
         })
     })
-    listaLayers.push(lyrLinea);
-
+    listaLayers.push(lyrLinea);*/
+/*
     var lyrPunto = new ol.layer.Tile({
         title:'Hospital',
         visible:true,
         source:new ol.source.TileWMS({
-<<<<<<< HEAD
-            url:'http://localhost:8082/geoserver/wms?',
-=======
-            url:'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
+            url:'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
                 //STYLES:'puntoGeneral',
-                LAYERS: 'tsig:hospital2' //tsig2023:hospital'
+                LAYERS: 'tsig2023:hospital' //tsig2023:hospital2'
             }
         })
     })
-    listaLayers.push(lyrPunto);
+    listaLayers.push(lyrPunto);*/
 	
-	var lyrZonas = new ol.layer.Tile({
+/*	var lyrZonas = new ol.layer.Tile({
         title:'zonas',
         visible: true,
 		opacity: 0.4,
         source: new ol.source.TileWMS({
-<<<<<<< HEAD
-            url:'http://localhost:8082/geoserver/wms?',
-=======
-            url:'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
+            url:'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:zonas' //'tsig2023:zonas'
+                LAYERS: 'tsig2023:zonas'
             }
         })
     });
-    listaLayers.push(lyrZonas);
+    listaLayers.push(lyrZonas);*/
 	
-	var lyrEjes = new ol.layer.Tile({
+/*	var lyrEjes = new ol.layer.Tile({
         title:'ft_01_ejes',
         visible: false,
         source: new ol.source.TileWMS({
-<<<<<<< HEAD
-            url:'http://localhost:8082/geoserver/wms?',
-=======
-            url:'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
+            url:'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:ft_01ejes' //'tsig2023:ft_01_ejes'
+                LAYERS: 'tsig2023:ft_01ejes'
             }
         })
     });
-    listaLayers.push(lyrEjes);
+    listaLayers.push(lyrEjes);*/
 	
 	var lyrUsuario = new ol.layer.Tile({
         title:'Usuario',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8082/geoserver/wms?',
+            url:'http://localhost:8082/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
@@ -136,20 +116,20 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         })
     })
     listaLayers.push(lyrUsuario);
-	
+	/*
 	var lyrConsulta = new ol.layer.Tile({
 		title:'Consulta',
 		visible:false,
 		source : new ol.source.TileWMS({
 			url : 'http://localhost:8082/geoserver/tsig2023/wms?',
 			params : {
-				'LAYERS' : 'tsig:hospital', //'LAYERS' : 'tsig:hospital2',
+				'LAYERS' : 'tsig2023:hospital', //'LAYERS' : 'tsig:hospital2',
 				'TILED' : true
 			},
 			serverType : 'geoserver'
 		})
 	});
-	listaLayers.push(lyrConsulta);
+	listaLayers.push(lyrConsulta);*/
 
     return new ol.layer.Group({
         title:'Capas Sopbrepuestas',

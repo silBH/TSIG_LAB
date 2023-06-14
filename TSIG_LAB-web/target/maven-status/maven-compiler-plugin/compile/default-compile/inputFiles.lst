@@ -1,12 +1,5 @@
-<<<<<<< HEAD
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-web\src\main\java\TSIG_LAB\TSIG_LAB\Jsf23Activator.java
+C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\HospitalServlet.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\ListarAdministradores.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\CrearAdmin.java
 C:\Users\Lucia\eclipse-workspace\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\LoginAdmin.java
-=======
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\CrearAdmin.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-web\src\main\java\TSIG_LAB\TSIG_LAB\Jsf23Activator.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\LoginAdmin.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\HospitalServlet.java
-D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-web\src\main\java\servlets\ListarAdministradores.java
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb

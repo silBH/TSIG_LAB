@@ -33,13 +33,9 @@
 			// Crea una capa de GeoServer
 			var geoserverLayer = new ol.layer.Tile({
 				source: new ol.source.TileWMS({
-<<<<<<< HEAD:TSIG_LAB-web/src/main/webapp/index2.jsp
 					url: 'http://localhost:8082/geoserver/tsig2023/wms?',
-=======
-					url: 'http://localhost:8585/geoserver/tsig/wms?',
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb:TSIG_LAB-web/src/main/webapp/pruebas_index2.jsp
 					params: {
-						'LAYERS': 'tsig:hospitales', //'LAYERS' : 'tsig:hospital2',
+						'LAYERS': 'tsig2023:hospitales', //'LAYERS' : 'tsig:hospital2',
 						'TILED': true
 					},
 					serverType: 'geoserver'
@@ -138,11 +134,7 @@
 							version: '1.1.0'
 						});
 
-<<<<<<< HEAD:TSIG_LAB-web/src/main/webapp/index2.jsp
 						fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
-=======
-						fetch('http://localhost:8585/geoserver/tsig/wfs', {
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb:TSIG_LAB-web/src/main/webapp/pruebas_index2.jsp
 							method: 'POST',
 							headers: {
 								'Content-Type': 'text/xml'

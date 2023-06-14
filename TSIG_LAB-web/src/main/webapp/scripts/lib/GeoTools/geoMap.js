@@ -331,11 +331,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
-=======
-		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -445,11 +441,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
-=======
-		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'
@@ -544,11 +536,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  });
 
 		  // Enviar la solicitud WFS al servidor
-<<<<<<< HEAD
 		  fetch('http://localhost:8082/geoserver/tsig2023/wfs', {
-=======
-		  fetch('http://localhost:8585/geoserver/tsig/wfs', {
->>>>>>> f8a41c8ce771ba2ad3b2ace5aba417de54ee88bb
 			method: 'POST',
 			headers: {
 			  'Content-Type': 'text/xml'

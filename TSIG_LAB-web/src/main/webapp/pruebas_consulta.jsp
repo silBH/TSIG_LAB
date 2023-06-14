@@ -41,9 +41,9 @@
 	// Crea una capa de GeoServer
 	var geoserverLayer = new ol.layer.Tile({
 		source : new ol.source.TileWMS({
-			url : 'http://localhost:8585/geoserver/tsig/wms?',
+			url : 'http://localhost:8082/geoserver/tsig/wms?',
 			params : {
-				'LAYERS' : 'tsig:hospitales', //'LAYERS' : 'tsig:hospital2',
+				'LAYERS' : 'tsig2023:hospital', //'LAYERS' : 'tsig:hospital2',
 				'TILED' : true
 			},
 			serverType : 'geoserver'
