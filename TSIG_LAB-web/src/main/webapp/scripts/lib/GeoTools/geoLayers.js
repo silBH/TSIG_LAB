@@ -20,12 +20,12 @@ GeoLayers.prototype.ObtenerLayersBase = function(){
         visible: false,
         baseLayer:true,
         source: new ol.source.TileWMS({
-            url: 'http://localhost:8585/geoserver/tsig/wms?', //'http://localhost:8585/geoserver/tsig/wms?',
+            url: 'http://localhost:8586/geoserver/tsig2023/wms?', //'http://localhost:8586/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:ft_00departamento'  //'tsig2023:ft_00_departamento'
+                LAYERS: 'tsig2023:ft_00departamento'  //'tsig2023:ft_00_departamento'
             }
         })
     });
@@ -44,12 +44,12 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Recorrido',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8585/geoserver/tsig/wms?',
+            url:'http://localhost:8586/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:recorridos' //'tsig2023:recorridos'
+                LAYERS: 'tsig2023:recorridos' //'tsig2023:recorridos'
             }
         })
     })
@@ -59,13 +59,13 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'Hospital',
         visible:true,
         source:new ol.source.TileWMS({
-            url:'http://localhost:8585/geoserver/tsig/wms?',
+            url:'http://localhost:8586/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
                 //STYLES:'puntoGeneral',
-                LAYERS: 'tsig:hospital2' //tsig2023:hospital'
+                LAYERS: 'tsig2023:hospital2' //tsig2023:hospital'
             }
         })
     })
@@ -76,12 +76,12 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         visible: true,
 		opacity: 0.4,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8585/geoserver/tsig/wms?',
+            url:'http://localhost:8586/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:zonas' //'tsig2023:zonas'
+                LAYERS: 'tsig2023:zonas' //'tsig2023:zonas'
             }
         })
     });
@@ -91,12 +91,12 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
         title:'ft_01_ejes',
         visible: false,
         source: new ol.source.TileWMS({
-            url:'http://localhost:8585/geoserver/tsig/wms?',
+            url:'http://localhost:8586/geoserver/tsig2023/wms?',
             params:{
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS: 'tsig:ft_01ejes' //'tsig2023:ft_01_ejes'
+                LAYERS: 'tsig2023:ft_01ejes' //'tsig2023:ft_01_ejes'
             }
         })
     });
@@ -123,7 +123,7 @@ GeoLayers.prototype.ObtenerLayersSobrepuestos=function(){
 		source : new ol.source.TileWMS({
 			url : 'http://localhost:8586/geoserver/tsig2023/wms?',
 			params : {
-				'LAYERS' : 'tsig:hospital', //'LAYERS' : 'tsig:hospital2',
+				'LAYERS' : 'tsig2023:hospital', //'LAYERS' : 'tsig2023:hospital2',
 				'TILED' : true
 			},
 			serverType : 'geoserver'

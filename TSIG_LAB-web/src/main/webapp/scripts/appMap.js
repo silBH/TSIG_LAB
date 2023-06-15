@@ -10,3 +10,14 @@ function CargarMapa(){
 	map.CrearBarraBusquedaCalle();
 	
 }
+
+function CargarMapaServicio(){
+    var map =new GeoMap();
+    var layers = new GeoLayers();
+   
+    map.CrearMapaServicios('map',null,12);
+    //map.CrearControlBarraDibujo();    
+    map.CrearControlBarraDibujoServicio();	
+	map.CrearBarraBusquedaCalleNumeroSeparado();
+	
+}
