@@ -1000,7 +1000,17 @@ GeoMap.prototype.CrearControlBarraDibujoServicio = function() {
 					.then(response => response.text())
 					.then(data => {
 						console.log('Respuesta del servidor:', data);
-						// Procesar la respuesta del servidor aquí
+						// fetch para llamar a la función del servlet de hospital
+						fetch('http://localhost:8080/HospitalServlet?action=/agregarServicioEmergencia', {
+							method: 'GET'							
+						})
+							.then(response => {
+								if (response.ok) {
+									console.log('Llamada al servlet de hospital exitosa');									
+								} else {
+									console.error('Error al llamar al servlet de hospital');
+								}
+							})
 					})
 					.catch(error => {
 						console.error('Error al realizar la solicitud WFS:', error);

@@ -165,24 +165,17 @@ public class HospitalServlet extends HttpServlet {
 	private void agregarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
 		
-		//---------------REVISAR FALTA TERMINAR
-		Long idHospital = Long.parseLong(request.getParameter("id"));
-		Hospital hospital = hospBusiness.obtenerPorIdObjeto(idHospital);
+		List<DtServicioEmergencia> servicios = servicioBusiness.listar();
 		
-		Integer totalCamas = Integer.parseInt(request.getParameter("totalCamas"));
-		Integer camasDisponibles = Integer.parseInt(request.getParameter("camasDisponibles"));
-		//agregar latitud y longitud para el punto.....
-		//ojo... si se agrega el servicio desde geoserver, ver como se hace acá
-		//supongo que obtener servicio de emergencia de la base y agregarle el resto de los datos
-		Long idServicio = Long.parseLong(request.getParameter("idServicio"));
-		DtServicioEmergencia dt = servicioBusiness.obtenerPorId(idServicio);
-		dt.setHospital(hospital);
-		dt.setTotalCamas(totalCamas);
-		dt.setCamasDisponibles(camasDisponibles);
-		servicioBusiness.editar(dt);	
-		ServicioEmergencia nuevo = servicioBusiness.obtenerPorIdObjeto(dt.getId()); //ver si esta bien usar asi....		
-		List<ServicioEmergencia> listado = hospital.getServicios();
-		listado.add(nuevo);
+		if (!servicios.isEmpty()) {
+		    // Obtener el último elemento de la lista
+		    DtServicioEmergencia ultimoServicio = servicios.get(servicios.size() - 1);
+		    Hospital hospital = ultimoServicio.getHospital();
+		    List<ServicioEmergencia> listado = hospital.getServicios();
+		    ServicioEmergencia servicio = servicioBusiness.obtenerPorIdObjeto(ultimoServicio.getId());
+			listado.add(servicio);
+		}
+		System.out.println("-------------- servlet ----  agregarServicioEmergencia");
 		response.sendRedirect("hospitalMenu.jsp");
 	}
 
