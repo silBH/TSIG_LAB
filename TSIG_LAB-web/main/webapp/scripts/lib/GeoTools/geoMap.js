@@ -111,34 +111,7 @@ GeoMap.prototype.CrearMapa= function(target,center,zoom){
 
     this.map.addControl(layerSwitcher);
 	
-	// Obtén los datos de la capa Hospital como JSON
-	var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:hospital2&outputFormat=application/json';
-
-	fetch(url)
-	  .then(function(response) {
-		return response.json();
-	  })
-	  .then(function(data) {
-		// Crea la fuente de vector con los datos obtenidos
-		var vectorSource = new ol.source.Vector({
-		  features: new ol.format.GeoJSON().readFeatures(data)
-		});
-
-		// Crea la capa de mapa de calor
-		var heatmapLayer = new ol.layer.Heatmap({
-		  title:'Mapa de Calor',
-		  visible:false,
-		  source: vectorSource,
-		  blur: 15,
-		  radius: 10,
-		  weight: 'weight',
-		  gradient: ['rgba(0, 0, 255, 0)', 'rgba(0, 0, 255, 1)']
-		});
-
-		// Agrega la capa de mapa de calor al mapa existente
-		this.map.addLayer(heatmapLayer);
-	  });
-	map = this.map;
+	map = this.map;	
 };
 
 GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
@@ -178,6 +151,18 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
   });
 
   this.map.addLayer(vectorLayer);
+  
+  var multiLineStringLayer = new ol.layer.Vector({
+	  source: new ol.source.Vector(),
+	  style: new ol.style.Style({
+		stroke: new ol.style.Stroke({
+		  color: 'red',
+		  width: 2,
+		}),
+	  }),
+	});
+
+	this.map.addLayer(multiLineStringLayer);
 
   var buscarDireccion = function () {
     var direccionInput = document.getElementById('direccion-input').value;
@@ -217,7 +202,6 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
 			 // Obtener las coordenadas del marcador
 				// Obtener las coordenadas del marcador en EPSG:3857
 				var coords3857 = marker.getGeometry().getCoordinates();
-				
 				// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
 				//var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
 
@@ -243,6 +227,97 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
     }
   };
 
+  
+var buscarCalleDibujarLinea = function () {
+  Swal.fire({
+    title: 'Ingresa los nombres de las calles',
+    html:
+      '<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
+      '<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
+    focusConfirm: false,
+    preConfirm: function () {
+      var calle1 = document.getElementById('calle1-input').value;
+      var calle2 = document.getElementById('calle2-input').value;
+      
+      if (calle1 && calle2) {
+        // Realizar la solicitud WFS para obtener la información de las calles
+        var wfsUrl = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Aft_01_ejes&CQL_FILTER=(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle1) + '%25%27)%20or%20(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle2) + '%25%27)&outputFormat=application/json';
+        fetch(wfsUrl)
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            // Obtener las coordenadas del MultiLineString
+            var features = data.features;
+            var coordinates = [];
+            for (var i = 0; i < features.length; i++) {
+              var geometry = features[i].geometry;
+              if (geometry && geometry.type === 'MultiLineString') {
+                coordinates = coordinates.concat(geometry.coordinates);
+              }
+            }	
+			
+			// Transformar las coordenadas de CRS 32721 a CRS 3857
+			var transformedCoordinates = [];
+			for (var i = 0; i < coordinates.length; i++) {
+			  var subCoordinates = coordinates[i];
+			  var transformedSubCoordinates = [];
+			  for (var j = 0; j < subCoordinates.length; j++) {
+				var coordinate = subCoordinates[j];
+				var transformedCoordinate = proj4("EPSG:32721", "EPSG:3857", coordinate);
+				
+				transformedSubCoordinates.push(transformedCoordinate);
+			  }
+			  transformedCoordinates.push(transformedSubCoordinates);
+			}
+            // Crear el MultiLineString
+            var multiLineString = new ol.geom.MultiLineString(transformedCoordinates);
+			
+            // Crear una nueva feature con el MultiLineString
+            var feature = new ol.Feature(multiLineString);
+
+            // Añadir la feature a la fuente de datos de la capa multiLineStringLayer
+            multiLineStringLayer.getSource().addFeature(feature);
+
+			var pointCount = {}; // Objeto para realizar un seguimiento de la cantidad de linestrings en los que aparece cada punto
+
+			// Recorrer las coordenadas del MultiLineString y contar la cantidad de apariciones de cada punto
+			multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+			  lineStringCoordinates.forEach(function(coordinate) {
+				var coordinateKey = coordinate.toString();
+				pointCount[coordinateKey] = (pointCount[coordinateKey] || 0) + 1;
+			  });
+			});
+			var lastPointCoordinates = null;
+			// Recorrer las coordenadas y crear los puntos para aquellos que cruzan con 3 o más linestrings
+			multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+			  lineStringCoordinates.forEach(function(coordinate) {
+				var coordinateKey = coordinate.toString();
+				if (pointCount[coordinateKey] >= 3) {
+				  var point = new ol.Feature({
+					geometry: new ol.geom.Point(coordinate)
+				  });
+				  vectorLayer.getSource().addFeature(point);
+				  lastPointCoordinates = coordinate;
+				}
+			  });
+			});
+
+						if (lastPointCoordinates) {
+			  self.map.getView().setCenter(lastPointCoordinates);
+			  self.map.getView().setZoom(19);
+			}
+					  })
+					  .catch(function (error) {
+						console.log('Error en la solicitud WFS:', error);
+					  });
+				  } else {
+					alert('Por favor, ingresa los nombres de las calles.');
+				  }
+				},
+			  });
+	};
+
   var inputElement = document.createElement('input');
   inputElement.setAttribute('id', 'direccion-input');
   inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
@@ -256,6 +331,15 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
 
   this.mainBarCustom.element.appendChild(inputElement);
   this.mainBarCustom.element.appendChild(buttonElement);
+  
+  var buttonElement2 = document.createElement('button');
+	buttonElement2.textContent = 'Dibujar Calles';
+	buttonElement2.addEventListener('click', buscarCalleDibujarLinea);
+	buttonElement2.style.width = '100%';
+	buttonElement2.style.padding = '6px';
+
+	this.mainBarCustom.element.appendChild(buttonElement2);
+  
 };
 
 
@@ -599,10 +683,12 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	
 	controlSeleccionar.on('change:active', function(evt) {
 	  if (evt.active) {
+		crearBufferDistancia();  
 		obtenerDatosCapas(); 
 	  } else {
 		eliminarVectorSource();
 		desactivarPopup();	
+		eliminarCapaDistancia();
 	  }
 	});
 	
@@ -712,4 +798,95 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	}
 
 	barraDibujo.addControl(controlSeleccionar);
+	
+	function crearBufferDistancia(){
+		if (!controlSeleccionar.getActive()) {
+			return; // Si la opción de selección no está activa, no se ejecuta el resto del código
+		}
+		// Obtén los datos de la capa "recorridos2" como JSON
+		var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:recorridos2&outputFormat=application/json';
+
+		fetch(url)
+		  .then(function(response) {
+			return response.json();
+		  })
+		  .then(function(data) {
+			// Crea la fuente de vector con los datos obtenidos
+			var vectorSource = new ol.source.Vector({
+			  features: new ol.format.GeoJSON().readFeatures(data)
+			});
+
+			// Crea el polígono alrededor de cada feature
+			vectorSource.forEachFeature(function(feature) {
+			  var geometry = feature.getGeometry();
+			  var extent = geometry.getExtent();
+			  var polygonGeometry = ol.geom.Polygon.fromExtent(extent);
+			  feature.setGeometry(polygonGeometry);
+			});
+
+			// Crea la capa de polígonos
+			var capaDistancia = new ol.layer.Vector({
+			  title: 'Distancia Desvio',
+			  visible:false,
+			  source: vectorSource,
+			  style: new ol.style.Style({
+				fill: new ol.style.Fill({
+				  color: 'rgba(0, 0, 255, 0.5)'
+				}),
+				stroke: new ol.style.Stroke({
+				  color: 'rgba(0, 0, 255, 1)',
+				  width: 2
+				})
+			  })
+			});
+
+			// Agrega la capa de polígonos al mapa existente
+			map.addLayer(capaDistancia);
+		  })
+		  .catch(function(error) {
+			console.error('Error al obtener los datos de la capa de líneas:', error);
+		  });
+	}
+
+	function eliminarCapaDistancia() {
+	  var layers = map.getLayers().getArray();
+	  var index = layers.findIndex(function(layer) {
+		return layer.get('title') === 'Distancia Desvio';
+	  });
+
+	  if (index !== -1) {
+		map.removeLayer(layers[index]);
+	  }
+	}
+	
 }
+function crearCapaMapaCalor(){
+		// Obtén los datos de la capa Hospital como JSON
+		var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:hospital2&outputFormat=application/json';
+
+		fetch(url)
+		  .then(function(response) {
+			return response.json();
+		  })
+		  .then(function(data) {
+			// Crea la fuente de vector con los datos obtenidos
+			var vectorSource = new ol.source.Vector({
+			  features: new ol.format.GeoJSON().readFeatures(data)
+			});
+
+			// Crea la capa de mapa de calor
+			var heatmapLayer = new ol.layer.Heatmap({
+			  title:'Mapa de Calor',
+			  visible:false,
+			  source: vectorSource,
+			  blur: 15,
+			  radius: 10,
+			  weight: 'weight',
+			  gradient: ['rgba(0, 0, 255, 0)', 'rgba(0, 0, 255, 1)']
+			});
+
+			// Agrega la capa de mapa de calor al mapa existente
+			map.addLayer(heatmapLayer);
+		  });
+	}
+crearCapaMapaCalor();
