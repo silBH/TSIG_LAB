@@ -129,7 +129,7 @@ GeoMap.prototype.CrearControlBarra= function(){
     mainBar.setPosition('top-left');
 }
 
-GeoMap.prototype.CrearBarraBusquedaCalle = function () {
+GeoMap.prototype.CrearBarraBusqueda = function () {
   var self = this;
 
   if (!this.mainBarCustom) {
@@ -228,94 +228,203 @@ GeoMap.prototype.CrearBarraBusquedaCalle = function () {
   };
 
   
-var buscarCalleDibujarLinea = function () {
-  Swal.fire({
-    title: 'Ingresa los nombres de las calles',
-    html:
-      '<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
-      '<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
-    focusConfirm: false,
-    preConfirm: function () {
-      var calle1 = document.getElementById('calle1-input').value;
-      var calle2 = document.getElementById('calle2-input').value;
-      
-      if (calle1 && calle2) {
-        // Realizar la solicitud WFS para obtener la información de las calles
-        var wfsUrl = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Aft_01_ejes&CQL_FILTER=(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle1) + '%25%27)%20or%20(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle2) + '%25%27)&outputFormat=application/json';
-        fetch(wfsUrl)
-          .then(function (response) {
-            return response.json();
-          })
-          .then(function (data) {
-            // Obtener las coordenadas del MultiLineString
-            var features = data.features;
-            var coordinates = [];
-            for (var i = 0; i < features.length; i++) {
-              var geometry = features[i].geometry;
-              if (geometry && geometry.type === 'MultiLineString') {
-                coordinates = coordinates.concat(geometry.coordinates);
-              }
-            }	
-			
-			// Transformar las coordenadas de CRS 32721 a CRS 3857
-			var transformedCoordinates = [];
-			for (var i = 0; i < coordinates.length; i++) {
-			  var subCoordinates = coordinates[i];
-			  var transformedSubCoordinates = [];
-			  for (var j = 0; j < subCoordinates.length; j++) {
-				var coordinate = subCoordinates[j];
-				var transformedCoordinate = proj4("EPSG:32721", "EPSG:3857", coordinate);
-				
-				transformedSubCoordinates.push(transformedCoordinate);
-			  }
-			  transformedCoordinates.push(transformedSubCoordinates);
-			}
-            // Crear el MultiLineString
-            var multiLineString = new ol.geom.MultiLineString(transformedCoordinates);
-			
-            // Crear una nueva feature con el MultiLineString
-            var feature = new ol.Feature(multiLineString);
+	var buscarCalleDibujarLinea = function () {
+	  Swal.fire({
+		title: 'Ingresa los nombres de las calles',
+		html:
+		  '<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
+		  '<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
+		focusConfirm: false,
+		preConfirm: function () {
+		  var calle1 = document.getElementById('calle1-input').value;
+		  var calle2 = document.getElementById('calle2-input').value;
+		  
+		  if (calle1 && calle2) {
+			// Realizar la solicitud WFS para obtener la información de las calles
+			var wfsUrl = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Aft_01_ejes&CQL_FILTER=(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle1) + '%25%27)%20or%20(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle2) + '%25%27)&outputFormat=application/json';
+			fetch(wfsUrl)
+			  .then(function (response) {
+				return response.json();
+			  })
+			  .then(function (data) {
+					// Obtener las coordenadas del MultiLineString
+					var features = data.features;
+					var coordinates = [];
+					for (var i = 0; i < features.length; i++) {
+					  var geometry = features[i].geometry;
+					  if (geometry && geometry.type === 'MultiLineString') {
+						coordinates = coordinates.concat(geometry.coordinates);
+					  }
+					}	
+					
+					// Transformar las coordenadas de CRS 32721 a CRS 3857
+					var transformedCoordinates = [];
+					for (var i = 0; i < coordinates.length; i++) {
+					  var subCoordinates = coordinates[i];
+					  var transformedSubCoordinates = [];
+					  for (var j = 0; j < subCoordinates.length; j++) {
+						var coordinate = subCoordinates[j];
+						var transformedCoordinate = proj4("EPSG:32721", "EPSG:3857", coordinate);
+						
+						transformedSubCoordinates.push(transformedCoordinate);
+					  }
+					  transformedCoordinates.push(transformedSubCoordinates);
+					}
+					// Crear el MultiLineString
+					var multiLineString = new ol.geom.MultiLineString(transformedCoordinates);
+					
+					// Crear una nueva feature con el MultiLineString
+					var feature = new ol.Feature(multiLineString);
 
-            // Añadir la feature a la fuente de datos de la capa multiLineStringLayer
-            multiLineStringLayer.getSource().addFeature(feature);
+					// Añadir la feature a la fuente de datos de la capa multiLineStringLayer
+					multiLineStringLayer.getSource().addFeature(feature);
 
-			var pointCount = {}; // Objeto para realizar un seguimiento de la cantidad de linestrings en los que aparece cada punto
+					var pointCount = {}; // Objeto para realizar un seguimiento de la cantidad de linestrings en los que aparece cada punto
 
-			// Recorrer las coordenadas del MultiLineString y contar la cantidad de apariciones de cada punto
-			multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
-			  lineStringCoordinates.forEach(function(coordinate) {
-				var coordinateKey = coordinate.toString();
-				pointCount[coordinateKey] = (pointCount[coordinateKey] || 0) + 1;
-			  });
-			});
-			var lastPointCoordinates = null;
-			// Recorrer las coordenadas y crear los puntos para aquellos que cruzan con 3 o más linestrings
-			multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
-			  lineStringCoordinates.forEach(function(coordinate) {
-				var coordinateKey = coordinate.toString();
-				if (pointCount[coordinateKey] >= 3) {
-				  var point = new ol.Feature({
-					geometry: new ol.geom.Point(coordinate)
-				  });
-				  vectorLayer.getSource().addFeature(point);
-				  lastPointCoordinates = coordinate;
-				}
-			  });
-			});
-
-						if (lastPointCoordinates) {
-			  self.map.getView().setCenter(lastPointCoordinates);
-			  self.map.getView().setZoom(19);
-			}
-					  })
-					  .catch(function (error) {
-						console.log('Error en la solicitud WFS:', error);
+					// Recorrer las coordenadas del MultiLineString y contar la cantidad de apariciones de cada punto
+					multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+					  lineStringCoordinates.forEach(function(coordinate) {
+						var coordinateKey = coordinate.toString();
+						pointCount[coordinateKey] = (pointCount[coordinateKey] || 0) + 1;
 					  });
-				  } else {
-					alert('Por favor, ingresa los nombres de las calles.');
+					});
+					var lastPointCoordinates = null;
+					var point;
+					// Recorrer las coordenadas y crear los puntos para aquellos que cruzan con 3 o más linestrings
+					multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+					  lineStringCoordinates.forEach(function(coordinate) {
+						var coordinateKey = coordinate.toString();
+						if (pointCount[coordinateKey] >= 3) {
+						  point = new ol.Feature({
+							geometry: new ol.geom.Point(coordinate)
+						  });
+						  vectorLayer.getSource().addFeature(point);
+						  lastPointCoordinates = coordinate;
+						}
+					  });
+					});
+
+					if (lastPointCoordinates) {
+					  self.map.getView().setCenter(lastPointCoordinates);
+					  self.map.getView().setZoom(19);
+					}
+					var coords3857 = point.getGeometry().getCoordinates();
+					console.log('coordenada:',coords3857);
+
+
+				})
+				  .catch(function (error) {
+					console.log('Error en la solicitud WFS:', error);
+				  });
+			  } else {
+				alert('Por favor, ingresa los nombres de las calles.');
+			  }
+			},
+		});
+	};
+	
+	var drawInteraction;
+	var dibujo;
+	var finalizarButtonCreated = false;
+
+	var buscarAmbulancias = function () {
+	  if (!finalizarButtonCreated) {
+		agregarBotonFinalizar(); // Agregar el botón "Finalizar" solo si no ha sido creado previamente
+		finalizarButtonCreated = true;
+	  }
+
+	  if (drawInteraction) {
+		self.map.removeInteraction(drawInteraction);
+		drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
+	  } else {
+		if (!dibujo) {
+		  dibujo = new ol.layer.Vector({
+			source: new ol.source.Vector(),
+			style: new ol.style.Style({
+			  fill: new ol.style.Fill({
+				color: 'rgba(0, 0, 255, 0.2)' // Color de relleno del polígono
+			  }),
+			  stroke: new ol.style.Stroke({
+				color: 'blue', // Color del borde del polígono
+				width: 2 // Grosor del borde del polígono
+			  })
+			})
+		  });
+		  self.map.addLayer(dibujo);
+		}
+
+		drawInteraction = new ol.interaction.Draw({
+		  type: 'Polygon',
+		  // Configuraciones adicionales para la interacción de dibujo si es necesario
+		  source: dibujo.getSource() // Utilizar la fuente de la capa vectorial para almacenar los polígonos dibujados
+		});
+
+		drawInteraction.on('drawend', function (event) {
+		  var geometry = event.feature.getGeometry();
+		  var coordinates = geometry.getCoordinates();
+			//console.log(coordinates);
+			
+			 // Convertir las coordenadas en una cadena de texto separada por comas
+		  var coordenadasTexto = coordinates[0].map(function(coordinate) {
+			return coordinate.join(' ');
+		  }).join(', ');
+		  //console.log(coordenadasTexto);
+
+		var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Arecorridos2&' +
+		  'CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))&outputFormat=application/json';
+		  // Realizar la consulta utilizando fetch
+		  fetch(url)
+			.then(function (response) {
+			  if (response.ok) {
+				return response.json();
+			  } else {
+				throw new Error('Error al realizar la consulta WFS');
+			  }
+			})
+			.then(function (data) {
+			  // Obtener las características resultantes de la respuesta
+			  var features = data.features;
+				
+				  if (features.length > 0) {
+					// Crear el contenido del Swal.fire con los atributos de las características
+					var contenido = '<strong>Ambulancias Encontradas:</strong><br><br>';
+					features.forEach(function (feature) {
+					  var id = feature.id;
+					  var nombre = feature.properties.nombre;
+					  contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+					});
 				  }
-				},
-			  });
+				  // Mostrar el Swal.fire
+				Swal.fire({
+				  title: 'Ambulancias Encontradas:',
+				  html: contenido,
+				  icon: 'info',
+				  confirmButtonText: 'Aceptar'
+				});	  
+			})
+			.catch(function (error) {
+			  console.error('Error al realizar la consulta WFS:', error);
+			});
+		});
+
+		self.map.addInteraction(drawInteraction);
+	  }
+	};
+
+	var agregarBotonFinalizar = function () {
+	  var buttonElementFinalizar = document.createElement('button');
+	  buttonElementFinalizar.textContent = 'Finalizar';
+	  buttonElementFinalizar.addEventListener('click', function () {
+		self.map.removeInteraction(drawInteraction);
+		dibujo.getSource().clear();
+		drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
+		this.remove(); // Remover el botón "Finalizar"
+		finalizarButtonCreated = false; // Restablecer el estado del botón a no creado
+	  });
+	  buttonElementFinalizar.style.width = '100%';
+	  buttonElementFinalizar.style.padding = '6px';
+
+	  self.mainBarCustom.element.appendChild(buttonElementFinalizar); // Utilizar self en lugar de this para referirse a mainBarCustom
 	};
 
   var inputElement = document.createElement('input');
@@ -339,6 +448,14 @@ var buscarCalleDibujarLinea = function () {
 	buttonElement2.style.padding = '6px';
 
 	this.mainBarCustom.element.appendChild(buttonElement2);
+	
+	var buttonElement3 = document.createElement('button');
+	buttonElement3.textContent = 'Buscar Ambulancias';
+	buttonElement3.addEventListener('click', buscarAmbulancias);
+	buttonElement3.style.width = '100%';
+	buttonElement3.style.padding = '6px';
+
+	this.mainBarCustom.element.appendChild(buttonElement3);
   
 };
 
@@ -516,41 +633,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 
 	barraDibujo.addControl(controlLinea);
 
-	var controlPoligono = new ol.control.Toggle({
-	  title: 'Dibujar polígono',
-	  html: '<i class="fa fa-bookmark-o fa-rotate-270"></i>',
-	  interaction: new ol.interaction.Draw({
-		type: 'Polygon',
-		source: this.vector.getSource()
-	  }),
-	  bar: new ol.control.Bar({
-		controls: [
-		  new ol.control.TextButton({
-			title: 'Deshacer ultimo punto',
-			html: 'Deshacer',
-			handleClick: function() {
-			  controlPoligono.getInteraction().removeLastPoint()
-			}
-		  }),
-		  new ol.control.TextButton({
-			title: 'Finalizar dibujo',
-			html: 'Finalizar',
-			handleClick: function() {
-			  controlPoligono.getInteraction().finishDrawing();
-			}
-		  })
-		]
-	  })
-	});
-
-	controlPoligono.getInteraction().on('drawend', function(event) {
-	  var feature = event.feature;
-	  var coords3857 = feature.getGeometry().getCoordinates();
-	  insertarFeature('zonas2', 'Nueva Zona', 'tsig2023', 'Polygon', coords3857);
-	});
-
-	barraDibujo.addControl(controlPoligono);
-
 	var controlSeleccionar = new ol.control.Toggle({
 	  title: 'Seleccionar',
 	  html: '<i class="fa fa-mouse-pointer"></i>',
@@ -683,7 +765,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	
 	controlSeleccionar.on('change:active', function(evt) {
 	  if (evt.active) {
-		crearBufferDistancia();  
+		//crearBufferDistancia();  
 		obtenerDatosCapas(); 
 	  } else {
 		eliminarVectorSource();
@@ -798,7 +880,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	}
 
 	barraDibujo.addControl(controlSeleccionar);
-	
+	/*
 	function crearBufferDistancia(){
 		if (!controlSeleccionar.getActive()) {
 			return; // Si la opción de selección no está activa, no se ejecuta el resto del código
@@ -858,7 +940,7 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		map.removeLayer(layers[index]);
 	  }
 	}
-	
+	*/
 }
 function crearCapaMapaCalor(){
 		// Obtén los datos de la capa Hospital como JSON
