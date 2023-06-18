@@ -527,76 +527,164 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
     this.map.addInteraction(controlModificar);
 	
 //////////////////////////////////////////////////
-    function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
-	  console.log('Coordenadas en SRID 3857:', coords3857);
+function actualizarFeature() {
+  if (lyrLinea2.getSource()) {
+    var sourceLinea2 = new ol.source.TileWMS({
+      url: 'http://localhost:8586/geoserver/wms?',
+      params: {
+        VERSION: '1.1.1',
+        FORMAT: 'image/png',
+        TRANSPARENT: true,
+        LAYERS: 'tsig2023:recorridos2',
+        _ts: Date.now() // Agregar un sello de tiempo único
+      }
+    });
+    lyrLinea2.setSource(sourceLinea2);
+  }
 
-	  // Mostrar ventana de diálogo para ingresar el valor del nombre
-	  Swal.fire({
-		title: 'Ingresar nombre',
-		input: 'text',
-		inputPlaceholder: 'Ingrese el nombre',
-		showCancelButton: true,
-		confirmButtonText: 'Guardar',
-		cancelButtonText: 'Cancelar',
-		inputValidator: (value) => {
-		  if (!value) {
-			return 'Debe ingresar un nombre';
-		  }
-		}
-	  }).then((result) => {
-		if (result.isConfirmed) {
-		  // Obtener el valor del nombre ingresado por el usuario
-		  var nombre = result.value;
+  if (lyrPunto2.getSource()) {
+    var sourcePunto2 = new ol.source.TileWMS({
+      url: 'http://localhost:8586/geoserver/wms?',
+      params: {
+        VERSION: '1.1.1',
+        FORMAT: 'image/png',
+        TRANSPARENT: true,
+        STYLES: 'puntoGeneral',
+        LAYERS: 'tsig2023:hospital2',
+        _ts: Date.now() // Agregar un sello de tiempo único
+      }
+    });
+    lyrPunto2.setSource(sourcePunto2);
+  }
 
-		  // Crear la geometría correspondiente
-		  var geometry;
-		  if (tipoGeometria === 'Point') {
-			geometry = new ol.geom.Point(coords3857);
-		  } else if (tipoGeometria === 'LineString') {
-			geometry = new ol.geom.LineString(coords3857);
-		  } else if (tipoGeometria === 'Polygon') {
-			geometry = new ol.geom.Polygon(coords3857);
-		  }
+  if (lyrZonas2.getSource()) {
+    var sourceZonas2 = new ol.source.TileWMS({
+      url: 'http://localhost:8586/geoserver/wms?',
+      params: {
+        VERSION: '1.1.1',
+        FORMAT: 'image/png',
+        TRANSPARENT: true,
+        LAYERS: 'tsig2023:zonas2',
+        _ts: Date.now() // Agregar un sello de tiempo único
+      }
+    });
+    lyrZonas2.setSource(sourceZonas2);
+  }
+}
+	
+function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
+  console.log('Coordenadas en SRID 3857:', coords3857);
 
-		  // Crear la característica con la geometría y el nombre
-		  var feature = new ol.Feature({
-			nombre: nombre,
-			ubicacion: geometry
-		  });
+  // Mostrar ventana de diálogo para ingresar el valor del nombre
+  Swal.fire({
+    title: 'Ingresar nombre',
+    input: 'text',
+    inputPlaceholder: 'Ingrese el nombre',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Cancelar',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Debe ingresar un nombre';
+      }
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Obtener el valor del nombre ingresado por el usuario
+      var nombre = result.value;
+	  var wfs = new ol.format.WFS();
+      // Crear la geometría correspondiente
+      var geometry;
+      if (tipoGeometria === 'Point') {
+        geometry = new ol.geom.Point(coords3857);
+      } else if (tipoGeometria === 'LineString') {
+        geometry = new ol.geom.LineString(coords3857);
+      } else if (tipoGeometria === 'Polygon') {
+        geometry = new ol.geom.Polygon(coords3857);
+      }
 
-		  // Asignar cualquier otro atributo a la característica si es necesario
-		  feature.setProperties({
-			name: nombreFeature
-		  });
+      // Crear la característica con la geometría y el nombre
+      var feature = new ol.Feature({
+        nombre: nombre,
+        ubicacion: geometry
+      });
 
-		  // Crear una transacción WFS para insertar la característica
-		  var wfs = new ol.format.WFS();
-		  var insertRequest = wfs.writeTransaction([feature], null, null, {
-			featureType: nombreFeatureType,
-			featureNS: 'tsig2023',
-			srsName: 'EPSG:3857',
-			version: '1.1.0'
-		  });
+      // Asignar cualquier otro atributo a la característica si es necesario
+      feature.setProperties({
+        name: nombreFeature
+      });
 
-		  // Enviar la solicitud WFS al servidor
-		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-			method: 'POST',
-			headers: {
-			  'Content-Type': 'text/xml'
-			},
-			body: new XMLSerializer().serializeToString(insertRequest)
-		  })
-		  .then(response => response.text())
-		  .then(data => {
-			console.log('Respuesta del servidor:', data);
-			// Procesar la respuesta del servidor aquí
-		  })
-		  .catch(error => {
-			console.error('Error al realizar la solicitud WFS:', error);
-		  });
-		}
-	  });
-	}
+      // Si el tipo de geometría es LineString, crear una característica de tipo polígono (zona de cobertura)
+      if (tipoGeometria === 'LineString') {
+        // Crear el buffer alrededor de la geometría LineString basado en la distancia máxima de desvío
+        var buffer = ol.extent.buffer(geometry.getExtent(), 100); // Reemplaza 100 con la distancia máxima de desvío deseada
+
+        // Crear la geometría de polígono para la zona de cobertura
+        var polygonGeometry = new ol.geom.Polygon.fromExtent(buffer);
+
+        // Crear la característica de la zona de cobertura
+        var zonaCoberturaFeature = new ol.Feature({
+          nombre: 'Zona de Cobertura',
+          ubicacion: polygonGeometry
+        });
+
+        // Asignar cualquier otra propiedad necesaria a la característica de la zona de cobertura
+        zonaCoberturaFeature.setProperties({
+          name: nombreFeature
+        });
+
+        // Crear una transacción WFS para insertar la característica de la zona de cobertura
+        var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
+          featureType: 'zonas2',
+          featureNS: 'tsig2023',
+          srsName: 'EPSG:3857',
+          version: '1.1.0'
+        });
+
+        // Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
+        fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/xml'
+          },
+          body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
+        })
+        .then(response => response.text())
+        .then(data => {
+          console.log('Respuesta del servidor (zona de cobertura):', data);
+        })
+        .catch(error => {
+          console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
+        });
+      }
+
+      // Crear una transacción WFS para insertar la característica principal
+      var insertRequest = wfs.writeTransaction([feature], null, null, {
+        featureType: nombreFeatureType,
+        featureNS: 'tsig2023',
+        srsName: 'EPSG:3857',
+        version: '1.1.0'
+      });
+
+      // Enviar la solicitud WFS al servidor para insertar la característica principal
+      fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml'
+        },
+        body: new XMLSerializer().serializeToString(insertRequest)
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log('Respuesta del servidor (característica principal):', data);
+        actualizarFeature();
+      })
+      .catch(error => {
+        console.error('Error al realizar la solicitud WFS (característica principal):', error);
+      });
+    }
+  });
+}
 
 	var controlPunto = new ol.control.Toggle({
 	  title: 'Dibujar punto',
@@ -706,7 +794,17 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			  var selectedFeature = selectedFeatures.item(0);
 			  var nombre = selectedFeature.get('nombre');
 			  var id = selectedFeature.getId();
-			  var geometry = selectedFeature.getGeometry();			  
+			  var geometry = selectedFeature.getGeometry();	
+
+				// Determinar el valor de layerName según el tipo de geometría
+					var layerName;
+					if (geometry instanceof ol.geom.Point) {
+					  layerName = 'hospital2';
+					} else if (geometry instanceof ol.geom.LineString) {
+					  layerName = 'recorridos2';
+					} else if (geometry instanceof ol.geom.Polygon) {
+					  layerName = 'zonas2';
+					}
 			  // Mostrar el mensaje de confirmación para eliminar otras entidades
 			  Swal.fire({
 				title: 'Eliminar',
@@ -718,6 +816,8 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			  }).then(function(result) {
 				if (result.isConfirmed) {
 				  eliminarEntidad(selectedFeature, layerName);
+				  actualizarFeature();
+				  selectedFeature = null;
 				}
 			  });
 			}
@@ -729,79 +829,43 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		    handleClick: function() {
 				  var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
 				  if (selectedFeatures.getLength() > 0) {
-					var selectedFeature = selectedFeatures.item(0);
+					var selectedFeature = selectedFeatures.item(0);					
+					console.log('Coordenadas antes de la modificación:', selectedFeature.getGeometry().getCoordinates());
 
-					
-						console.log('Coordenadas antes de la modificación:', selectedFeature.getGeometry().getCoordinates());
+					// Crea la interacción de modificación y asigna la capa vectorial
+					var modifyInteraction = new ol.interaction.Modify({
+					  features: selectedFeatures,
+					});
 
-						// Crea la interacción de modificación y asigna la capa vectorial
-						var modifyInteraction = new ol.interaction.Modify({
-						  features: selectedFeatures,
-						});
+					// Agrega la interacción de modificación al mapa
+					map.addInteraction(modifyInteraction);
 
-						// Agrega la interacción de modificación al mapa
-						map.addInteraction(modifyInteraction);
+					// Al finalizar la edición
+					modifyInteraction.on('modifyend', function(event) {
+					  // Obtén la geometría modificada
+					  var modifiedGeometry = event.features.item(0).getGeometry();
+					  var modifiedCoordinates = modifiedGeometry.getCoordinates();
 
-						// Al finalizar la edición
-						modifyInteraction.on('modifyend', function(event) {
-						  // Obtén la geometría modificada
-						  var modifiedGeometry = event.features.item(0).getGeometry();
-						  var modifiedCoordinates = modifiedGeometry.getCoordinates();
+					  // Actualiza la geometría de la característica
+					  selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
+					  console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
 
-						  // Actualiza la geometría de la característica
-						  selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
-						  console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
+					  // Determinar el valor de layerName según el tipo de geometría
+					  var layerName;
+					  if (modifiedGeometry instanceof ol.geom.Point) {
+						layerName = 'hospital2';
+					  } else if (modifiedGeometry instanceof ol.geom.LineString) {
+						layerName = 'recorridos2';
+					  } else if (modifiedGeometry instanceof ol.geom.Polygon) {
+						layerName = 'zonas2';
+					  }
 
-						  // Determinar el valor de layerName según el tipo de geometría
-						  var layerName;
-						  if (modifiedGeometry instanceof ol.geom.Point) {
-							layerName = 'hospital2';
-						  } else if (modifiedGeometry instanceof ol.geom.LineString) {
-							layerName = 'recorridos2';
-						  } else if (modifiedGeometry instanceof ol.geom.Polygon) {
-							layerName = 'zonas2';
-						  }
-
-						  // Guarda los cambios en la base de datos
-						  guardarCambios(selectedFeature, layerName)
-							.then(function() {
-							  // Volver a cargar las capas desde el servicio WMS
-							  if (lyrLinea2.getSource()) {
-								var sourceLinea2 = new ol.source.TileWMS({
-								  url: 'http://localhost:8586/geoserver/wms?',
-								  params: {
-									VERSION: '1.1.1',
-									FORMAT: 'image/png',
-									TRANSPARENT: true,
-									LAYERS: 'tsig2023:recorridos2',
-									_ts: Date.now() // Agregar un sello de tiempo único
-								  }
-								});
-								lyrLinea2.setSource(sourceLinea2);
-								selectedFeatures.clear();
-							  }
-
-							  if (lyrPunto2.getSource()) {
-								var sourcePunto2 = new ol.source.TileWMS({
-								  url: 'http://localhost:8586/geoserver/wms?',
-								  params: {
-									VERSION: '1.1.1',
-									FORMAT: 'image/png',
-									TRANSPARENT: true,
-									STYLES: 'puntoGeneral',
-									LAYERS: 'tsig2023:hospital2',
-									_ts: Date.now() // Agregar un sello de tiempo único
-								  }
-								});
-								lyrPunto2.setSource(sourcePunto2);
-								selectedFeatures.clear();
-							  }
-							})
-							.catch(function(error) {
-							  console.error('Error al guardar los cambios:', error);
-							});
-						});
-                }
+					  // Guarda los cambios en la base de datos
+					  guardarCambios(selectedFeature, layerName);
+					  actualizarFeature();
+					  selectedFeatures.clear();
+					});
+                  }
             }
         }),
         ]
@@ -928,33 +992,52 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 
 	barraDibujo.addControl(controlSeleccionar);
 }
-function crearCapaMapaCalor(){
-		// Obtén los datos de la capa Hospital como JSON
-		var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:hospital2&outputFormat=application/json';
+function crearCapaMapaCalor() {
+  // Obtén los datos de la capa Recorridos como JSON
+  var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:recorridos2&outputFormat=application/json';
 
-		fetch(url)
-		  .then(function(response) {
-			return response.json();
-		  })
-		  .then(function(data) {
-			// Crea la fuente de vector con los datos obtenidos
-			var vectorSource = new ol.source.Vector({
-			  features: new ol.format.GeoJSON().readFeatures(data)
-			});
+  fetch(url)
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(data) {
+      // Crea la fuente de vector con los datos obtenidos
+      var vectorSource = new ol.source.Vector({
+        features: new ol.format.GeoJSON().readFeatures(data, {
+        })
+      });
 
-			// Crea la capa de mapa de calor
-			var heatmapLayer = new ol.layer.Heatmap({
-			  title:'Mapa de Calor',
-			  visible:false,
-			  source: vectorSource,
-			  blur: 15,
-			  radius: 10,
-			  weight: 'weight',
-			  gradient: ['rgba(0, 0, 255, 0)', 'rgba(0, 0, 255, 1)']
-			});
+      // Calcula el punto medio de cada linestring y agrega un nuevo punto a la fuente de vector
+      vectorSource.getFeatures().forEach(function(feature) {
+        var geometry = feature.getGeometry();
+        if (geometry.getType() === 'LineString') {
+          var lineString = geometry.clone();
+          var midpoint = lineString.getCoordinateAt(0.5);
+          var midpointFeature = new ol.Feature(new ol.geom.Point(midpoint));
+          vectorSource.addFeature(midpointFeature);
+        }
+      });
 
-			// Agrega la capa de mapa de calor al mapa existente
-			map.addLayer(heatmapLayer);
-		  });
-	}
+      // Crea la capa de mapa de calor utilizando los puntos medios como fuente
+      var heatmapLayer = new ol.layer.Heatmap({
+        title: 'Mapa de Calor',
+        visible: false,
+        source: vectorSource,
+        blur: 15,
+        radius: 10,
+        weight: 'weight',
+        gradient: [
+          'rgba(0, 0, 255, 0)',  // Azul transparente (valor mínimo)
+          'rgba(0, 0, 255, 1)',  // Azul opaco
+          'rgba(255, 0, 0, 1)'   // Rojo opaco (valor máximo)
+        ],
+        minOpacity: 0.05,  // Opacidad mínima para los puntos más leves
+        maxOpacity: 1.0,   // Opacidad máxima para los puntos más densos
+        opacity: 0.8       // Opacidad general de la capa de calor
+      });
+
+      // Agrega la capa de mapa de calor al mapa existente
+      map.addLayer(heatmapLayer);
+    });
+}
 crearCapaMapaCalor();
