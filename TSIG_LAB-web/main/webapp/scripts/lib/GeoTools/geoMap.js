@@ -89,6 +89,7 @@ var lyrUsuario = new ol.layer.Tile({
             }
         })
 })
+
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa= function(target,center,zoom){
     var _target = target || 'map',
@@ -139,6 +140,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
   }
 
   var vectorLayer = new ol.layer.Vector({
+	title: 'Punto Interseccion',
+	visible:true,
     source: new ol.source.Vector(),
     style: new ol.style.Style({
       image: new ol.style.Circle({
@@ -153,6 +156,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
   this.map.addLayer(vectorLayer);
   
   var multiLineStringLayer = new ol.layer.Vector({
+	  title: 'Calles Interseccion',
+	  visible:false,
 	  source: new ol.source.Vector(),
 	  style: new ol.style.Style({
 		stroke: new ol.style.Stroke({
@@ -163,7 +168,9 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	});
 
 	this.map.addLayer(multiLineStringLayer);
+	
 
+	
   var buscarDireccion = function () {
     var direccionInput = document.getElementById('direccion-input').value;
     if (direccionInput) {
@@ -212,7 +219,7 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 				// Construir el filtro CQL utilizando las coordenadas transformadas
 				var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
 				self.updateGeoserverLayer(cqlFilter);
-			  
+			    ambulanciasCercanas(coords3857);
             } else {
               alert('No se pudo encontrar la dirección.');
             }
@@ -226,7 +233,6 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
       }
     }
   };
-
   
 	var buscarCalleDibujarLinea = function () {
 	  Swal.fire({
@@ -309,9 +315,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 					  self.map.getView().setZoom(19);
 					}
 					var coords3857 = point.getGeometry().getCoordinates();
-					console.log('coordenada:',coords3857);
-
-
+					console.log('coordenada:',coords3857);					
+					ambulanciasCercanas(coords3857);
 				})
 				  .catch(function (error) {
 					console.log('Error en la solicitud WFS:', error);
@@ -325,14 +330,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	
 	var drawInteraction;
 	var dibujo;
-	var finalizarButtonCreated = false;
-
+	
 	var buscarAmbulancias = function () {
-	  if (!finalizarButtonCreated) {
-		agregarBotonFinalizar(); // Agregar el botón "Finalizar" solo si no ha sido creado previamente
-		finalizarButtonCreated = true;
-	  }
-
 	  if (drawInteraction) {
 		self.map.removeInteraction(drawInteraction);
 		drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
@@ -355,7 +354,6 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 
 		drawInteraction = new ol.interaction.Draw({
 		  type: 'Polygon',
-		  // Configuraciones adicionales para la interacción de dibujo si es necesario
 		  source: dibujo.getSource() // Utilizar la fuente de la capa vectorial para almacenar los polígonos dibujados
 		});
 
@@ -382,25 +380,33 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 			  }
 			})
 			.then(function (data) {
-			  // Obtener las características resultantes de la respuesta
-			  var features = data.features;
-				
-				  if (features.length > 0) {
-					// Crear el contenido del Swal.fire con los atributos de las características
-					var contenido = '<strong>Ambulancias Encontradas:</strong><br><br>';
-					features.forEach(function (feature) {
-					  var id = feature.id;
-					  var nombre = feature.properties.nombre;
-					  contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
-					});
-				  }
-				  // Mostrar el Swal.fire
+			    var features = data.features;
+				var contenido = '';
+				var titulo;
+
+				if (features.length > 0) {
+				  var titulo1 = '<strong>Ambulancias Encontradas:</strong><br><br>';
+				  features.forEach(function (feature) {
+					var id = feature.id;
+					var nombre = feature.properties.nombre;
+					contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+				  });
+				  titulo = titulo1;
+				} else {
+				  var titulo2 = 'No se encontraron ambulancias.';
+				  titulo = titulo2;
+				}
+
 				Swal.fire({
-				  title: 'Ambulancias Encontradas:',
+				  title: titulo,
 				  html: contenido,
 				  icon: 'info',
 				  confirmButtonText: 'Aceptar'
-				});	  
+				}).then(function () {				  
+				  dibujo.getSource().clear();
+				  self.map.removeInteraction(drawInteraction);
+				  drawInteraction = null;
+				});
 			})
 			.catch(function (error) {
 			  console.error('Error al realizar la consulta WFS:', error);
@@ -411,37 +417,50 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	  }
 	};
 
-	var agregarBotonFinalizar = function () {
-	  var buttonElementFinalizar = document.createElement('button');
-	  buttonElementFinalizar.textContent = 'Finalizar';
-	  buttonElementFinalizar.addEventListener('click', function () {
-		self.map.removeInteraction(drawInteraction);
-		dibujo.getSource().clear();
-		drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
-		this.remove(); // Remover el botón "Finalizar"
-		finalizarButtonCreated = false; // Restablecer el estado del botón a no creado
-	  });
-	  buttonElementFinalizar.style.width = '100%';
-	  buttonElementFinalizar.style.padding = '6px';
+	function ambulanciasCercanas(coords3857) {
+		// Realizar la consulta WFS
+		fetch('http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Arecorridos2&outputFormat=application/json')
+		  .then(response => response.json())
+		  .then(data => {
+			// Ordenar las features por distancia ascendente desde el punto de referencia
+			data.features.sort((a, b) => {
+			  const distA = getDistance(coords3857[0], coords3857[1], a.geometry.coordinates[0][0], a.geometry.coordinates[0][1]);
+			  const distB = getDistance(coords3857[0], coords3857[1], b.geometry.coordinates[0][0], b.geometry.coordinates[0][1]);
+			  return distA - distB;
+			});
 
-	  self.mainBarCustom.element.appendChild(buttonElementFinalizar); // Utilizar self en lugar de this para referirse a mainBarCustom
-	};
+			// Obtener la feature más cercana (primera feature después de la ordenación)
+			const closestFeature = data.features[0];
 
-  var inputElement = document.createElement('input');
-  inputElement.setAttribute('id', 'direccion-input');
-  inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
-  inputElement.setAttribute('type', 'text');
+			// Obtener el atributo 'nombre' de la feature más cercana
+			const nombre = closestFeature.properties.nombre;
+			console.log(nombre);
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la consulta WFS:', error);
+		  });
 
-  var buttonElement = document.createElement('button');
-  buttonElement.textContent = 'Buscar';
-  buttonElement.addEventListener('click', buscarDireccion);
-  buttonElement.style.width = '100%'; // Ajusta el ancho del botón al 100%
-  buttonElement.style.padding = '6px'; // Ajusta el relleno del botón
+		// Función para calcular la distancia entre dos puntos en coordenadas EPSG:3857
+		function getDistance(x1, y1, x2, y2) {
+		  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+		}
+	}
 
-  this.mainBarCustom.element.appendChild(inputElement);
-  this.mainBarCustom.element.appendChild(buttonElement);
+    var inputElement = document.createElement('input');
+    inputElement.setAttribute('id', 'direccion-input');
+    inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
+    inputElement.setAttribute('type', 'text');
+
+    var buttonElement = document.createElement('button');
+    buttonElement.textContent = 'Buscar';
+    buttonElement.addEventListener('click', buscarDireccion);
+    buttonElement.style.width = '100%'; // Ajusta el ancho del botón al 100%
+    buttonElement.style.padding = '6px'; // Ajusta el relleno del botón
+
+    this.mainBarCustom.element.appendChild(inputElement);
+    this.mainBarCustom.element.appendChild(buttonElement);
   
-  var buttonElement2 = document.createElement('button');
+    var buttonElement2 = document.createElement('button');
 	buttonElement2.textContent = 'Dibujar Calles';
 	buttonElement2.addEventListener('click', buscarCalleDibujarLinea);
 	buttonElement2.style.width = '100%';
@@ -455,10 +474,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	buttonElement3.style.width = '100%';
 	buttonElement3.style.padding = '6px';
 
-	this.mainBarCustom.element.appendChild(buttonElement3);
-  
+	this.mainBarCustom.element.appendChild(buttonElement3);  
 };
-
 
 GeoMap.prototype.CrearControlBarraDibujo=function(){
     var self = this;
@@ -644,18 +661,20 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 		  new ol.control.TextButton({
 			title: 'Ver Información',
 			html: 'Info',
-			 handleClick: function() {
-				var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
-				if (selectedFeatures.getLength() > 0) {
-				  var selectedFeature = selectedFeatures.item(0);
-				   var id = selectedFeature.getId();
-					var nombre = selectedFeature.get('nombre');
-					var tipo = selectedFeature.getGeometry().getType();
-					 // Establecer los valores de los atributos en la característica seleccionada
-					selectedFeature.set('id', id);
-					selectedFeature.set('tipo', tipo);
-					selectedFeature.set('nombree', nombre);
-				
+			handleClick: function() {
+			  var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+			  if (selectedFeatures.getLength() > 0) {
+				var selectedFeature = selectedFeatures.item(0);
+
+				  var id = selectedFeature.getId();
+				  var nombre = selectedFeature.get('nombre');
+				  var tipo = selectedFeature.getGeometry().getType();
+				  
+				  // Establecer los valores de los atributos en la característica seleccionada
+				  selectedFeature.set('id', id);
+				  selectedFeature.set('tipo', tipo);
+				  selectedFeature.set('nombree', nombre);
+
 				  // Crear el Popup de OpenLayers si no existe
 				  if (!popup) {
 					popup = new ol.Overlay.PopupFeature({
@@ -663,114 +682,137 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 					  select: controlSeleccionar.getInteraction(),
 					  template: {
 						attributes: {
-							'id': { title: 'ID: ' },
-							'nombree': { title: 'Nombre: ' },
-							'tipo': { title: 'Tipo: ' }
+						  'id': { title: 'ID: ' },
+						  'nombree': { title: 'Nombre: ' },
+						  'tipo': { title: 'Tipo: ' }
 						}
 					  }
 					});
 					map.addOverlay(popup);
 				  }
-				  
+
 				  // Mostrar el Popup en la posición de la característica seleccionada
 				  popup.show(selectedFeature);
-				}
+				
+			  }
 			}
 		  }),
 		  new ol.control.TextButton({
-			title: 'Eliminar',
-			  html: 'Eliminar',
-			  handleClick: function() {
-				var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
-				if (selectedFeatures.getLength() > 0) {
-				  var selectedFeature = selectedFeatures.item(0);
-				  var nombre = selectedFeature.get('nombre');
-				  var id = selectedFeature.getId();
-				 var geometry = selectedFeature.getGeometry();
-    
-					// Determinar el valor de layerName según el tipo de geometría
-					var layerName;
-					if (geometry instanceof ol.geom.Point) {
-					  layerName = 'hospital2';
-					} else if (geometry instanceof ol.geom.LineString) {
-					  layerName = 'recorridos2';
-					} else if (geometry instanceof ol.geom.Polygon) {
-					  layerName = 'zonas2';
-					}
-				  
-				  // Mostrar el mensaje de confirmación
-				  Swal.fire({
-					title: 'Eliminar',
-					html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
-					icon: 'question',
-					showCancelButton: true,
-					confirmButtonText: 'Eliminar',
-					cancelButtonText: 'Cancelar'
-				  }).then(function(result) {
-					if (result.isConfirmed) {
-					  eliminarEntidad(selectedFeature, layerName);
-					}
-				  });
+		  title: 'Eliminar',
+		  html: 'Eliminar',
+		  handleClick: function() {
+			var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+			if (selectedFeatures.getLength() > 0) {
+			  var selectedFeature = selectedFeatures.item(0);
+			  var nombre = selectedFeature.get('nombre');
+			  var id = selectedFeature.getId();
+			  var geometry = selectedFeature.getGeometry();			  
+			  // Mostrar el mensaje de confirmación para eliminar otras entidades
+			  Swal.fire({
+				title: 'Eliminar',
+				html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
+				icon: 'question',
+				showCancelButton: true,
+				confirmButtonText: 'Eliminar',
+				cancelButtonText: 'Cancelar'
+			  }).then(function(result) {
+				if (result.isConfirmed) {
+				  eliminarEntidad(selectedFeature, layerName);
 				}
-			  }
-		  }),
-			new ol.control.TextButton({
-			  title: 'Editar',
-			  html: 'Editar',
-			  handleClick: function() {
-				var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
-				if (selectedFeatures.getLength() > 0) {
-				  var selectedFeature = selectedFeatures.item(0);
-				  console.log('Coordenadas antes de la modificación:', selectedFeature.getGeometry().getCoordinates());
+			  });
+			}
+		  }
+		}),
+		new ol.control.TextButton({
+		    title: 'Editar',
+		    html: 'Editar',
+		    handleClick: function() {
+				  var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+				  if (selectedFeatures.getLength() > 0) {
+					var selectedFeature = selectedFeatures.item(0);
 
-				  // Crea la interacción de modificación y asigna la capa vectorial
-				  var modifyInteraction = new ol.interaction.Modify({
-					features: selectedFeatures,
-				  });
+					
+						console.log('Coordenadas antes de la modificación:', selectedFeature.getGeometry().getCoordinates());
 
-				  // Agrega la interacción de modificación al mapa
-				  map.addInteraction(modifyInteraction);
+						// Crea la interacción de modificación y asigna la capa vectorial
+						var modifyInteraction = new ol.interaction.Modify({
+						  features: selectedFeatures,
+						});
 
-				  // Al finalizar la edición
-				  modifyInteraction.on('modifyend', function(event) {
-					// Obtén la geometría modificada
-				  var modifiedGeometry = event.features.item(0).getGeometry();
-				  var modifiedCoordinates = modifiedGeometry.getCoordinates();
+						// Agrega la interacción de modificación al mapa
+						map.addInteraction(modifyInteraction);
 
-				  // Mostrar las coordenadas antes y después de la modificación
+						// Al finalizar la edición
+						modifyInteraction.on('modifyend', function(event) {
+						  // Obtén la geometría modificada
+						  var modifiedGeometry = event.features.item(0).getGeometry();
+						  var modifiedCoordinates = modifiedGeometry.getCoordinates();
 
-				  // Actualiza la geometría de la característica
-				  selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
-				  console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
+						  // Actualiza la geometría de la característica
+						  selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
+						  console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
 
-				  // Determinar el valor de layerName según el tipo de geometría
-				  var layerName;
-				  if (modifiedGeometry instanceof ol.geom.Point) {
-					layerName = 'hospital2';
-				  } else if (modifiedGeometry instanceof ol.geom.LineString) {
-					layerName = 'recorridos2';
-				  } else if (modifiedGeometry instanceof ol.geom.Polygon) {
-					layerName = 'zonas2';
-				  }
+						  // Determinar el valor de layerName según el tipo de geometría
+						  var layerName;
+						  if (modifiedGeometry instanceof ol.geom.Point) {
+							layerName = 'hospital2';
+						  } else if (modifiedGeometry instanceof ol.geom.LineString) {
+							layerName = 'recorridos2';
+						  } else if (modifiedGeometry instanceof ol.geom.Polygon) {
+							layerName = 'zonas2';
+						  }
 
-				  // Guarda los cambios en la base de datos
-				  guardarCambios(selectedFeature, layerName);
-				  });
-				}
-			  }
-			})
-		]
-	  })
-	});
-	
+						  // Guarda los cambios en la base de datos
+						  guardarCambios(selectedFeature, layerName)
+							.then(function() {
+							  // Volver a cargar las capas desde el servicio WMS
+							  if (lyrLinea2.getSource()) {
+								var sourceLinea2 = new ol.source.TileWMS({
+								  url: 'http://localhost:8586/geoserver/wms?',
+								  params: {
+									VERSION: '1.1.1',
+									FORMAT: 'image/png',
+									TRANSPARENT: true,
+									LAYERS: 'tsig2023:recorridos2',
+									_ts: Date.now() // Agregar un sello de tiempo único
+								  }
+								});
+								lyrLinea2.setSource(sourceLinea2);
+								selectedFeatures.clear();
+							  }
+
+							  if (lyrPunto2.getSource()) {
+								var sourcePunto2 = new ol.source.TileWMS({
+								  url: 'http://localhost:8586/geoserver/wms?',
+								  params: {
+									VERSION: '1.1.1',
+									FORMAT: 'image/png',
+									TRANSPARENT: true,
+									STYLES: 'puntoGeneral',
+									LAYERS: 'tsig2023:hospital2',
+									_ts: Date.now() // Agregar un sello de tiempo único
+								  }
+								});
+								lyrPunto2.setSource(sourcePunto2);
+								selectedFeatures.clear();
+							  }
+							})
+							.catch(function(error) {
+							  console.error('Error al guardar los cambios:', error);
+							});
+						});
+                }
+            }
+        }),
+        ]
+     })
+    });
 	controlSeleccionar.on('change:active', function(evt) {
 	  if (evt.active) {
-		//crearBufferDistancia();  
 		obtenerDatosCapas(); 
 	  } else {
 		eliminarVectorSource();
 		desactivarPopup();	
-		eliminarCapaDistancia();
 	  }
 	});
 	
@@ -784,31 +826,37 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	}
 	
 	function guardarCambios(feature, nombrecapa) {
-	  // Crear una transacción WFS para actualizar la característica
-	  var wfs = new ol.format.WFS();
-	  var updateRequest = wfs.writeTransaction(null, [feature], null, {
-		featureType: nombrecapa,
-		featureNS: 'tsig2023',
-		srsName: 'EPSG:3857',
-		version: '1.1.0'
-	  });
-
-	  // Enviar la solicitud WFS al servidor
-	  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-		method: 'POST',
-		headers: {
-		  'Content-Type': 'text/xml'
-		},
-		body: new XMLSerializer().serializeToString(updateRequest)
-	  })
-		.then(response => response.text())
-		.then(data => {
-		  console.log('Respuesta del servidor:', data);
-		  // Procesar la respuesta del servidor aquí
-		})
-		.catch(error => {
-		  console.error('Error al realizar la solicitud WFS:', error);
+	  return new Promise(function(resolve, reject) {
+		// Crear una transacción WFS para actualizar la característica
+		var wfs = new ol.format.WFS();
+		var updateRequest = wfs.writeTransaction(null, [feature], null, {
+		  featureType: nombrecapa,
+		  featureNS: 'tsig2023',
+		  srsName: 'EPSG:3857',
+		  version: '1.1.0'
 		});
+
+		// Enviar la solicitud WFS al servidor
+		fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+		  method: 'POST',
+		  headers: {
+			'Content-Type': 'text/xml'
+		  },
+		  body: new XMLSerializer().serializeToString(updateRequest)
+		})
+		  .then(function(response) {
+			return response.text();
+		  })
+		  .then(function(data) {
+			console.log('Respuesta del servidor:', data);
+			// Procesar la respuesta del servidor aquí
+			resolve();
+		  })
+		  .catch(function(error) {
+			console.error('Error al realizar la solicitud WFS:', error);
+			reject(error);
+		  });
+	  });
 	}
 
 	// Función para eliminar una entidad
@@ -860,12 +908,11 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 			var coordinates = geometry.getCoordinates();
 			geometry.setCoordinates(coordinates);
 		  });
-
+		  
 		  // Agrega la fuente de vector a la capa vectorial existente
 		  if (self.vector) {
 			self.vector.setSource(vectorSource);
-		  }
-		  
+		  }		  
 		})
 		.catch(function(error) {
 		  console.error('Error al obtener los datos de las capas:', error);
@@ -880,67 +927,6 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
 	}
 
 	barraDibujo.addControl(controlSeleccionar);
-	/*
-	function crearBufferDistancia(){
-		if (!controlSeleccionar.getActive()) {
-			return; // Si la opción de selección no está activa, no se ejecuta el resto del código
-		}
-		// Obtén los datos de la capa "recorridos2" como JSON
-		var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:recorridos2&outputFormat=application/json';
-
-		fetch(url)
-		  .then(function(response) {
-			return response.json();
-		  })
-		  .then(function(data) {
-			// Crea la fuente de vector con los datos obtenidos
-			var vectorSource = new ol.source.Vector({
-			  features: new ol.format.GeoJSON().readFeatures(data)
-			});
-
-			// Crea el polígono alrededor de cada feature
-			vectorSource.forEachFeature(function(feature) {
-			  var geometry = feature.getGeometry();
-			  var extent = geometry.getExtent();
-			  var polygonGeometry = ol.geom.Polygon.fromExtent(extent);
-			  feature.setGeometry(polygonGeometry);
-			});
-
-			// Crea la capa de polígonos
-			var capaDistancia = new ol.layer.Vector({
-			  title: 'Distancia Desvio',
-			  visible:false,
-			  source: vectorSource,
-			  style: new ol.style.Style({
-				fill: new ol.style.Fill({
-				  color: 'rgba(0, 0, 255, 0.5)'
-				}),
-				stroke: new ol.style.Stroke({
-				  color: 'rgba(0, 0, 255, 1)',
-				  width: 2
-				})
-			  })
-			});
-
-			// Agrega la capa de polígonos al mapa existente
-			map.addLayer(capaDistancia);
-		  })
-		  .catch(function(error) {
-			console.error('Error al obtener los datos de la capa de líneas:', error);
-		  });
-	}
-
-	function eliminarCapaDistancia() {
-	  var layers = map.getLayers().getArray();
-	  var index = layers.findIndex(function(layer) {
-		return layer.get('title') === 'Distancia Desvio';
-	  });
-
-	  if (index !== -1) {
-		map.removeLayer(layers[index]);
-	  }
-	}
-	*/
 }
 function crearCapaMapaCalor(){
 		// Obtén los datos de la capa Hospital como JSON
