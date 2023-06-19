@@ -2,6 +2,7 @@ package business;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigInteger;
 
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
@@ -103,11 +104,13 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	}
 	
 	@Override
-	public void agregarServicioEmergencia(DtHospital hospital, DtServicioEmergencia servicio ) throws Exception{
-		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
+	public void agregarServicioEmergencia(ServicioEmergencia servicio ) throws Exception{
+		System.out.println("HospitalBusiness - agregarServicioEmergencia --- ");
+		Hospital hosp = servicio.getHospital();	
 		List<ServicioEmergencia> servicios = hosp.getServicios();
 		servicios.add(new ServicioEmergencia(hosp, servicio.getTotalCamas(), servicio.getCamasDisponibles(),
 				servicio.getUbicacion()));
+		System.out.println("HospitalBusiness - agregarServicioEmergencia --- 2 ");
 	}
 	
 	@Override

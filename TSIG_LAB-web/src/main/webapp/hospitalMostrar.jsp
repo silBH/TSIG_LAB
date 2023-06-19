@@ -46,7 +46,7 @@
 		    <div class="form-group row">
 		    	<button type="submit" name="action" value="/editar" class="btn btn-danger m-1">Modificar</button>
                 <button type="submit" name="action" value="/eliminar" class="btn btn-danger m-1">Eliminar</button>
-                <button type="submit" name="action" value="servicioCrear.jsp" class="btn btn-primary m-1">Agregar Servicio</button>    
+                <button type="submit" name="action" value="menuAdministrador.jsp" class="btn btn-primary m-1">Agregar Servicio</button>    
                 <button type="submit" name="action" value="" class="btn btn-primary m-1">Agregar Ambulancia</button>
 		        <a href="hospitalMenu.jsp" class="btn btn-info m-1">Atrás</a>
 		    </div>         

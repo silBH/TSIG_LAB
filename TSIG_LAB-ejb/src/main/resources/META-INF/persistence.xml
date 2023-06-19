@@ -11,7 +11,7 @@
       <class>entity.Administrador</class>
       <class>entity.ServicioEmergencia</class>
       <properties>
-         <property name="javax.persistence.schema-generation.database.action" value="create" />
+         <property name="javax.persistence.schema-generation.database.action" value="" />
          <property name="javax.persistence.schema-generation.create-source" value="metadata"/>
          <property name="javax.persistence.schema-generation.drop-source" value="metadata"/>
          <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>

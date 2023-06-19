@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -27,6 +28,7 @@ public class ServicioEmergencia implements Serializable{
 	private Integer camasDisponibles;
 	
 	//@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(columnDefinition = "geometry(Point, 3857)")
 	private Point ubicacion;
 
 	public ServicioEmergencia() {

@@ -155,7 +155,7 @@ GeoMap.prototype.CrearMapa = function(target, center, zoom) {
 	map = this.map;
 };
 
-GeoMap.prototype.CrearMapaServicios = function(target, center, zoom) {
+GeoMap.prototype.CrearMapaAdmin = function(target, center, zoom) {
 	var _target = target || 'map',
 		_center = center || [-56.164269, -34.896199],
 		_zoom = zoom || 30;
@@ -173,9 +173,7 @@ GeoMap.prototype.CrearMapaServicios = function(target, center, zoom) {
 		tipLabel: 'Leyenda',
 		groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
 	});
-
 	this.map.addControl(layerSwitcher);
-
 };
 
 GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
@@ -853,7 +851,7 @@ GeoMap.prototype.CrearControlBarraDibujo = function() {
 	barraDibujo.addControl(controlSeleccionar);
 }
 
-GeoMap.prototype.CrearControlBarraDibujoServicio = function() {
+GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 	var self = this;
 
 	if (!this.mainBarCustom) {
@@ -1000,17 +998,27 @@ GeoMap.prototype.CrearControlBarraDibujoServicio = function() {
 					.then(response => response.text())
 					.then(data => {
 						console.log('Respuesta del servidor:', data);
-						// fetch para llamar a la función del servlet de hospital
-						fetch('http://localhost:8080/HospitalServlet?action=/agregarServicioEmergencia', {
-							method: 'POST'							
-						})
-							.then(response => {
-								if (response.ok) {
-									console.log('Llamada al servlet de hospital exitosa');									
-								} else {
-									console.error('Error al llamar al servlet de hospital');
-								}
+						// Parsear la respuesta XML												
+						const parser = new DOMParser();
+						const xmlDoc = parser.parseFromString(data, 'text/xml');
+						const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
+						if (featureIds.length > 0) {
+							const sId = featureIds[0].getAttribute("fid");
+							const puntoIndex = sId.indexOf(".");
+							const serviceId = sId.substring(puntoIndex + 1);
+							console.log("ID del servicio de emergencia:", serviceId);
+							// fetch para llamar a la función del servlet de hospital
+							fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet2?id='+serviceId, { 
+								method: 'GET'
 							})
+								.then(response => {
+									if (response.ok) {
+										console.log('Llamada al servlet de hospital exitosa');
+									} else {
+										console.error('Error al llamar al servlet de hospital');
+									}
+								})
+						}
 					})
 					.catch(error => {
 						console.error('Error al realizar la solicitud WFS:', error);

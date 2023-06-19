@@ -1,6 +1,6 @@
 //Llama a todos los metodos y arma el mapa
 
-function CargarMapa(){
+function CargarMapa(){ //original para pruebas
     var map =new GeoMap();
     var layers = new GeoLayers();
    
@@ -11,13 +11,13 @@ function CargarMapa(){
 	
 }
 
-function CargarMapaServicio(){
+function CargarMapaAdministrador(){
     var map =new GeoMap();
     var layers = new GeoLayers();
    
-    map.CrearMapaServicios('map',null,12);
-    //map.CrearControlBarraDibujo();    
-    map.CrearControlBarraDibujoServicio();	
-	map.CrearBarraBusquedaCalleNumeroSeparado();
-	
+    map.CrearMapaAdmin('map',null,12);
+    map.CrearControlBarra();
+    //map.CrearControlBarraDibujo();
+    map.CrearControlBarraDibujoAdmin();
+	map.CrearBarraBusquedaCalleNumeroSeparado();	
 }
