@@ -164,7 +164,7 @@ public class HospitalServlet extends HttpServlet {
 
 	private void agregarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
-		
+		System.out.println("-------------- servlet ----  agregarServicioEmergencia 1");
 		List<DtServicioEmergencia> servicios = servicioBusiness.listar();
 		
 		if (!servicios.isEmpty()) {
@@ -174,8 +174,9 @@ public class HospitalServlet extends HttpServlet {
 		    List<ServicioEmergencia> listado = hospital.getServicios();
 		    ServicioEmergencia servicio = servicioBusiness.obtenerPorIdObjeto(ultimoServicio.getId());
 			listado.add(servicio);
+			System.out.println("-------------- servlet ----  agregarServicioEmergencia 2");
 		}
-		System.out.println("-------------- servlet ----  agregarServicioEmergencia");
+		System.out.println("-------------- servlet ----  agregarServicioEmergencia 3");
 		response.sendRedirect("hospitalMenu.jsp");
 	}
 

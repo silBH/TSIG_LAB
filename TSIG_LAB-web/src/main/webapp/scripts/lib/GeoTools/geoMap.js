@@ -1002,7 +1002,7 @@ GeoMap.prototype.CrearControlBarraDibujoServicio = function() {
 						console.log('Respuesta del servidor:', data);
 						// fetch para llamar a la función del servlet de hospital
 						fetch('http://localhost:8080/HospitalServlet?action=/agregarServicioEmergencia', {
-							method: 'GET'							
+							method: 'POST'							
 						})
 							.then(response => {
 								if (response.ok) {

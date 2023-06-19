@@ -35,8 +35,7 @@
 				<div class="col-sm-10 form-inline">
 					<input type="text" class="form-control" name="id" placeholder="">
 					<button type="submit" class="btn btn-primary m-1">Obtener hospital</button>
-				</div>
-				
+				</div>				
 			</div>
 		</form>
 		<!-- OBTENER POR NOMBRE -->
@@ -49,8 +48,7 @@
 					<button type="submit" class="btn btn-primary m-1">Obtener hospital</button>
 				</div>				
 			</div>
-		</form>
-		
+		</form>		
 	</div>
 </body>
 </html>
