@@ -2,15 +2,14 @@ package entity;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import org.hibernate.annotations.Type;
-import org.postgis.MultiLineString;
-import org.postgis.Polygon;
+import org.postgis.LineString;
 
 @Entity
 public class Ambulancia implements Serializable {
@@ -21,31 +20,43 @@ public class Ambulancia implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	
+	private String nombre;
+	
 	@ManyToOne
 	private Hospital hospital;
-	
-	//@Type(type = "org.hibernate.spatial.GeometryType")
-	private MultiLineString recorrido; //ver si está bien el tipo de dato
+
+	@Column(columnDefinition = "geometry(LineString, 3857)")
+	private LineString ubicacion; 	
 	
 	private Integer distancia;
-	
-	//@Type(type = "org.hibernate.spatial.GeometryType")
-	private Polygon zona; //---------- ver si este es un atributo calculado con distancia??
+
 
 	public Ambulancia() {
 		super();
 	}
 
-	public Ambulancia(Hospital hospital, MultiLineString recorrido, Integer distancia, Polygon zona) {
+	public Ambulancia(String nombre, Hospital hospital, LineString ubicacion, Integer distancia) {
 		super();
+		this.nombre = nombre;
 		this.hospital = hospital;
-		this.recorrido = recorrido;
+		this.ubicacion = ubicacion;
 		this.distancia = distancia;
-		this.zona = zona;
 	}
 
 	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getNombre() {
+		return nombre;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
 	}
 
 	public Hospital getHospital() {
@@ -56,12 +67,12 @@ public class Ambulancia implements Serializable {
 		this.hospital = hospital;
 	}
 
-	public MultiLineString getRecorrido() {
-		return recorrido;
+	public LineString getUbicacion() {
+		return ubicacion;
 	}
 
-	public void setRecorrido(MultiLineString recorrido) {
-		this.recorrido = recorrido;
+	public void setUbicacion(LineString ubicacion) {
+		this.ubicacion = ubicacion;
 	}
 
 	public Integer getDistancia() {
@@ -72,12 +83,8 @@ public class Ambulancia implements Serializable {
 		this.distancia = distancia;
 	}
 
-	public Polygon getZona() {
-		return zona;
+	public static long getSerialversionuid() {
+		return serialVersionUID;
 	}
-
-	public void setZona(Polygon zona) {
-		this.zona = zona;
-	}
-
+	
 }

@@ -21,6 +21,7 @@ D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\Admi
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Hospital.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\business\ServicioEmergenciaBusinessLocal.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Administrador.java
+D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\entity\Zona.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\datatype\TipoHospital.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\HospitalDAO.java
 D:\software\eclipse-workspaces\TSIG_LAB\TSIG_LAB-ejb\src\main\java\dao\AmbulanciaDAOLocal.java

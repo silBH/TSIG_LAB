@@ -9,6 +9,7 @@ datatype\DtAdministrador.class
 dao\ServicioEmergenciaDAO.class
 business\AmbulanciaBusiness.class
 business\HospitalBusiness.class
+entity\Zona.class
 business\AdministradorBusiness.class
 datatype\TipoHospital.class
 entity\Administrador.class

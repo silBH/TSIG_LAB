@@ -1,5 +1,6 @@
 package datatype;
 
+import org.postgis.LineString;
 import org.postgis.MultiLineString;
 import org.postgis.Polygon;
 
@@ -8,31 +9,32 @@ import entity.Hospital;
 
 public class DtAmbulancia {
 	private Long id;
+	private String nombre;
 	private Hospital hospital;
-	private MultiLineString recorrido;
+	private LineString ubicacion;
 	private Integer distancia;
-	private Polygon zona;
 	
 	public DtAmbulancia() {
 		super();
 	}
 
-	public DtAmbulancia(Long id, Hospital hospital, MultiLineString recorrido, Integer distancia, Polygon zona) {
+	
+	public DtAmbulancia(Long id, String nombre, Hospital hospital, LineString ubicacion, Integer distancia) {
 		super();
 		this.id = id;
+		this.nombre = nombre;
 		this.hospital = hospital;
-		this.recorrido = recorrido;
+		this.ubicacion = ubicacion;
 		this.distancia = distancia;
-		this.zona = zona;
 	}
-	
+
 	public DtAmbulancia(Ambulancia ambulancia) {
 		super();
 		this.id = ambulancia.getId();
+		this.nombre = ambulancia.getNombre();
 		this.hospital = ambulancia.getHospital();
-		this.recorrido = ambulancia.getRecorrido();
+		this.ubicacion = ambulancia.getUbicacion();
 		this.distancia = ambulancia.getDistancia();
-		this.zona = ambulancia.getZona();
 	}
 
 	public Long getId() {
@@ -59,20 +61,20 @@ public class DtAmbulancia {
 		this.distancia = distancia;
 	}
 
-	public Polygon getZona() {
-		return zona;
+	public LineString getUbicacion() {
+		return ubicacion;
 	}
 
-	public void setZona(Polygon zona) {
-		this.zona = zona;
+	public void setUbicacion(LineString ubicacion) {
+		this.ubicacion = ubicacion;
 	}
 
-	public MultiLineString getRecorrido() {
-		return recorrido;
+	public String getNombre() {
+		return nombre;
 	}
 
-	public void setRecorrido(MultiLineString recorrido) {
-		this.recorrido = recorrido;
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
 	}
 	
 }

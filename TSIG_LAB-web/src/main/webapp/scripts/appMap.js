@@ -7,7 +7,7 @@ function CargarMapa(){ //original para pruebas
     map.CrearMapa('map',null,16);
     map.CrearControlBarra();
     map.CrearControlBarraDibujo();
-	map.CrearBarraBusquedaCalle();
+	map.CrearBarraBusqueda();
 	
 }
 

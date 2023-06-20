@@ -12,11 +12,9 @@ import javax.persistence.Query;
 import dao.AmbulanciaDAOLocal;
 import dao.HospitalDAOLocal;
 import dao.ServicioEmergenciaDAOLocal;
-import datatype.DtAdministrador;
 import datatype.DtAmbulancia;
 import datatype.DtHospital;
 import datatype.DtServicioEmergencia;
-import entity.Administrador;
 import entity.Ambulancia;
 import entity.Hospital;
 import entity.ServicioEmergencia;
@@ -117,8 +115,8 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	public void agregarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception{
 		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
 		List<Ambulancia> ambulancias = hosp.getAmbulancias();
-		ambulancias.add(new Ambulancia(hosp, ambulancia.getRecorrido(),
-				ambulancia.getDistancia(), ambulancia.getZona()));
+		//ambulancias.add(new Ambulancia(hosp, ambulancia.getRecorrido(),
+			//	ambulancia.getDistancia(), ambulancia.getZona()));
 	}
 	
 	@Override
