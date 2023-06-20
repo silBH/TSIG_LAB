@@ -28,16 +28,20 @@ public class HospitalServlet2 extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
     	
-    	String serviceId = request.getParameter("id");
-        System.out.println("----------------- servlet id serviceId: " + serviceId);
-        long servId = Long.parseLong(serviceId);
-        System.out.println("----------------- servlet id servId: " + servId);
-
+    	String serviceId = request.getParameter("id");    	
+    	String hospitalId = request.getParameter("hospitalId");
+    	    
+    	System.out.println("----------------- servlet id serviceId: " + serviceId);
+    	System.out.println("----------------- servlet id hospitalId: " + hospitalId);
+        
         try {
-        	System.out.println("----------------- servlet 1");
-        	ServicioEmergencia nuevoServicio = servicioBusiness.obtenerPorIdObjeto(servId);        	
-            System.out.println("----------------- servlet id nuevoServicio: " + nuevoServicio.getId());
-           // hospBusiness.agregarServicioEmergencia(nuevoServicio);
+        	long idServicio = Long.parseLong(serviceId);
+        	long idHospital = Long.parseLong(hospitalId);
+
+            hospBusiness.agregarServicioEmergencia(idHospital, idServicio);
+            //ServicioEmergencia nuevoServicio = servicioBusiness.obtenerPorIdObjeto(servId); 
+            //--------------------------------------------------------------------------------------------ver si se puede arreglar bien esta funcion           
+            
         } catch (Exception e) {
             // Error al parsear el ID del servicio
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

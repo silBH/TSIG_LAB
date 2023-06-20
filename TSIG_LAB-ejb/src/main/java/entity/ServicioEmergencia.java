@@ -9,8 +9,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import org.hibernate.annotations.Type;
 import org.postgis.Point;
+
 
 @Entity
 public class ServicioEmergencia implements Serializable{
@@ -31,9 +31,7 @@ public class ServicioEmergencia implements Serializable{
 	@Column(columnDefinition = "geometry(Point, 3857)")
 	private Point ubicacion;
 
-	public ServicioEmergencia() {
-		super();
-	}
+	public ServicioEmergencia() {}
 
 	public ServicioEmergencia(Hospital hospital, Integer totalCamas, Integer camasDisponibles,
 			Point ubicacion) {

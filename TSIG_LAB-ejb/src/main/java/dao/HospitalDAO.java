@@ -8,7 +8,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
 import persistence.Conexion;
-import entity.Administrador;
 import entity.Hospital;
 
 //estas funciones solo se usan desde la interfaz local

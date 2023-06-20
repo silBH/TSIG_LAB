@@ -1,6 +1,9 @@
 package servlets;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -90,9 +93,19 @@ public class HospitalServlet extends HttpServlet {
 	private void listarHospitales(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
 		List<DtHospital> hospitales = hospBusiness.listar();
+		// Convertir la lista de hospitales a JSON
+	    ObjectMapper mapper = new ObjectMapper();
+	    String jsonHospitales = mapper.writeValueAsString(hospitales);
 		request.setAttribute("hospitales", hospitales);
-		RequestDispatcher dispatcher = request.getRequestDispatcher("hospitalLista.jsp"); 
-	    dispatcher.forward(request, response);		
+		// Establecer el encabezado Content-Type para indicar que la respuesta es JSON
+	    response.setContentType("application/json");
+
+	    // Enviar la respuesta JSON al cliente
+	    PrintWriter out = response.getWriter();
+	    out.print(jsonHospitales);
+	    out.flush();
+		//RequestDispatcher dispatcher = request.getRequestDispatcher("hospitalLista.jsp"); 
+	    //dispatcher.forward(request, response);		
 	}
 
 	private void obtenerHospitalPorId(HttpServletRequest request, HttpServletResponse response)

@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
+import javax.persistence.Query;
 
 import dao.AmbulanciaDAOLocal;
 import dao.HospitalDAOLocal;
@@ -37,8 +38,7 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 		List<Hospital> hospitales = hospitalData.listar();
 		List<DtHospital> dtHospitales = new ArrayList<>();
 		for (Hospital hosp : hospitales) {
-			dtHospitales.add(new DtHospital(hosp));
-			System.out.println("----listar ----- hospital" + hosp.getNombre());
+			dtHospitales.add(new DtHospital(hosp));			
 		}
 		return dtHospitales;
 	}
@@ -104,13 +104,13 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	}
 	
 	@Override
-	public void agregarServicioEmergencia(ServicioEmergencia servicio ) throws Exception{
+	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception{//ServicioEmergencia servicio
 		System.out.println("HospitalBusiness - agregarServicioEmergencia --- ");
-		Hospital hosp = servicio.getHospital();	
+		/*Hospital hosp = servicio.getHospital();	
 		List<ServicioEmergencia> servicios = hosp.getServicios();
 		servicios.add(new ServicioEmergencia(hosp, servicio.getTotalCamas(), servicio.getCamasDisponibles(),
-				servicio.getUbicacion()));
-		System.out.println("HospitalBusiness - agregarServicioEmergencia --- 2 ");
+				servicio.getUbicacion()));*/
+		servicioData.agregarServicioEmergencia(idHospital, idServicio); //----------------------- VER SI SE CAMBIA		
 	}
 	
 	@Override

@@ -32,21 +32,27 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
     @Override
 	public List<ServicioEmergencia> listar(){
     	Query q = em.createQuery("SELECT se FROM ServicioEmergencia se", ServicioEmergencia.class);
-		List<ServicioEmergencia> result = q.getResultList();
-		for(ServicioEmergencia se : result) {
-			System.out.println("----------------borrar " + se);
-		}
+		List<ServicioEmergencia> result = q.getResultList();		
 		return result;
 	}
-   /*
+    
+    @Override
+	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception{
+		System.out.println("servicioDAO - agregarServicioEmergencia"); //----------------------------- VER SI SE CAMBIA FUNCION		
+		String sql = "INSERT INTO hospital_servicioemergencia (hospital_id, servicios_id) VALUES (:idHospital, :idServicio)";
+	    Query query = em.createNativeQuery(sql);
+	    query.setParameter("idHospital", idHospital);
+	    query.setParameter("idServicio", idServicio);
+	    query.executeUpdate();		
+	}
+    
+   
     @Override
 	public ServicioEmergencia obtenerPorId(Long id) {
-    	System.out.println("----------------- obtenerPorId 1");    	
-    	ServicioEmergencia obj = em.find(ServicioEmergencia.class, id);
-    	em.refresh(obj);
-    	System.out.println("----------------- obtenerPorId 2" + obj.getId());
+    	System.out.println("----------------- obtenerPorId 1 ---- NO FUNCIONA");    	
+    	ServicioEmergencia obj = em.find(ServicioEmergencia.class, id);    	
     	return 	obj;
-	}
+	}/*
     @Override 
     public ServicioEmergencia obtenerPorId(Long id) {
     	System.out.println("----------------obtenerPorId 1");
@@ -63,7 +69,7 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
         	System.out.println("----------------obtenerPorId 3");
             return null; // El servicio de emergencia no existe con el ID proporcionado
         }
-    }*/
+    }
     @Override
     public ServicioEmergencia obtenerPorId(Long id) {
         String sql = "SELECT * FROM servicioemergencia WHERE id = :id";
@@ -76,7 +82,7 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
         } catch (NoResultException e) {
             return null; // El servicio de emergencia no existe con el ID proporcionado
         }
-    }
+    }*/
     
     @Override
 	public void crear(ServicioEmergencia servicio) {

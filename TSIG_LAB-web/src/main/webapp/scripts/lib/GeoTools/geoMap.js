@@ -900,131 +900,158 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 	var controlModificar = new ol.interaction.Modify({ source: this.vector.getSource() });
 	this.map.addInteraction(controlModificar);
 
+	let hospitalesArray = [];
+	function obtenerHospitales() {
+		return new Promise((resolve, reject) => {
+			fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
+				.then(response => response.json())
+				.then(data => {
+					hospitalesArray = data;
+					console.log(hospitalesArray);
+					resolve(hospitalesArray);
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					reject(error);
+				});
+		});
+	}
+
 	//////////////////////////////////////////////////
 	function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
 		console.log('Coordenadas en SRID 3857:', coords3857);
-
-		// Mostrar ventana de diálogo para ingresar datos
-		Swal.fire({
-			title: 'Ingrese los datos del nuevo Servicio de Emergencia',
-			html: `<input id="inputHospital" class="swal2-input" placeholder="ID hospital (cambiar a lista)" type="text">
+		//Lista hospitales
+		obtenerHospitales().then(hospitalesArray => {
+			console.log(hospitalesArray);
+			// Coloca aquí cualquier otro código que dependa de los datos de hospitalesArray
+			// Mostrar ventana de diálogo para ingresar datos
+			Swal.fire({
+				title: 'Ingrese los datos del nuevo Servicio de Emergencia',
+				html: `
+			<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
+        		${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
+      		</select>
 			    <input id="inputTotalCamas" class="swal2-input" placeholder="Camas totales" type="text">
     			<input id="inputCamasDisponibles" class="swal2-input" placeholder="Cantidad disponibles" type="text">  `,
-			showCancelButton: true,
-			confirmButtonText: 'Guardar',
-			cancelButtonText: 'Cancelar',
-			preConfirm: () => {
-				const inputHospital = document.getElementById('inputHospital').value;
-				const inputTotalCamas = document.getElementById('inputTotalCamas').value;
-				const inputCamasDisponibles = document.getElementById('inputCamasDisponibles').value;
+				showCancelButton: true,
+				confirmButtonText: 'Guardar',
+				cancelButtonText: 'Cancelar',
+				preConfirm: () => {
+					const inputHospital = document.getElementById('inputHospital').value;
+					const inputTotalCamas = document.getElementById('inputTotalCamas').value;
+					const inputCamasDisponibles = document.getElementById('inputCamasDisponibles').value;
 
-				if (!inputHospital || !inputTotalCamas || !inputCamasDisponibles) {
-					Swal.showValidationMessage('Debe ingresar todos los campos');
+					if (!inputHospital || !inputTotalCamas || !inputCamasDisponibles) {
+						Swal.showValidationMessage('Debe ingresar todos los campos');
+					}
+					return {
+						inputHospital: inputHospital,
+						inputTotalCamas: inputTotalCamas,
+						inputCamasDisponibles: inputCamasDisponibles
+					};
 				}
-				return {
-					inputHospital: inputHospital,
-					inputTotalCamas: inputTotalCamas,
-					inputCamasDisponibles: inputCamasDisponibles
-				};
-			}
-		}).then((result) => {
-			if (result.isConfirmed) {
-				// Obtener el valor del nombre ingresado por el usuario
-				//var nombre = result.value;				
+			}).then((result) => {
 				if (result.isConfirmed) {
-					const { inputHospital, inputTotalCamas, inputCamasDisponibles } = result.value;
-					console.log('ID hospital:', inputHospital);
-					console.log('Cantidad de camas totales:', inputTotalCamas);
-					console.log('Cantidad de camas disponibles:', inputCamasDisponibles);
+					// Obtener el valor del nombre ingresado por el usuario
+					//var nombre = result.value;				
+					if (result.isConfirmed) {
+						const { inputHospital, inputTotalCamas, inputCamasDisponibles } = result.value;
+						console.log('ID hospital:', inputHospital);
+						console.log('Cantidad de camas totales:', inputTotalCamas);
+						console.log('Cantidad de camas disponibles:', inputCamasDisponibles);
 
-					// Validar si son numeros
-					if (isNaN(inputHospital)) {
-						Swal.showValidationMessage('El ID del hospital debe ser un número válido');
-						return; // Detener la ejecución si no es válido
-					}
-					if (isNaN(inputTotalCamas)) {
-						Swal.showValidationMessage('El total de camas debe ser un número');
-						return; // Detener la ejecución si no es válido
-					}
-					if (isNaN(inputCamasDisponibles)) {
-						Swal.showValidationMessage('Las camas diponibles debe ser un número');
-						return; // Detener la ejecución si no es válido
-					}
-				}
-
-				const hospitalId = BigInt(inputHospital.value);
-
-				// Crear la geometría correspondiente
-				var geometry;
-				if (tipoGeometria === 'Point') {
-					geometry = new ol.geom.Point(coords3857);
-				} else if (tipoGeometria === 'LineString') {
-					geometry = new ol.geom.LineString(coords3857);
-				} else if (tipoGeometria === 'Polygon') {
-					geometry = new ol.geom.Polygon(coords3857);
-				}
-
-				// Crear la característica con la geometría y el nombre
-				var feature = new ol.Feature({
-					//nombre: nombre,					
-					camasdisponibles: inputCamasDisponibles.value,
-					totalcamas: inputTotalCamas.value,
-					ubicacion: geometry,
-					hospital_id: hospitalId
-				});
-
-				// Asignar cualquier otro atributo a la característica si es necesario
-				feature.setProperties({
-					name: nombreFeature
-				});
-
-				// Crear una transacción WFS para insertar la característica
-				var wfs = new ol.format.WFS();
-				var insertRequest = wfs.writeTransaction([feature], null, null, {
-					featureType: nombreFeatureType,
-					featureNS: 'tsig2023',
-					srsName: 'EPSG:3857',
-					version: '1.1.0'
-				});
-
-				// Enviar la solicitud WFS al servidor
-				fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'text/xml'
-					},
-					body: new XMLSerializer().serializeToString(insertRequest)
-				})
-					.then(response => response.text())
-					.then(data => {
-						console.log('Respuesta del servidor:', data);
-						// Parsear la respuesta XML												
-						const parser = new DOMParser();
-						const xmlDoc = parser.parseFromString(data, 'text/xml');
-						const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
-						if (featureIds.length > 0) {
-							const sId = featureIds[0].getAttribute("fid");
-							const puntoIndex = sId.indexOf(".");
-							const serviceId = sId.substring(puntoIndex + 1);
-							console.log("ID del servicio de emergencia:", serviceId);
-							// fetch para llamar a la función del servlet de hospital
-							fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet2?id='+serviceId, { 
-								method: 'GET'
-							})
-								.then(response => {
-									if (response.ok) {
-										console.log('Llamada al servlet de hospital exitosa');
-									} else {
-										console.error('Error al llamar al servlet de hospital');
-									}
-								})
+						// Validar si son numeros
+						if (isNaN(inputHospital)) {
+							Swal.showValidationMessage('El ID del hospital debe ser un número válido');
+							return; // Detener la ejecución si no es válido
 						}
-					})
-					.catch(error => {
-						console.error('Error al realizar la solicitud WFS:', error);
+						if (isNaN(inputTotalCamas)) {
+							Swal.showValidationMessage('El total de camas debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
+						if (isNaN(inputCamasDisponibles)) {
+							Swal.showValidationMessage('Las camas diponibles debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
+					}
+
+					const hospitalId = BigInt(inputHospital.value);
+
+					// Crear la geometría correspondiente
+					var geometry;
+					if (tipoGeometria === 'Point') {
+						geometry = new ol.geom.Point(coords3857);
+					} else if (tipoGeometria === 'LineString') {
+						geometry = new ol.geom.LineString(coords3857);
+					} else if (tipoGeometria === 'Polygon') {
+						geometry = new ol.geom.Polygon(coords3857);
+					}
+
+					// Crear la característica con la geometría y el nombre
+					var feature = new ol.Feature({
+						//nombre: nombre,					
+						camasdisponibles: inputCamasDisponibles.value,
+						totalcamas: inputTotalCamas.value,
+						ubicacion: geometry,
+						hospital_id: hospitalId
 					});
-			}
-		});
+
+					// Asignar cualquier otro atributo a la característica si es necesario
+					feature.setProperties({
+						name: nombreFeature
+					});
+
+					// Crear una transacción WFS para insertar la característica
+					var wfs = new ol.format.WFS();
+					var insertRequest = wfs.writeTransaction([feature], null, null, {
+						featureType: nombreFeatureType,
+						featureNS: 'tsig2023',
+						srsName: 'EPSG:3857',
+						version: '1.1.0'
+					});
+
+					// Enviar la solicitud WFS al servidor
+					fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'text/xml'
+						},
+						body: new XMLSerializer().serializeToString(insertRequest)
+					})
+						.then(response => response.text())
+						.then(data => {
+							console.log('Respuesta del servidor:', data);
+							// Parsear la respuesta XML												
+							const parser = new DOMParser();
+							const xmlDoc = parser.parseFromString(data, 'text/xml');
+							const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
+							if (featureIds.length > 0) {
+								const sId = featureIds[0].getAttribute("fid");
+								const puntoIndex = sId.indexOf(".");
+								const serviceId = sId.substring(puntoIndex + 1);
+								console.log("ID del servicio de emergencia:", serviceId);
+								// fetch para llamar a la función del servlet de hospital
+								fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet2?id=' + serviceId + '&hospitalId=' + hospitalId, {
+									method: 'GET'
+								})
+									.then(response => {
+										if (response.ok) {
+											console.log('Llamada al servlet de hospital exitosa');
+										} else {
+											console.error('Error al llamar al servlet de hospital');
+										}
+									})
+							}
+						})
+						.catch(error => {
+							console.error('Error al realizar la solicitud WFS:', error);
+						});
+				}
+			});
+		})
+			.catch(error => {
+				console.error('Error al obtener los hospitales:', error);
+			});
 	}
 
 	var controlPunto = new ol.control.Toggle({
