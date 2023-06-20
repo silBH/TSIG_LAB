@@ -21,3 +21,7 @@ function CargarMapaAdministrador(){
 	map.CrearBarraBusquedaCalleNumeroSeparado();
 	map.CrearControlHospital();	
 }
+
+function CargarMapaUsuario(){
+	
+}
