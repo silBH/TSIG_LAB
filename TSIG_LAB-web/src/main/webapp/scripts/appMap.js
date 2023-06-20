@@ -17,7 +17,7 @@ function CargarMapaAdministrador(){
    
     map.CrearMapaAdmin('map',null,12);
     map.CrearControlBarra();
-    //map.CrearControlBarraDibujo();
     map.CrearControlBarraDibujoAdmin();
-	map.CrearBarraBusquedaCalleNumeroSeparado();	
+	map.CrearBarraBusquedaCalleNumeroSeparado();
+	map.CrearControlHospital();	
 }

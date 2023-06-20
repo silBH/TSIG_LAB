@@ -1387,3 +1387,85 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 
 	barraDibujo.addControl(controlSeleccionar);
 }
+
+
+GeoMap.prototype.CrearControlHospital = function () {
+	var self = this;
+
+	if (!this.mainBarCustom) {
+		this.mainBarCustom = new ol.control.Bar();
+		this.map.addControl(this.mainBarCustom);
+		this.mainBarCustom.setPosition('top');
+	}
+
+	function crearHospital() {
+		var inputNombre;
+		var inputTipo;
+		
+		Swal.fire({
+			title: 'Ingrese los datos del nuevo Hospital',
+			html: `<input id="inputNombre" class="swal2-input" placeholder="Nombre" type="text">
+				<select id="inputTipo" class="swal2-select" placeholder="Seleccione el tipo">
+					<option value="Mutualista">Mutualista</option>
+					<option value="Seguro Privado">Seguro Privado</option>
+					<option value="Servicio Estatal">Servicio Estatal</option>
+			  	</select>   
+    			`,
+			showCancelButton: true,
+			confirmButtonText: 'Guardar',
+			cancelButtonText: 'Cancelar',
+			preConfirm: () => {
+				inputNombre = document.getElementById('inputNombre').value;
+				inputTipo = document.getElementById('inputTipo').value;
+
+				if (!inputNombre || !inputTipo) {
+					Swal.showValidationMessage('Debe ingresar todos los campos');
+				}
+				return {
+					inputNombre: inputNombre,
+					inputTipo: inputTipo,
+				};
+			}
+		}).then((result) => {
+			if (result.isConfirmed) {
+				// Obtener el valor del nombre ingresado por el usuario					
+				if (result.isConfirmed) {
+					const { inputNombre, inputTipo } = result.value;
+					console.log('Nombre hospital:', inputNombre);
+					console.log('Tipo:', inputTipo);
+				}
+
+				// parametros a enviar
+				const requestBody = new URLSearchParams();
+				requestBody.append('nombre', inputNombre);
+				requestBody.append('tipo', inputTipo);
+
+				// fetch para llamar a la función del servlet de hospital
+				fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/crear', {
+					method: 'POST',
+					body: requestBody,
+				})
+					.then(response => {
+						if (response.ok) {
+							console.log('Llamada al servlet de hospital exitosa');
+						} else {
+							console.error('Error al llamar al servlet de hospital');
+						}
+					})
+
+					.catch(error => {
+						console.error('Error al realizar la solicitud WFS:', error);
+					});
+			}
+		});
+
+	}
+
+	var buttonElement = document.createElement('button');
+	buttonElement.textContent = 'Agregar Hospital';
+	buttonElement.addEventListener('click', crearHospital);
+	buttonElement.style.width = '100%'; // Ajusta el ancho del botón al 100%
+	buttonElement.style.padding = '6px'; // Ajusta el relleno del botón	
+	this.mainBarCustom.element.appendChild(buttonElement);
+};
+

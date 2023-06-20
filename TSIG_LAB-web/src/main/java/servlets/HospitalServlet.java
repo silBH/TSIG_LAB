@@ -18,10 +18,7 @@ import business.AmbulanciaBusinessLocal;
 import business.HospitalBusinessLocal;
 import business.ServicioEmergenciaBusinessLocal;
 import datatype.DtHospital;
-import datatype.DtServicioEmergencia;
 import datatype.TipoHospital;
-import entity.Hospital;
-import entity.ServicioEmergencia;
 
 @WebServlet("/HospitalServlet")
 public class HospitalServlet extends HttpServlet {
@@ -137,6 +134,10 @@ public class HospitalServlet extends HttpServlet {
 			throws Exception {
 		String nombre = request.getParameter("nombre");
 		String t = request.getParameter("tipo");
+		
+		System.out.println("----------------- servlet nombre: " + nombre);
+		System.out.println("----------------- servlet tipo: " + t);
+		
 		TipoHospital tipo = null; 
 		if(t.equals("Mutualista")) {
 			tipo = TipoHospital.MUTUALISTA;
@@ -177,20 +178,8 @@ public class HospitalServlet extends HttpServlet {
 
 	private void agregarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
-		System.out.println("-------------- servlet ----  agregarServicioEmergencia 1");
-		List<DtServicioEmergencia> servicios = servicioBusiness.listar();
-		
-		if (!servicios.isEmpty()) {
-		    // Obtener el último elemento de la lista
-		    DtServicioEmergencia ultimoServicio = servicios.get(servicios.size() - 1);
-		    Hospital hospital = ultimoServicio.getHospital();
-		    List<ServicioEmergencia> listado = hospital.getServicios();
-		    ServicioEmergencia servicio = servicioBusiness.obtenerPorIdObjeto(ultimoServicio.getId());
-			listado.add(servicio);
-			System.out.println("-------------- servlet ----  agregarServicioEmergencia 2");
-		}
-		System.out.println("-------------- servlet ----  agregarServicioEmergencia 3");
-		response.sendRedirect("hospitalMenu.jsp");
+		//por ahroa se usa el otro servlet hospitalServlet2
+		response.sendRedirect("");
 	}
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)
