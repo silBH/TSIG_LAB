@@ -4,12 +4,13 @@ import java.io.Serializable;
 
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 
-import org.hibernate.annotations.Type;
 import org.postgis.Point;
+
 
 @Entity
 public class ServicioEmergencia implements Serializable{
@@ -27,12 +28,20 @@ public class ServicioEmergencia implements Serializable{
 	private Integer camasDisponibles;
 	
 	//@Type(type = "org.hibernate.spatial.GeometryType")
+	@Column(columnDefinition = "geometry(Point, 3857)")
 	private Point ubicacion;
 
-	public ServicioEmergencia() {
-		super();
-	}
+	public ServicioEmergencia() {}
 
+	public ServicioEmergencia(Hospital hospital, Integer totalCamas, Integer camasDisponibles,
+			Point ubicacion) {
+		super();		
+		this.hospital = hospital;
+		this.totalCamas = totalCamas;
+		this.camasDisponibles = camasDisponibles;
+		this.ubicacion = ubicacion;
+	}
+	
 	public ServicioEmergencia(Long id, Hospital hospital, Integer totalCamas, Integer camasDisponibles,
 			Point ubicacion) {
 		super();

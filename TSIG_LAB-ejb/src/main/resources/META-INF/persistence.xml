@@ -6,12 +6,12 @@
         http://xmlns.jcp.org/xml/ns/persistence/persistence_2_2.xsd">
    <persistence-unit name="TSIG_LABPersistenceUnit">
       <jta-data-source>java:/TSIG</jta-data-source>
-      <!--<class>entity.Hospital</class>-->
+      <class>entity.Hospital</class>
       <class>entity.Ambulancia</class>
       <class>entity.Administrador</class>
       <class>entity.ServicioEmergencia</class>
       <properties>
-         <property name="javax.persistence.schema-generation.database.action" value="create" />
+         <property name="javax.persistence.schema-generation.database.action" value="" />
          <property name="javax.persistence.schema-generation.create-source" value="metadata"/>
          <property name="javax.persistence.schema-generation.drop-source" value="metadata"/>
          <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>

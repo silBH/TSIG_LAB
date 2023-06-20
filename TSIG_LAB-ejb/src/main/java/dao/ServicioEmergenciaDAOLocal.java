@@ -13,4 +13,5 @@ public interface ServicioEmergenciaDAOLocal {
 	public void crear(ServicioEmergencia servicio);
 	public void editar(ServicioEmergencia servicio);
 	public void eliminar(ServicioEmergencia servicio);
+	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception;
 }

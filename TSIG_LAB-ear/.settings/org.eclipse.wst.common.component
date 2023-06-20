@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
-                                
+                                        
+    
+    
     
     
     
@@ -7,7 +9,9 @@
     
     
     <wb-module deploy-name="TSIG_LAB">
-                                                                
+                                                                                
+        
+        
         
         
         
@@ -15,7 +19,9 @@
         
         
         <wb-resource deploy-path="/" source-path="/target/m2e-wtp/ear-resources"/>
-                                                                
+                                                                                
+        
+        
         
         
         
@@ -107,10 +113,21 @@
         <dependent-module archiveName="postgresql.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/postgresql/postgresql/8.3-603.jdbc4/postgresql-8.3-603.jdbc4.jar">
             <dependency-type>uses</dependency-type>
         </dependent-module>
+        <dependent-module archiveName="geolatte-geom.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/geolatte/geolatte-geom/1.8.2/geolatte-geom-1.8.2.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="jts-core.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/locationtech/jts/jts-core/1.18.2/jts-core-1.18.2.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
+        <dependent-module archiveName="slf4j-api.jar" deploy-path="/lib" handle="module:/classpath/var/M2_REPO/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar">
+            <dependency-type>uses</dependency-type>
+        </dependent-module>
         <dependent-module archiveName="TSIG_LAB-web.war" deploy-path="/" handle="module:/resource/TSIG_LAB-web/TSIG_LAB-web">
             <dependency-type>uses</dependency-type>
         </dependent-module>
-                                                            
+                                                                            
+    
+    
     
     
     
@@ -118,7 +135,9 @@
     
     
     </wb-module>
-                            
+                                    
+
+
 
 
 

@@ -9,5 +9,5 @@ Class-Path: lib/postgresql.jar lib/checker-qual.jar lib/hibernate-entity
  r lib/jakarta.activation-api.jar lib/jaxb-runtime.jar lib/txw2.jar lib/
  istack-commons-runtime.jar lib/jakarta.activation.jar lib/jakarta.injec
  t-api.jar lib/antlr4-runtime.jar lib/postgis-jdbc.jar lib/postgis-stubs
- .jar
+ .jar lib/geolatte-geom.jar lib/jts-core.jar lib/slf4j-api.jar
 
