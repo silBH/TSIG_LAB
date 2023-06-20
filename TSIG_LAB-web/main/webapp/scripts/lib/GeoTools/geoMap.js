@@ -5,6 +5,9 @@ proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0
 // Registra las definiciones de proyección en OpenLayers
 ol.proj.proj4.register(proj4);
 
+const ubiUsuario = [-6253611.066855117, -4141044.3788586617];
+console.log('Ubicacion del Usuario: ',ubiUsuario);
+
 function GeoMap(){
     this.map=null;
     this.mainBarCustom  =null;
@@ -76,7 +79,7 @@ var lyrZonas2 = new ol.layer.Tile({
         })
 });
 
-var lyrUsuario = new ol.layer.Tile({
+var lyrUsuario2 = new ol.layer.Tile({
         title:'Usuario',
         visible:true,
         source:new ol.source.TileWMS({
@@ -85,7 +88,7 @@ var lyrUsuario = new ol.layer.Tile({
                 VERSION:'1.1.1',
                 FORMAT:'image/png',
                 TRANSPARENT:true,
-                LAYERS:'tsig2023:usuario'
+                LAYERS:'tsig2023:usuario2'
             }
         })
 })
@@ -98,7 +101,7 @@ GeoMap.prototype.CrearMapa= function(target,center,zoom){
 
     this.map = new ol.Map({
         target: _target,
-        layers: [lyrOSM,lyrLinea2,lyrPunto2,lyrZonas2,lyrUsuario,lyrEjes],
+        layers: [lyrOSM,lyrLinea2,lyrPunto2,lyrZonas2,lyrUsuario2,lyrEjes],
         view : new ol.View({
             center: ol.proj.fromLonLat(_center),
             zoom:_zoom
@@ -119,6 +122,14 @@ GeoMap.prototype.updateGeoserverLayer = function(cqlFilter) {
   lyrPunto2.getSource().updateParams({
     'CQL_FILTER': cqlFilter
   });
+  
+  lyrZonas2.getSource().updateParams({
+     'CQL_FILTER': cqlFilter
+  });
+		
+  lyrLinea2.getSource().updateParams({
+     'CQL_FILTER': cqlFilter
+  });		
 };
 
 GeoMap.prototype.CrearControlBarra= function(){
@@ -446,6 +457,77 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 		}
 	}
 
+function buscarAmbulanciasYServiciosEmergencia() {
+  var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azonas2&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      var features = data.features;
+
+      if (features.length === 0) {
+        // No se encontraron features
+        Swal.fire({
+          icon: 'info',
+          title: 'Sin cobertura',
+          text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
+        });
+      } else {
+        var promises = features.map(feature => {
+          var nombreA = feature.properties.nombre;
+          console.log('Ambulancia: ', nombreA);
+          var coordenadasTexto = feature.geometry.coordinates[0]
+            .map(coordinate => coordinate.join(' '))
+            .join(', ');
+
+          return emergenciaDentroZona(coordenadasTexto)
+            .then(resultado => {
+              if (resultado.codigoRetorno === 0) {
+                var nombreObtenido = resultado.nombre;
+                console.log('Servicio de Emergencia: ', nombreObtenido);
+
+                return nombreObtenido;
+              }
+            })
+            .catch(error => {
+              console.error('Error en la función emergenciaDentroZona:', error);
+            });
+        });
+
+        Promise.all(promises)
+          .then(nombresObtenidos => {
+            var cqlFilter = 'IN(' + features.map(feature => "'" + feature.id + "'").join(',') + ')';
+
+            lyrZonas2.getSource().updateParams({
+              'CQL_FILTER': cqlFilter
+            });
+
+            var contenido = 'Ambulancias en tu ubicación:<br><ul>';
+            for (var i = 0; i < features.length; i++) {
+              contenido += '<li>' + features[i].properties.nombre + '</li>';
+            }
+            contenido += '</ul><br>Servicios de Emergencia en tu ubicación:<br><ul>';
+            for (var j = 0; j < nombresObtenidos.length; j++) {
+              contenido += '<li>' + nombresObtenidos[j] + '</li>';
+            }
+            contenido += '</ul>';
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
+              html: contenido
+            });
+          })
+          .catch(error => {
+            console.error('Error en Promise.all:', error);
+          });
+      }
+    })
+    .catch(error => {
+      console.error('Error al realizar la consulta WFS:', error);
+    });
+}
+	
     var inputElement = document.createElement('input');
     inputElement.setAttribute('id', 'direccion-input');
     inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
@@ -474,7 +556,15 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	buttonElement3.style.width = '100%';
 	buttonElement3.style.padding = '6px';
 
-	this.mainBarCustom.element.appendChild(buttonElement3);  
+	this.mainBarCustom.element.appendChild(buttonElement3);
+
+	var buttonElement4 = document.createElement('button');
+    buttonElement4.textContent = 'Buscar Ambulancias y S. Emergencia cerca';
+    buttonElement4.addEventListener('click', buscarAmbulanciasYServiciosEmergencia);
+    buttonElement4.style.width = '100%';
+    buttonElement4.style.padding = '6px';
+
+    this.mainBarCustom.element.appendChild(buttonElement4);	
 };
 
 GeoMap.prototype.CrearControlBarraDibujo=function(){
@@ -527,164 +617,163 @@ GeoMap.prototype.CrearControlBarraDibujo=function(){
     this.map.addInteraction(controlModificar);
 	
 //////////////////////////////////////////////////
-function actualizarFeature() {
-  if (lyrLinea2.getSource()) {
-    var sourceLinea2 = new ol.source.TileWMS({
-      url: 'http://localhost:8586/geoserver/wms?',
-      params: {
-        VERSION: '1.1.1',
-        FORMAT: 'image/png',
-        TRANSPARENT: true,
-        LAYERS: 'tsig2023:recorridos2',
-        _ts: Date.now() // Agregar un sello de tiempo único
-      }
-    });
-    lyrLinea2.setSource(sourceLinea2);
-  }
+	function actualizarFeature() {
+	  if (lyrLinea2.getSource()) {
+		var sourceLinea2 = new ol.source.TileWMS({
+		  url: 'http://localhost:8586/geoserver/wms?',
+		  params: {
+			VERSION: '1.1.1',
+			FORMAT: 'image/png',
+			TRANSPARENT: true,
+			LAYERS: 'tsig2023:recorridos2',
+			_ts: Date.now() // Agregar un sello de tiempo único
+		  }
+		});
+		lyrLinea2.setSource(sourceLinea2);
+	  }
 
-  if (lyrPunto2.getSource()) {
-    var sourcePunto2 = new ol.source.TileWMS({
-      url: 'http://localhost:8586/geoserver/wms?',
-      params: {
-        VERSION: '1.1.1',
-        FORMAT: 'image/png',
-        TRANSPARENT: true,
-        STYLES: 'puntoGeneral',
-        LAYERS: 'tsig2023:hospital2',
-        _ts: Date.now() // Agregar un sello de tiempo único
-      }
-    });
-    lyrPunto2.setSource(sourcePunto2);
-  }
+	  if (lyrPunto2.getSource()) {
+		var sourcePunto2 = new ol.source.TileWMS({
+		  url: 'http://localhost:8586/geoserver/wms?',
+		  params: {
+			VERSION: '1.1.1',
+			FORMAT: 'image/png',
+			TRANSPARENT: true,
+			STYLES: 'puntoGeneral',
+			LAYERS: 'tsig2023:hospital2',
+			_ts: Date.now() // Agregar un sello de tiempo único
+		  }
+		});
+		lyrPunto2.setSource(sourcePunto2);
+	  }
 
-  if (lyrZonas2.getSource()) {
-    var sourceZonas2 = new ol.source.TileWMS({
-      url: 'http://localhost:8586/geoserver/wms?',
-      params: {
-        VERSION: '1.1.1',
-        FORMAT: 'image/png',
-        TRANSPARENT: true,
-        LAYERS: 'tsig2023:zonas2',
-        _ts: Date.now() // Agregar un sello de tiempo único
-      }
-    });
-    lyrZonas2.setSource(sourceZonas2);
-  }
-}
+	  if (lyrZonas2.getSource()) {
+		var sourceZonas2 = new ol.source.TileWMS({
+		  url: 'http://localhost:8586/geoserver/wms?',
+		  params: {
+			VERSION: '1.1.1',
+			FORMAT: 'image/png',
+			TRANSPARENT: true,
+			LAYERS: 'tsig2023:zonas2',
+			_ts: Date.now() // Agregar un sello de tiempo único
+		  }
+		});
+		lyrZonas2.setSource(sourceZonas2);
+	  }
+	}
 	
-function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
-  console.log('Coordenadas en SRID 3857:', coords3857);
+	function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
+	  console.log('Coordenadas en SRID 3857:', coords3857);
 
-  // Mostrar ventana de diálogo para ingresar el valor del nombre
-  Swal.fire({
-    title: 'Ingresar nombre',
-    input: 'text',
-    inputPlaceholder: 'Ingrese el nombre',
-    showCancelButton: true,
-    confirmButtonText: 'Guardar',
-    cancelButtonText: 'Cancelar',
-    inputValidator: (value) => {
-      if (!value) {
-        return 'Debe ingresar un nombre';
-      }
-    }
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // Obtener el valor del nombre ingresado por el usuario
-      var nombre = result.value;
-	  var wfs = new ol.format.WFS();
-      // Crear la geometría correspondiente
-      var geometry;
-      if (tipoGeometria === 'Point') {
-        geometry = new ol.geom.Point(coords3857);
-      } else if (tipoGeometria === 'LineString') {
-        geometry = new ol.geom.LineString(coords3857);
-      } else if (tipoGeometria === 'Polygon') {
-        geometry = new ol.geom.Polygon(coords3857);
-      }
+	  // Mostrar ventana de diálogo para ingresar el valor del nombre
+	  Swal.fire({
+		title: 'Ingresar nombre',
+		input: 'text',
+		inputPlaceholder: 'Ingrese el nombre',
+		showCancelButton: true,
+		confirmButtonText: 'Guardar',
+		cancelButtonText: 'Cancelar',
+		inputValidator: (value) => {
+		  if (!value) {
+			return 'Debe ingresar un nombre';
+		  }
+		}
+	  }).then((result) => {
+		if (result.isConfirmed) {
+		  // Obtener el valor del nombre ingresado por el usuario
+		  var nombre = result.value;
+		  var wfs = new ol.format.WFS();
+		  // Crear la geometría correspondiente
+		  var geometry;
+		  if (tipoGeometria === 'Point') {
+			geometry = new ol.geom.Point(coords3857);
+		  } else if (tipoGeometria === 'LineString') {
+			geometry = new ol.geom.LineString(coords3857);
+		  } else if (tipoGeometria === 'Polygon') {
+			geometry = new ol.geom.Polygon(coords3857);
+		  }
 
-      // Crear la característica con la geometría y el nombre
-      var feature = new ol.Feature({
-        nombre: nombre,
-        ubicacion: geometry
-      });
+		  // Crear la característica con la geometría y el nombre
+		  var feature = new ol.Feature({
+			nombre: nombre,
+			ubicacion: geometry
+		  });
 
-      // Asignar cualquier otro atributo a la característica si es necesario
-      feature.setProperties({
-        name: nombreFeature
-      });
+		  // Asignar cualquier otro atributo a la característica si es necesario
+		  feature.setProperties({
+			name: nombreFeature
+		  });
 
-      // Si el tipo de geometría es LineString, crear una característica de tipo polígono (zona de cobertura)
-      if (tipoGeometria === 'LineString') {
-        // Crear el buffer alrededor de la geometría LineString basado en la distancia máxima de desvío
-        var buffer = ol.extent.buffer(geometry.getExtent(), 100); // Reemplaza 100 con la distancia máxima de desvío deseada
+		  // Si el tipo de geometría es LineString, crear una característica de tipo polígono (zona de cobertura)
+		  if (tipoGeometria === 'LineString') {
+			// Crear el buffer alrededor de la geometría LineString basado en la distancia máxima de desvío
+			var buffer = ol.extent.buffer(geometry.getExtent(), 100); // Reemplaza 100 con la distancia máxima de desvío deseada
+			// Crear la geometría de polígono para la zona de cobertura
+			var polygonGeometry = new ol.geom.Polygon.fromExtent(buffer);
+			console.log(polygonGeometry.getCoordinates());
+			// Crear la característica de la zona de cobertura
+			var zonaCoberturaFeature = new ol.Feature({
+			  nombre: nombre,
+			  ubicacion: polygonGeometry
+			});
 
-        // Crear la geometría de polígono para la zona de cobertura
-        var polygonGeometry = new ol.geom.Polygon.fromExtent(buffer);
+			// Asignar cualquier otra propiedad necesaria a la característica de la zona de cobertura
+			zonaCoberturaFeature.setProperties({
+			  name: nombreFeature
+			});
 
-        // Crear la característica de la zona de cobertura
-        var zonaCoberturaFeature = new ol.Feature({
-          nombre: 'Zona de Cobertura',
-          ubicacion: polygonGeometry
-        });
+			// Crear una transacción WFS para insertar la característica de la zona de cobertura
+			var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
+			  featureType: 'zonas2',
+			  featureNS: 'tsig2023',
+			  srsName: 'EPSG:3857',
+			  version: '1.1.0'
+			});
 
-        // Asignar cualquier otra propiedad necesaria a la característica de la zona de cobertura
-        zonaCoberturaFeature.setProperties({
-          name: nombreFeature
-        });
+			// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
+			fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			  method: 'POST',
+			  headers: {
+				'Content-Type': 'text/xml'
+			  },
+			  body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
+			})
+			.then(response => response.text())
+			.then(data => {
+			  console.log('Respuesta del servidor (zona de cobertura):', data);
+			})
+			.catch(error => {
+			  console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
+			});
+		  }
 
-        // Crear una transacción WFS para insertar la característica de la zona de cobertura
-        var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
-          featureType: 'zonas2',
-          featureNS: 'tsig2023',
-          srsName: 'EPSG:3857',
-          version: '1.1.0'
-        });
+		  // Crear una transacción WFS para insertar la característica principal
+		  var insertRequest = wfs.writeTransaction([feature], null, null, {
+			featureType: nombreFeatureType,
+			featureNS: 'tsig2023',
+			srsName: 'EPSG:3857',
+			version: '1.1.0'
+		  });
 
-        // Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
-        fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/xml'
-          },
-          body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
-        })
-        .then(response => response.text())
-        .then(data => {
-          console.log('Respuesta del servidor (zona de cobertura):', data);
-        })
-        .catch(error => {
-          console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
-        });
-      }
-
-      // Crear una transacción WFS para insertar la característica principal
-      var insertRequest = wfs.writeTransaction([feature], null, null, {
-        featureType: nombreFeatureType,
-        featureNS: 'tsig2023',
-        srsName: 'EPSG:3857',
-        version: '1.1.0'
-      });
-
-      // Enviar la solicitud WFS al servidor para insertar la característica principal
-      fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/xml'
-        },
-        body: new XMLSerializer().serializeToString(insertRequest)
-      })
-      .then(response => response.text())
-      .then(data => {
-        console.log('Respuesta del servidor (característica principal):', data);
-        actualizarFeature();
-      })
-      .catch(error => {
-        console.error('Error al realizar la solicitud WFS (característica principal):', error);
-      });
-    }
-  });
-}
+		  // Enviar la solicitud WFS al servidor para insertar la característica principal
+		  fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+			method: 'POST',
+			headers: {
+			  'Content-Type': 'text/xml'
+			},
+			body: new XMLSerializer().serializeToString(insertRequest)
+		  })
+		  .then(response => response.text())
+		  .then(data => {
+			console.log('Respuesta del servidor (característica principal):', data);
+			actualizarFeature();
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la solicitud WFS (característica principal):', error);
+		  });
+		}
+	  });
+	}
 
 	var controlPunto = new ol.control.Toggle({
 	  title: 'Dibujar punto',
@@ -729,10 +818,20 @@ function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeom
 		]
 	  })
 	});
-
+	
 	controlLinea.getInteraction().on('drawend', function(event) {
 	  var feature = event.feature;
 	  var coords3857 = feature.getGeometry().getCoordinates();
+	  geometry = new ol.geom.LineString(coords3857);
+	  var buffer = ol.extent.buffer(geometry.getExtent(), 100);
+	  var polygonGeometry = new ol.geom.Polygon.fromExtent(buffer);
+	  //console.log(polygonGeometry.getCoordinates());
+	  var coords = polygonGeometry.getCoordinates();
+	  var coordenadasTexto = coords[0].map(function(coordinate) {
+			return coordinate.join(' ');
+		  }).join(', ');
+	  //console.log(coordenadasTexto);
+	  emergenciaDentroZona(coordenadasTexto);
 	  insertarFeature('recorridos2', 'Nueva Línea', 'tsig2023', 'LineString', coords3857);
 	});
 
@@ -780,12 +879,11 @@ function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeom
 				  }
 
 				  // Mostrar el Popup en la posición de la característica seleccionada
-				  popup.show(selectedFeature);
-				
+				  popup.show(selectedFeature);				
 			  }
 			}
 		  }),
-		  new ol.control.TextButton({
+		new ol.control.TextButton({
 		  title: 'Eliminar',
 		  html: 'Eliminar',
 		  handleClick: function() {
@@ -794,32 +892,109 @@ function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeom
 			  var selectedFeature = selectedFeatures.item(0);
 			  var nombre = selectedFeature.get('nombre');
 			  var id = selectedFeature.getId();
-			  var geometry = selectedFeature.getGeometry();	
+			  var geometry = selectedFeature.getGeometry();
 
-				// Determinar el valor de layerName según el tipo de geometría
-					var layerName;
-					if (geometry instanceof ol.geom.Point) {
-					  layerName = 'hospital2';
-					} else if (geometry instanceof ol.geom.LineString) {
-					  layerName = 'recorridos2';
-					} else if (geometry instanceof ol.geom.Polygon) {
-					  layerName = 'zonas2';
+			  // Determinar el valor de layerName según el tipo de geometría
+			  var layerName;
+			  if (geometry instanceof ol.geom.Point) {
+				layerName = 'hospital2';
+				var coords = selectedFeature.getGeometry().getCoordinates();
+				var modifiedCoordsText = coords.slice(0, 2).join(' ');
+				console.log(modifiedCoordsText);						
+				emergenciaFueraZona(modifiedCoordsText)
+				  .then(resultado => {
+					if (resultado.codigoRetorno === 0) {
+						Swal.fire({
+							icon: 'error',
+							title: 'No es posible eliminar',
+							text: 'La ambulancia tiene que tener un Servicio de Emergencia dentro de su zona'
+						});
+					} else{
+						Swal.fire({
+						title: 'Eliminar',
+						html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
+						icon: 'question',
+						showCancelButton: true,
+						confirmButtonText: 'Eliminar',
+						cancelButtonText: 'Cancelar'
+					  }).then(function(result) {
+						if (result.isConfirmed) {
+						  eliminarEntidad(selectedFeature, layerName);
+						  actualizarFeature();
+						  selectedFeature = null;
+						}
+					  });					
+					}	
+				  })
+				  .catch(error => {
+					console.error('Error en la función emergenciaDentroZona:', error);
+				  });				  
+			  } else if (geometry instanceof ol.geom.LineString) {
+				  layerName = 'recorridos2';
+				  Swal.fire({
+					title: 'Eliminar',
+					html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
+					icon: 'question',
+					showCancelButton: true,
+					confirmButtonText: 'Eliminar',
+					cancelButtonText: 'Cancelar'
+				  }).then(function(result) {
+					if (result.isConfirmed) {
+					  var getFeatureUrl = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:zonas2&CQL_FILTER=nombre%20%3D%20%27' + nombre + '%27&outputFormat=application/json';
+					fetch(getFeatureUrl)
+					  .then(function(response) {
+						return response.json();
+					  })
+					  .then(function(data) {
+						var features = data.features;
+						if (features.length > 0) {
+						  var featureId = features[0].id; // Obtener el ID de la feature
+						  console.log(featureId);
+
+						  var deleteFeatureUrl = 'http://localhost:8586/geoserver/wfs';
+						  var typeName = 'tsig2023:zonas2';
+						  var xmlData = '<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" service="WFS" version="1.1.0" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"><wfs:Delete typeName="' + typeName + '"><ogc:Filter><ogc:FeatureId fid="' + featureId + '"/></ogc:Filter></wfs:Delete></wfs:Transaction>';
+
+						  var deleteFeatureRequest = fetch(deleteFeatureUrl, {
+							method: 'POST',
+							headers: {
+							  'Content-Type': 'text/xml'
+							},
+							body: xmlData
+						  });
+						  Promise.all([deleteFeatureRequest])
+							.then(function(responses) {
+							  // Verificar si todas las respuestas son exitosas
+							  var allSuccessful = responses.every(function(response) {
+								return response.ok;
+							  });
+
+							  if (allSuccessful) {
+								console.log('Todas las operaciones se completaron correctamente');
+								// Realizar otras acciones después de eliminar la feature
+								actualizarFeature();
+								selectedFeature = null;
+								eliminarVectorSource();
+							  } else {
+								console.error('Al menos una operación falló');
+							  }
+							})
+							.catch(function(error) {
+							  console.error('Error al enviar la solicitud WFS:', error);
+							});
+						} else {
+						  console.log('No se encontró ninguna feature con el nombre especificado');
+						}
+					  })
+					  .catch(function(error) {
+						console.error('Error al obtener la feature de Polygon:', error);
+					  });	
+					  eliminarEntidad(selectedFeature, layerName);
+					  actualizarFeature();
+					  selectedFeature = null;
 					}
-			  // Mostrar el mensaje de confirmación para eliminar otras entidades
-			  Swal.fire({
-				title: 'Eliminar',
-				html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
-				icon: 'question',
-				showCancelButton: true,
-				confirmButtonText: 'Eliminar',
-				cancelButtonText: 'Cancelar'
-			  }).then(function(result) {
-				if (result.isConfirmed) {
-				  eliminarEntidad(selectedFeature, layerName);
-				  actualizarFeature();
-				  selectedFeature = null;
-				}
-			  });
+				  });		
+			    }
 			}
 		  }
 		}),
@@ -854,16 +1029,51 @@ function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeom
 					  var layerName;
 					  if (modifiedGeometry instanceof ol.geom.Point) {
 						layerName = 'hospital2';
+						var coords = selectedFeature.getGeometry().getCoordinates();
+						var modifiedCoordsText = coords.slice(0, 2).join(' ');
+						console.log(modifiedCoordsText);
+						
+						emergenciaFueraZona(modifiedCoordsText)
+						  .then(resultado => {
+							if (resultado.codigoRetorno === 0) {
+							    guardarCambios(selectedFeature, layerName);
+								actualizarFeature();
+								selectedFeatures.clear();
+							} else{
+								actualizarFeature();
+								selectedFeatures.clear();
+								eliminarVectorSource();						
+							}	
+						  })
+						  .catch(error => {
+							console.error('Error en la función emergenciaDentroZona:', error);
+						  });
 					  } else if (modifiedGeometry instanceof ol.geom.LineString) {
 						layerName = 'recorridos2';
+						guardarCambios(selectedFeature, layerName);
+					    actualizarFeature();
+						selectedFeatures.clear();
 					  } else if (modifiedGeometry instanceof ol.geom.Polygon) {
 						layerName = 'zonas2';
-					  }
-
-					  // Guarda los cambios en la base de datos
-					  guardarCambios(selectedFeature, layerName);
-					  actualizarFeature();
-					  selectedFeatures.clear();
+						var coords = selectedFeature.getGeometry().getCoordinates();
+					    var coordenadasTexto = coords[0].map(function(coordinate) {
+							return coordinate.join(' ');
+						}).join(', ');
+						var coordenadas = coordenadasTexto.replace(/\s\d/g, '');
+						//console.log(coordenadas);
+						emergenciaDentroZona(coordenadas)
+						  .then(resultado => {
+							if (resultado.codigoRetorno === 1) {
+							  //modificar
+							}
+							guardarCambios(selectedFeature, layerName);
+							actualizarFeature();
+							selectedFeatures.clear();
+						  })
+						  .catch(error => {
+							console.error('Error en la función emergenciaDentroZona:', error);
+						  });
+					  }  
 					});
                   }
             }
@@ -990,8 +1200,9 @@ function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeom
 	  }
 	}
 
-	barraDibujo.addControl(controlSeleccionar);
+	barraDibujo.addControl(controlSeleccionar); 	
 }
+
 function crearCapaMapaCalor() {
   // Obtén los datos de la capa Recorridos como JSON
   var url = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:recorridos2&outputFormat=application/json';
@@ -1041,3 +1252,72 @@ function crearCapaMapaCalor() {
     });
 }
 crearCapaMapaCalor();
+
+function emergenciaDentroZona(coordenadasTexto) {
+  var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Ahospital2&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))';
+  console.log(coordenadasTexto);
+
+  return fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      var features = data.features;
+      var resultado = {};
+
+      if (features.length === 0) {
+        // No se encontraron features
+        Swal.fire({
+          icon: 'info',
+          title: 'Sin servicio de Emergencia',
+          text: 'La ambulancia no tiene un Servicio de Emergencia en su zona. Intente nuevamente'
+        });
+        resultado.nombre = null;
+        resultado.codigoRetorno = 1;
+      } else {
+        features.forEach(feature => {
+          resultado.nombre = feature.properties.nombre;
+          //console.log(resultado.nombre);
+        });
+        resultado.codigoRetorno = 0;
+      }
+
+      return resultado;
+    })
+    .catch(error => {
+      console.error('Error al realizar la consulta WFS:', error);
+      throw error;
+    });
+}
+
+function emergenciaFueraZona(coordenadasTexto) {
+  var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azonas2&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT('+coordenadasTexto+'))';
+ 
+  return fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      var features = data.features;
+      var resultado = {};
+	
+      if (features.length === 0) {
+        // No se encontraron features
+        Swal.fire({
+          icon: 'info',
+          title: 'Sin servicio de Emergencia',
+          text: 'La ambulancia no tiene un Servicio de Emergencia en su zona. Intente nuevamente'
+        });
+        resultado.nombre = null;
+        resultado.codigoRetorno = 1;
+      } else {
+        features.forEach(feature => {
+          resultado.nombre = feature.properties.nombre;
+          //console.log(resultado.nombre);
+        });
+        resultado.codigoRetorno = 0;
+      }
+		
+      return resultado;
+    })
+    .catch(error => {
+      console.error('Error al realizar la consulta WFS:', error);
+      throw error;
+    });
+}
