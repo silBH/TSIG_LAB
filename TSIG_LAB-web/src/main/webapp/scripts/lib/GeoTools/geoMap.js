@@ -180,6 +180,7 @@ GeoMap.prototype.CrearMapaAdmin = function (target, center, zoom) {
 		groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
 	});
 	this.map.addControl(layerSwitcher);
+	map = this.map;
 };
 
 GeoMap.prototype.updateGeoserverLayer = function (cqlFilter) {
@@ -1829,7 +1830,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 										console.error('Error en la función emergenciaDentroZona:', error);
 									});
 							} else if (geometry instanceof ol.geom.LineString) {
-								layerName = 'recorridos2';
+								layerName = 'ambulancia';
 								Swal.fire({
 									title: 'Eliminar',
 									html: '¿Eliminar ID: ' + id + ' y nombre: ' + nombre + '?',
@@ -2039,17 +2040,18 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 
 					// Agrega la interacción de modificación al mapa
 					map.addInteraction(modifyInteraction);
-
+					console.log('A:');
 					// Al finalizar la edición
 					modifyInteraction.on('modifyend', function (event) {
 						// Obtén la geometría modificada
+						console.log('B:');
 						var modifiedGeometry = event.features.item(0).getGeometry();
 						var modifiedCoordinates = modifiedGeometry.getCoordinates();
-
+						console.log('C:');
 						// Actualiza la geometría de la característica
 						selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
 						console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
-
+						
 						// Determinar el valor de layerName según el tipo de geometría
 						var layerName;
 						if (modifiedGeometry instanceof ol.geom.Point) {
@@ -2058,21 +2060,21 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 							var modifiedCoordsText = coords.slice(0, 2).join(' ');
 							console.log(modifiedCoordsText);
 
-							emergenciaFueraZona(modifiedCoordsText)
-								.then(resultado => {
-									if (resultado.codigoRetorno === 0) {
+							//emergenciaFueraZona(modifiedCoordsText)
+							//	.then(resultado => {
+						//			if (resultado.codigoRetorno === 0) {
 										guardarCambios(selectedFeature, layerName);
 										actualizarFeature();
 										selectedFeatures.clear();
-									} else {
-										actualizarFeature();
-										selectedFeatures.clear();
-										eliminarVectorSource();
-									}
-								})
-								.catch(error => {
-									console.error('Error en la función emergenciaDentroZona:', error);
-								});
+						//			} else {
+						//				actualizarFeature();
+						//				selectedFeatures.clear();
+						//				eliminarVectorSource();
+									//}
+						//		})
+						//		.catch(error => {
+						//			console.error('Error en la función emergenciaDentroZona:', error);
+								//});
 						} else if (modifiedGeometry instanceof ol.geom.LineString) {
 							layerName = 'ambulancia';
 							guardarCambios(selectedFeature, layerName);

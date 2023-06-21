@@ -1,3 +1,4 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,7 +28,7 @@
 
 </head>
 <body>	
-	<h3>Gestión del sistema</h3>
+	<h3>GestiÃ³n del sistema</h3>
 	<div id="map"></div>
     <div id="mouse-position"></div>    
     <script>
