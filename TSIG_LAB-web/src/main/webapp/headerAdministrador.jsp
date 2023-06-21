@@ -1,4 +1,5 @@
-<%@ page import="javax.servlet.http.HttpSession" %>
+import javax.servlet.http.HttpServletRequest;
+
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
