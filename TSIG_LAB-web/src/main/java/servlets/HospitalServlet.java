@@ -68,8 +68,8 @@ public class HospitalServlet extends HttpServlet {
 			case "/agregarAmbulancia":
 				agregarAmbulancia(request, response);
 				break;
-			case "/eliminarServicioEmergencia":
-				eliminarServicioEmergencia(request, response);
+			case "/agregarServicio":
+				agregarServicio(request, response);
 				break;
 			case "/eliminarAmbulancia":
 				eliminarAmbulancia(request, response);
@@ -203,9 +203,26 @@ public class HospitalServlet extends HttpServlet {
 		response.sendRedirect("hospitalMenu.jsp");
 	}
 
-	private void eliminarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
+	private void agregarServicio(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("hospitalMenu.jsp");
+				
+		String serviceId = request.getParameter("id");    	
+    	String hospitalId = request.getParameter("hospitalId");
+    	    
+    	System.out.println("----------------- servlet id serviceId: " + serviceId);
+    	System.out.println("----------------- servlet id hospitalId: " + hospitalId);
+        
+        try {
+        	long idServicio = Long.parseLong(serviceId);
+        	long idHospital = Long.parseLong(hospitalId);
+
+            hospBusiness.agregarServicioEmergencia(idHospital, idServicio);
+            
+        } catch (Exception e) {
+            // Error al parsear el ID del servicio
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }        	
+        response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
 
 	private void eliminarAmbulancia(HttpServletRequest request, HttpServletResponse response)

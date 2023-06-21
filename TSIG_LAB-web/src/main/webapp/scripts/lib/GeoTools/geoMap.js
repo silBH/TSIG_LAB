@@ -121,6 +121,21 @@ var lyrAmbulancias = new ol.layer.Tile({
 	})
 });
 
+var lyrZonas = new ol.layer.Tile({
+	title: 'zonas',
+	visible: true,
+	opacity: 0.4,
+	source: new ol.source.TileWMS({
+		url: 'http://localhost:8586/geoserver/wms?',
+		params: {
+			VERSION: '1.1.1',
+			FORMAT: 'image/png',
+			TRANSPARENT: true,
+			LAYERS: 'tsig2023:zona'
+		}
+	})
+});
+
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 	var _target = target || 'map',
@@ -1422,18 +1437,18 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	}
 
 	function actualizarFeature() {
-		if (lyrLinea2.getSource()) {
+		if (lyrAmbulancias.getSource()) {
 			var sourceLinea2 = new ol.source.TileWMS({
 				url: 'http://localhost:8586/geoserver/wms?',
 				params: {
 					VERSION: '1.1.1',
 					FORMAT: 'image/png',
 					TRANSPARENT: true,
-					LAYERS: 'tsig2023:recorridos2',
+					LAYERS: 'tsig2023:ambulancia',
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
 			});
-			lyrLinea2.setSource(sourceLinea2);
+			lyrAmbulancias.setSource(sourceLinea2);
 		}
 
 		if (lyrServicios.getSource()) {
@@ -1451,18 +1466,18 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 			lyrServicios.setSource(sourcePunto2);
 		}
 
-		if (lyrZonas2.getSource()) {
+		if (lyrZonas.getSource()) {
 			var sourceZonas2 = new ol.source.TileWMS({
 				url: 'http://localhost:8586/geoserver/wms?',
 				params: {
 					VERSION: '1.1.1',
 					FORMAT: 'image/png',
 					TRANSPARENT: true,
-					LAYERS: 'tsig2023:zonas2',
+					LAYERS: 'tsig2023:zona',
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
 			});
-			lyrZonas2.setSource(sourceZonas2);
+			lyrZonas.setSource(sourceZonas2);
 		}
 	}
 
@@ -1472,139 +1487,134 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 		//Lista hospitales
 		obtenerHospitales().then(hospitalesArray => {
 			console.log(hospitalesArray);
-			// Coloca aquí cualquier otro código que dependa de los datos de hospitalesArray
-			// Mostrar ventana de diálogo para ingresar datos
-			Swal.fire({
-				title: 'Ingrese los datos del nuevo Servicio de Emergencia',
-				html: `
-			<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
-        		${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
-      		</select>
-			    <input id="inputTotalCamas" class="swal2-input" placeholder="Camas totales" type="text">
-    			<input id="inputCamasDisponibles" class="swal2-input" placeholder="Cantidad disponibles" type="text">  `,
-				showCancelButton: true,
-				confirmButtonText: 'Guardar',
-				cancelButtonText: 'Cancelar',
-				preConfirm: () => {
-					const inputHospital = document.getElementById('inputHospital').value;
-					const inputTotalCamas = document.getElementById('inputTotalCamas').value;
-					const inputCamasDisponibles = document.getElementById('inputCamasDisponibles').value;
 
-					if (!inputHospital || !inputTotalCamas || !inputCamasDisponibles) {
-						Swal.showValidationMessage('Debe ingresar todos los campos');
+			// Crear la geometría correspondiente
+			var geometry;
+			if (tipoGeometria === 'Point') { //-------------------------------nuevo servicio de emergencia
+				geometry = new ol.geom.Point(coords3857);
+				Swal.fire({
+					title: 'Nuevo Servicio de Emergencia',
+					html: `
+					<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
+						${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
+				  	</select>
+					<input id="inputTotalCamas" class="swal2-input" placeholder="Camas totales" type="text">
+					<input id="inputCamasDisponibles" class="swal2-input" placeholder="Cantidad disponibles" type="text">  `,
+					showCancelButton: true,
+					confirmButtonText: 'Guardar',
+					cancelButtonText: 'Cancelar',
+					preConfirm: () => {
+						const inputHospital = document.getElementById('inputHospital').value;
+						const inputTotalCamas = document.getElementById('inputTotalCamas').value;
+						const inputCamasDisponibles = document.getElementById('inputCamasDisponibles').value;
+
+						if (!inputHospital || !inputTotalCamas || !inputCamasDisponibles) {
+							Swal.showValidationMessage('Debe ingresar todos los campos');
+						}
+						return {
+							inputHospital: inputHospital,
+							inputTotalCamas: inputTotalCamas,
+							inputCamasDisponibles: inputCamasDisponibles
+						};
 					}
-					return {
-						inputHospital: inputHospital,
-						inputTotalCamas: inputTotalCamas,
-						inputCamasDisponibles: inputCamasDisponibles
-					};
-				}
-			}).then((result) => {
-				if (result.isConfirmed) {
-					// Obtener el valor del nombre ingresado por el usuario
-					//var nombre = result.value;			
+				}).then((result) => {
+					if (result.isConfirmed) {
+						// Obtener el valor del nombre ingresado por el usuario
+						const { inputHospital, inputTotalCamas, inputCamasDisponibles } = result.value;
+						console.log('ID hospital:', inputHospital);
+						console.log('Cantidad de camas totales:', inputTotalCamas);
+						console.log('Cantidad de camas disponibles:', inputCamasDisponibles);
 
-					const { inputHospital, inputTotalCamas, inputCamasDisponibles } = result.value;
-					console.log('ID hospital:', inputHospital);
-					console.log('Cantidad de camas totales:', inputTotalCamas);
-					console.log('Cantidad de camas disponibles:', inputCamasDisponibles);
+						// Validar si son numeros
+						if (isNaN(inputHospital)) {
+							Swal.showValidationMessage('El ID del hospital debe ser un número válido');
+							return; // Detener la ejecución si no es válido
+						}
+						if (isNaN(inputTotalCamas)) {
+							Swal.showValidationMessage('El total de camas debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
+						if (isNaN(inputCamasDisponibles)) {
+							Swal.showValidationMessage('Las camas diponibles debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
 
-					// Validar si son numeros
-					if (isNaN(inputHospital)) {
-						Swal.showValidationMessage('El ID del hospital debe ser un número válido');
-						return; // Detener la ejecución si no es válido
-					}
-					if (isNaN(inputTotalCamas)) {
-						Swal.showValidationMessage('El total de camas debe ser un número');
-						return; // Detener la ejecución si no es válido
-					}
-					if (isNaN(inputCamasDisponibles)) {
-						Swal.showValidationMessage('Las camas diponibles debe ser un número');
-						return; // Detener la ejecución si no es válido
-					}
+						const hospitalId = BigInt(inputHospital);
 
-
-					const hospitalId = BigInt(inputHospital);
-
-					// Crear la geometría correspondiente
-					var geometry;
-					if (tipoGeometria === 'Point') {
-						geometry = new ol.geom.Point(coords3857);
-					} else if (tipoGeometria === 'LineString') {
-						geometry = new ol.geom.LineString(coords3857);
-					} else if (tipoGeometria === 'Polygon') {
-						geometry = new ol.geom.Polygon(coords3857);
-					}
-
-					// Crear la característica con la geometría y el nombre
-					var feature = new ol.Feature({
-						//nombre: nombre,					
-						camasdisponibles: inputCamasDisponibles,
-						totalcamas: inputTotalCamas,
-						ubicacion: geometry,
-						hospital_id: hospitalId
-					});
-
-					// Asignar cualquier otro atributo a la característica si es necesario
-					feature.setProperties({
-						name: nombreFeature
-					});
-
-					// Crear una transacción WFS para insertar la característica
-					var wfs = new ol.format.WFS();
-					var insertRequest = wfs.writeTransaction([feature], null, null, {
-						featureType: nombreFeatureType,
-						featureNS: 'tsig2023',
-						srsName: 'EPSG:3857',
-						version: '1.1.0'
-					});
-
-					// Enviar la solicitud WFS al servidor
-					fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'text/xml'
-						},
-						body: new XMLSerializer().serializeToString(insertRequest)
-					})
-						.then(response => response.text())
-						.then(data => {
-							console.log('Respuesta del servidor:', data);
-							// Parsear la respuesta XML												
-							const parser = new DOMParser();
-							const xmlDoc = parser.parseFromString(data, 'text/xml');
-							const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
-							if (featureIds.length > 0) {
-								const sId = featureIds[0].getAttribute("fid");
-								const puntoIndex = sId.indexOf(".");
-								const serviceId = sId.substring(puntoIndex + 1);
-								console.log("ID del servicio de emergencia:", serviceId);
-								// fetch para llamar a la función del servlet de hospital
-								fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet2?id=' + serviceId + '&hospitalId=' + hospitalId, {
-									method: 'GET'
-								})
-									.then(response => {
-										if (response.ok) {
-											console.log('Llamada al servlet de hospital exitosa');
-										} else {
-											console.error('Error al llamar al servlet de hospital');
-										}
-									})
-							}
-						})
-						.catch(error => {
-							console.error('Error al realizar la solicitud WFS:', error);
+						// Crear la característica con la geometría y el nombre
+						var feature = new ol.Feature({
+							camasdisponibles: inputCamasDisponibles,
+							totalcamas: inputTotalCamas,
+							ubicacion: geometry,
+							hospital_id: hospitalId
 						});
-				}
-			});
-		})
-			.catch(error => {
-				console.error('Error al obtener los hospitales:', error);
-			});
+
+						// Asignar cualquier otro atributo a la característica si es necesario
+						feature.setProperties({
+							name: nombreFeature
+						});
+
+						// Crear una transacción WFS para insertar la característica
+						var wfs = new ol.format.WFS();
+						var insertRequest = wfs.writeTransaction([feature], null, null, {
+							featureType: nombreFeatureType,
+							featureNS: 'tsig2023',
+							srsName: 'EPSG:3857',
+							version: '1.1.0'
+						});
+
+						// Enviar la solicitud WFS al servidor
+						fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'text/xml'
+							},
+							body: new XMLSerializer().serializeToString(insertRequest)
+						})
+							.then(response => response.text())
+							.then(data => {
+								console.log('Respuesta del servidor:', data);
+								// Parsear la respuesta XML												
+								const parser = new DOMParser();
+								const xmlDoc = parser.parseFromString(data, 'text/xml');
+								const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
+								if (featureIds.length > 0) {
+									const sId = featureIds[0].getAttribute("fid");
+									const puntoIndex = sId.indexOf(".");
+									const serviceId = sId.substring(puntoIndex + 1);
+									console.log("ID del servicio de emergencia:", serviceId);
+									// fetch para llamar a la función del servlet de hospital
+									fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/agregarServicio' + '&id=' + serviceId + '&hospitalId=' + hospitalId, { //fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet2?id=' + serviceId + '&hospitalId=' + hospitalId, {
+										method: 'GET'
+									})
+										.then(response => {
+											if (response.ok) {
+												console.log('Llamada al servlet de hospital exitosa');
+											} else {
+												console.error('Error al llamar al servlet de hospital');
+											}
+										})
+								}
+							})
+							.catch(error => {
+								console.error('Error al realizar la solicitud WFS:', error);
+							});
+					}
+				});
+			} else if (tipoGeometria === 'LineString') { //-------------------------------nueva ambulancia
+				geometry = new ol.geom.LineString(coords3857);
+				//------------- COMPLETAR
+			} else if (tipoGeometria === 'Polygon') {
+				geometry = new ol.geom.Polygon(coords3857);
+				//------------- COMPLETAR
+			}
+		}).catch(error => {
+			console.error('Error al obtener los hospitales:', error);
+		});
 	}
 
 	var controlPunto = new ol.control.Toggle({
-		title: 'Dibujar punto',
+		title: 'Registrar Servicio',
 		html: '<i class="fa fa-map-marker"></i>',
 		interaction: new ol.interaction.Draw({
 			type: 'Point',
@@ -1621,7 +1631,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	barraDibujo.addControl(controlPunto);
 
 	var controlLinea = new ol.control.Toggle({
-		title: 'Dibujar línea',
+		title: 'Registrar Ambulancia',
 		html: '<i class="fa fa-share-alt"></i>',
 		interaction: new ol.interaction.Draw({
 			type: 'LineString',
@@ -1650,46 +1660,46 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	controlLinea.getInteraction().on('drawend', function (event) {
 		var feature = event.feature;
 		var coords3857 = feature.getGeometry().getCoordinates();
-		insertarFeature('recorridos2', 'Nueva Línea', 'tsig2023', 'LineString', coords3857);
+		insertarFeature('ambulancia', 'Nueva Línea', 'tsig2023', 'LineString', coords3857);
 	});
 
 	barraDibujo.addControl(controlLinea);
-
-	var controlPoligono = new ol.control.Toggle({
-		title: 'Dibujar polígono',
-		html: '<i class="fa fa-bookmark-o fa-rotate-270"></i>',
-		interaction: new ol.interaction.Draw({
-			type: 'Polygon',
-			source: this.vector.getSource()
-		}),
-		bar: new ol.control.Bar({
-			controls: [
-				new ol.control.TextButton({
-					title: 'Deshacer ultimo punto',
-					html: 'Deshacer',
-					handleClick: function () {
-						controlPoligono.getInteraction().removeLastPoint()
-					}
-				}),
-				new ol.control.TextButton({
-					title: 'Finalizar dibujo',
-					html: 'Finalizar',
-					handleClick: function () {
-						controlPoligono.getInteraction().finishDrawing();
-					}
-				})
-			]
-		})
-	});
-
-	controlPoligono.getInteraction().on('drawend', function (event) {
-		var feature = event.feature;
-		var coords3857 = feature.getGeometry().getCoordinates();
-		insertarFeature('zonas2', 'Nueva Zona', 'tsig2023', 'Polygon', coords3857);
-	});
-
-	barraDibujo.addControl(controlPoligono);
-
+	/*
+		var controlPoligono = new ol.control.Toggle({
+			title: 'Dibujar polígono',
+			html: '<i class="fa fa-bookmark-o fa-rotate-270"></i>',
+			interaction: new ol.interaction.Draw({
+				type: 'Polygon',
+				source: this.vector.getSource()
+			}),
+			bar: new ol.control.Bar({
+				controls: [
+					new ol.control.TextButton({
+						title: 'Deshacer ultimo punto',
+						html: 'Deshacer',
+						handleClick: function () {
+							controlPoligono.getInteraction().removeLastPoint()
+						}
+					}),
+					new ol.control.TextButton({
+						title: 'Finalizar dibujo',
+						html: 'Finalizar',
+						handleClick: function () {
+							controlPoligono.getInteraction().finishDrawing();
+						}
+					})
+				]
+			})
+		});
+	
+		controlPoligono.getInteraction().on('drawend', function (event) {
+			var feature = event.feature;
+			var coords3857 = feature.getGeometry().getCoordinates();
+			insertarFeature('zonas2', 'Nueva Zona', 'tsig2023', 'Polygon', coords3857);
+		});
+	
+		barraDibujo.addControl(controlPoligono);
+	*/
 	var controlSeleccionar = new ol.control.Toggle({
 		title: 'Seleccionar',
 		html: '<i class="fa fa-mouse-pointer"></i>',
@@ -1705,34 +1715,56 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 						var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
 						if (selectedFeatures.getLength() > 0) {
 							var selectedFeature = selectedFeatures.item(0);
-
 							var id = selectedFeature.getId();
-							var nombre = selectedFeature.get('nombre');
-							var tipo = selectedFeature.getGeometry().getType();
+							var geometry = selectedFeature.getGeometry();
 
-							// Establecer los valores de los atributos en la característica seleccionada
-							selectedFeature.set('id', id);
-							selectedFeature.set('tipo', tipo);
-							selectedFeature.set('nombree', nombre);
-
-							// Crear el Popup de OpenLayers si no existe
-							if (!popup) {
-								popup = new ol.Overlay.PopupFeature({
-									popupClass: 'default anim',
-									select: controlSeleccionar.getInteraction(),
-									template: {
-										attributes: {
-											'id': { title: 'ID: ' },
-											'nombree': { title: 'Nombre: ' },
-											'tipo': { title: 'Tipo: ' }
+							obtenerHospitales()
+								.then(() => {
+									var hospId = Number(selectedFeature.get('hospital_id'));
+									function obtenerNombrePorId(hospId) {
+										for (var i = 0; i < hospitalesArray.length; i++) {
+											if (hospitalesArray[i].id === hospId) {
+												return hospitalesArray[i].nombre;
+											}
 										}
+										return null;
 									}
-								});
-								map.addOverlay(popup);
-							}
+									var hospName = obtenerNombrePorId(hospId);
 
-							// Mostrar el Popup en la posición de la característica seleccionada
-							popup.show(selectedFeature);
+									if (geometry instanceof ol.geom.Point) {
+										var totalCamas = Number(selectedFeature.get('totalcamas'));
+										var camasDispo = Number(selectedFeature.get('camasdisponibles'));
+										// Establecer los valores de los atributos en la característica seleccionada
+										selectedFeature.set('id', id);
+										selectedFeature.set('hospital', hospName);
+										selectedFeature.set('totalCamas', totalCamas);
+										selectedFeature.set('camasDispo', camasDispo);										
+
+										// Crear el Popup de OpenLayers si no existe
+										if (!popup) {
+											popup = new ol.Overlay.PopupFeature({
+												popupClass: 'default anim',
+												select: controlSeleccionar.getInteraction(),
+												template: {
+													attributes: {
+														'id': { title: 'Servicio ID: ' },
+														'hospital': { title: 'Hospital: ' },
+														'totalCamas': { title: 'Total de camas: ' },
+														'camasDispo': { title: 'Camas disponibles: ' }
+													}
+												}
+											});
+											map.addOverlay(popup);											
+										}
+									} else if (geometry instanceof ol.geom.LineString) {
+
+									} else if (geometry instanceof ol.geom.Polygon) {
+
+									}									
+									// Mostrar el Popup en la posición de la característica seleccionada
+									popup.show(selectedFeature);
+								})
+							
 						}
 					}
 				}),
@@ -1887,6 +1919,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 			]
 		})
 	});
+
 	controlSeleccionar.on('change:active', function (evt) {
 		if (evt.active) {
 			obtenerDatosCapas();
@@ -1923,7 +1956,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 							<label for="inputHospital">Hospital:</label>	
 							<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">        		
 								${hospitalesArray.map(hospital => `<option value="${hospital.id}" ${hospital.id === hospIdOri ? 'selected' : ''}>${hospital.nombre}</option>`).join('')}
-      						</select>
+      						</select><br>
 							<label for="inputTotalCamas">Camas:</label>							  
 							<input id="inputTotalCamas" class="swal2-input" placeholder="Camas totales" type="text" value="${totalCamas}">`,
 						showCancelButton: true,
@@ -1964,25 +1997,23 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 							guardarCambios(selectedFeature, 'servicioemergencia');
 
 							console.log('Falta actulizar la lista hospital_servicioemergencia');//////////////////////////////////////////////////// falta
-							
+
 							const puntoIndex = servicio_id.indexOf(".");
 							const serviceId = servicio_id.substring(puntoIndex + 1);
 							console.log("ID del servicio de emergencia:", serviceId);
-							
+
 							fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarServicio' + '&servicioId=' + serviceId + '&hospIdNuevo=' + hospitalId + '&hospIdViejo=' + hospIdOri, {
-									method: 'GET'
+								method: 'GET'
+							})
+								.then(response => {
+									if (response.ok) {
+										console.log('Llamada al servlet de hospital exitosa');
+									} else {
+										console.error('Error al llamar al servlet de hospital');
+									}
 								})
-									.then(response => {
-										if (response.ok) {
-											console.log('Llamada al servlet de hospital exitosa');
-										} else {
-											console.error('Error al llamar al servlet de hospital');
-										}
-									})
-
-
-							modificarUbicacion(selectedFeatures);
 						}
+						modificarUbicacion(selectedFeatures);
 					});
 				})
 		}
@@ -1990,8 +2021,8 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 
 	function modificarUbicacion(selectedFeatures) {
 		Swal.fire({
-			title: '¿Desea modificar la ubicacion?',
-			html: 'A continuación modifique la ubicación.',
+			title: 'Modificar la ubicacion',
+			html: 'A continuacion modifique la ubicacion.',
 			showCancelButton: true,
 			confirmButtonText: 'Siguiente',
 		}).then((result) => {
@@ -2022,7 +2053,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 						// Determinar el valor de layerName según el tipo de geometría
 						var layerName;
 						if (modifiedGeometry instanceof ol.geom.Point) {
-							layerName = 'hospital2';
+							layerName = 'servicioemergencia';
 							var coords = selectedFeature.getGeometry().getCoordinates();
 							var modifiedCoordsText = coords.slice(0, 2).join(' ');
 							console.log(modifiedCoordsText);
@@ -2043,12 +2074,12 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 									console.error('Error en la función emergenciaDentroZona:', error);
 								});
 						} else if (modifiedGeometry instanceof ol.geom.LineString) {
-							layerName = 'recorridos2';
+							layerName = 'ambulancia';
 							guardarCambios(selectedFeature, layerName);
 							actualizarFeature();
 							selectedFeatures.clear();
 						} else if (modifiedGeometry instanceof ol.geom.Polygon) {
-							layerName = 'zonas2';
+							layerName = 'zona';
 							var coords = selectedFeature.getGeometry().getCoordinates();
 							var coordenadasTexto = coords[0].map(function (coordinate) {
 								return coordinate.join(' ');
@@ -2073,7 +2104,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 			}
 		});
 	}
-
 
 	function guardarCambios(feature, nombrecapa) {
 		// Crear una transacción WFS para actualizar la característica

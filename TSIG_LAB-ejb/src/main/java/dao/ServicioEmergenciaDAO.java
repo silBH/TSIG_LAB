@@ -38,24 +38,25 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
     
     @Override
 	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception{
-		System.out.println("servicioDAO - agregarServicioEmergencia"); //----------------------------- VER SI SE CAMBIA FUNCION		
+		//----------------------------- se manipula directo la base por problema de deserealizacion hibernate
 		String sql = "INSERT INTO hospital_servicioemergencia (hospital_id, servicios_id) VALUES (:idHospital, :idServicio)";
 	    Query query = em.createNativeQuery(sql);
 	    query.setParameter("idHospital", idHospital);
 	    query.setParameter("idServicio", idServicio);
-	    query.executeUpdate();		
+	    query.executeUpdate();
+	    System.out.println("servicioDAO - agregarServicioEmergencia --- FIN");
 	}
     
     @Override
 	public void actualizarServicio(Long idServicio, Long idHospNuevo, Long idHospViejo) {
-		System.out.println("hospitalDAO - actualizarServicio"); //----------------------------- VER SI SE CAMBIA FUNCION
+    	//----------------------------- se manipula directo la base por problema de deserealizacion hibernate
 		String sql = "UPDATE hospital_servicioemergencia SET hospital_id = :idHospNuevo WHERE hospital_id = :idHospViejo AND servicios_id = :idServicio";
 	    Query query = em.createNativeQuery(sql);
 	    query.setParameter("idHospNuevo", idHospNuevo);
 	    query.setParameter("idHospViejo", idHospViejo);
 	    query.setParameter("idServicio", idServicio);
 	    query.executeUpdate();
-	    System.out.println("hospitalDAO - actualizarServicio --- FIN");
+	    System.out.println("servicioDAO - actualizarServicio --- FIN");
 	}
    
     @Override
