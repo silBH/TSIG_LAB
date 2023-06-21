@@ -4,30 +4,4 @@
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
 	version="4.0">
 
-	<!-- Configuración de servlet -->
-	<servlet>
-		<servlet-name>CrearAdmin</servlet-name>
-		<servlet-class>servlets.CrearAdmin</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>CrearAdmin</servlet-name>
-		<url-pattern>/CrearAdmin</url-pattern>
-	</servlet-mapping>
-	<servlet>
-		<servlet-name>LoginAdmin</servlet-name>
-		<servlet-class>servlets.LoginAdmin</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>LoginAdmin</servlet-name>
-		<url-pattern>/LoginAdmin</url-pattern>
-	</servlet-mapping>
-	<servlet>
-		<servlet-name>ListarAdministradores</servlet-name>
-		<servlet-class>servlets.ListarAdministradores</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>ListarAdministradores</servlet-name>
-		<url-pattern>/ListarAdministradores</url-pattern>
-	</servlet-mapping>
-
 </web-app>

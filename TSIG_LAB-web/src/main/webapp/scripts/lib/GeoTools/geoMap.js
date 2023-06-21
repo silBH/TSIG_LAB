@@ -137,28 +137,28 @@ var lyrZonas = new ol.layer.Tile({
 });
 
 ////CAPAS//////////
-GeoMap.prototype.CrearMapa = function (target, center, zoom) {
-	var _target = target || 'map',
-		_center = center || [-56.1645, -34.8339],
-		_zoom = zoom || 10;
+GeoMap.prototype.CrearMapa= function(target,center,zoom){
+    var _target = target || 'map',
+    _center = center || [-6253611.066855117, -4141044.3788586617],
+    _zoom = zoom || 10;
 
-	this.map = new ol.Map({
-		target: _target,
-		layers: [lyrOSM, lyrLinea2, lyrPunto2, lyrZonas2, lyrUsuario2, lyrEjes],
-		view: new ol.View({
-			center: ol.proj.fromLonLat(_center),
-			zoom: _zoom
-		})
-	});
+    this.map = new ol.Map({
+        target: _target,
+        layers: [lyrOSM,lyrLinea2,lyrPunto2,lyrZonas2,lyrUsuario2,lyrEjes],
+        view : new ol.View({
+            center: (_center),
+            zoom:_zoom
+        })
+    });
+  /*
+    var layerSwitcher = new ol.control.LayerSwitcher({
+        tipLabel: 'Leyenda', 
+        groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
+    });
 
-	var layerSwitcher = new ol.control.LayerSwitcher({
-		tipLabel: 'Leyenda',
-		groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
-	});
-
-	this.map.addControl(layerSwitcher);
-
-	map = this.map;
+    this.map.addControl(layerSwitcher);
+	*/
+	map = this.map;	
 };
 
 GeoMap.prototype.CrearMapaAdmin = function (target, center, zoom) {
@@ -170,7 +170,7 @@ GeoMap.prototype.CrearMapaAdmin = function (target, center, zoom) {
 		target: _target,
 		layers: [lyrOSM, lyrServicios, lyrAmbulancias],
 		view: new ol.View({
-			center: ol.proj.fromLonLat(_center),
+			center: (_center),
 			zoom: _zoom
 		})
 	});
@@ -197,13 +197,13 @@ GeoMap.prototype.updateGeoserverLayer = function (cqlFilter) {
 	});
 };
 
-GeoMap.prototype.CrearControlBarra = function () {
-	var mainBar = new ol.control.Bar();
-	this.map.addControl(mainBar);
-	mainBar.addControl(new ol.control.FullScreen());
-	mainBar.addControl(new ol.control.Rotate());
-	mainBar.addControl(new ol.control.ZoomToExtent({ extent: [-6276100, -4132519, -6241733, -4132218] }));
-	mainBar.setPosition('top-left');
+GeoMap.prototype.CrearControlBarra= function(){
+    var mainBar = new ol.control.Bar();
+    this.map.addControl(mainBar);
+    //mainBar.addControl(new ol.control.FullScreen());
+    //mainBar.addControl(new ol.control.Rotate());	
+    //mainBar.addControl(new ol.control.ZoomToExtent({extent:[-6276100,-4132519, -6241733,-4132218]}));
+    mainBar.setPosition('top-left');
 }
 
 GeoMap.prototype.CrearBarraBusqueda = function () {
@@ -246,70 +246,73 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	this.map.addLayer(multiLineStringLayer);
 
 
+	
+var buscarDireccion = function() {
+		var nombreCalleInput = document.getElementById('nombre-calle-input').value;
+		var numeroPuertaInput = document.getElementById('numero-puerta-input').value;
 
-	var buscarDireccion = function () {
-		var direccionInput = document.getElementById('direccion-input').value;
-		if (direccionInput) {
-			var direccion = direccionInput.trim();
+		var nombreCalle = nombreCalleInput.trim();
+		var numeroPuerta = numeroPuertaInput.trim();
 
-			// Validar el formato de la dirección
-			var direccionRegExp = /^([\w\s]+),\s*(\d+)$/;
-			var match = direccion.match(direccionRegExp);
-			if (match) {
-				var nombreCalle = match[1].trim();
-				var numeroPuerta = match[2].trim();
+		if (nombreCalle && numeroPuerta) {
+			// Realizar la solicitud de geocodificación
+			var direccionGeocodificada = nombreCalle + ' ' + numeroPuerta;
+			var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(direccionGeocodificada) + '&format=json&addressdetails=1';
 
-				// Realizar la solicitud de geocodificación
-				var direccionGeocodificada = nombreCalle + ', ' + numeroPuerta;
-				var url = 'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(direccionGeocodificada) + '&format=json&addressdetails=1';
-				fetch(url)
-					.then(function (response) {
-						return response.json();
-					})
-					.then(function (data) {
-						if (data.length > 0) {
-							var latitud = parseFloat(data[0].lat);
-							var longitud = parseFloat(data[0].lon);
+			fetch(url)
+				.then(function(response) {
+					return response.json();
+				})
+				.then(function(data) {
+					if (data.length > 0) {
+						var latitud = parseFloat(data[0].lat);
+						var longitud = parseFloat(data[0].lon);
 
-							// Centrar el mapa en la ubicación encontrada
-							self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
-							self.map.getView().setZoom(19);
+						// Centrar el mapa en la ubicación encontrada
+						self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
+						self.map.getView().setZoom(15);
 
-							// Crear el marcador en la ubicación encontrada
-							var marker = new ol.Feature({
-								geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
-							});
+						// Crear el marcador en la ubicación encontrada
+						var marker = new ol.Feature({
+							geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
+						});
 
-							vectorLayer.getSource().clear();
-							vectorLayer.getSource().addFeature(marker);
-							// Obtener las coordenadas del marcador
-							// Obtener las coordenadas del marcador en EPSG:3857
-							var coords3857 = marker.getGeometry().getCoordinates();
-							// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
-							//var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+						vectorLayer.getSource().clear();
+						vectorLayer.getSource().addFeature(marker);
 
-							// Mostrar las coordenadas transformadas en la consola
-							console.log('Coordenadas 3857:', coords3857);
-							//console.log('Coordenadas 32721:', coords32721);
+						// Obtener las coordenadas del marcador
+						var coords3857 = marker.getGeometry().getCoordinates();
 
-							// Construir el filtro CQL utilizando las coordenadas transformadas
-							var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
-							self.updateGeoserverLayer(cqlFilter);
-							ambulanciasCercanas(coords3857);
-						} else {
-							alert('No se pudo encontrar la dirección.');
-						}
-					})
-					.catch(function (error) {
-						console.error('Error al realizar la solicitud de geocodificación:', error);
-						alert('Error al buscar la dirección.');
-					});
-			} else {
-				alert('El formato de la dirección no es válido. Utiliza el formato "nombre de calle, número de puerta".');
-			}
+						// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
+						// var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+
+						// Mostrar las coordenadas transformadas en la consola
+						console.log('Coordenadas 3857:', coords3857);
+						// console.log('Coordenadas 32721:', coords32721);
+						var coordenadasTexto = coords3857.join(' ');
+						console.log(coordenadasTexto);
+						emergenciaFueraZona(coordenadasTexto)
+						.then(resultado => {
+							if (resultado.codigoRetorno === 0) {
+								ambulanciasCercana(coords3857);
+							} 
+						})	
+						// Construir el filtro CQL utilizando las coordenadas transformadas
+						var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
+						self.updateGeoserverLayer(cqlFilter);
+					} else {
+						alert('No se pudo encontrar la dirección.');
+					}
+				})
+				.catch(function(error) {
+					console.error('Error al realizar la solicitud de geocodificación:', error);
+					alert('Error al buscar la dirección.');
+				});
+		} else {
+			alert('Por favor, ingresa la calle y el número.');
 		}
 	};
-
+  
 	var buscarCalleDibujarLinea = function () {
 		Swal.fire({
 			title: 'Ingresa los nombres de las calles',
@@ -386,20 +389,27 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 								});
 							});
 
-							if (lastPointCoordinates) {
-								self.map.getView().setCenter(lastPointCoordinates);
-								self.map.getView().setZoom(19);
-							}
-							var coords3857 = point.getGeometry().getCoordinates();
-							console.log('coordenada:', coords3857);
-							ambulanciasCercanas(coords3857);
-						})
-						.catch(function (error) {
-							console.log('Error en la solicitud WFS:', error);
-						});
-				} else {
-					alert('Por favor, ingresa los nombres de las calles.');
-				}
+					if (lastPointCoordinates) {
+					  self.map.getView().setCenter(lastPointCoordinates);
+					  self.map.getView().setZoom(19);
+					}
+					var coords3857 = point.getGeometry().getCoordinates();
+					console.log('coordenada:',coords3857);
+					var coordenadasTexto = coords3857.join(' ');
+					console.log(coordenadasTexto);
+					emergenciaFueraZona(coordenadasTexto)
+					.then(resultado => {
+						if (resultado.codigoRetorno === 0) {
+							ambulanciasCercana(coords3857);
+						} 
+					})						
+				})
+				  .catch(function (error) {
+					console.log('Error en la solicitud WFS:', error);
+				  });
+			  } else {
+				alert('Por favor, ingresa los nombres de las calles.');
+			  }
 			},
 		});
 	};
@@ -493,7 +503,7 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 		}
 	};
 
-	function ambulanciasCercanas(coords3857) {
+	function ambulanciasCercana(coords3857) {
 		// Realizar la consulta WFS
 		fetch('http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Arecorridos2&outputFormat=application/json')
 			.then(response => response.json())
@@ -508,13 +518,22 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 				// Obtener la feature más cercana (primera feature después de la ordenación)
 				const closestFeature = data.features[0];
 
-				// Obtener el atributo 'nombre' de la feature más cercana
-				const nombre = closestFeature.properties.nombre;
-				console.log(nombre);
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
+			// Obtener el atributo 'nombre' de la feature más cercana
+			const nombre = closestFeature.properties.nombre;
+			console.log(nombre);
+			
+			Swal.fire({
+				title: 'Ambulancia solicitada correctamente',
+				text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+				icon: 'success',
+				showCancelButton: false,
+				confirmButtonColor: '#3085d6',
+				confirmButtonText: 'Aceptar'
 			});
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la consulta WFS:', error);
+		  });
 
 		// Función para calcular la distancia entre dos puntos en coordenadas EPSG:3857
 		function getDistance(x1, y1, x2, y2) {
@@ -577,38 +596,44 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 							}
 							contenido += '</ul>';
 
-							Swal.fire({
-								icon: 'success',
-								title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
-								html: contenido
-							});
-						})
-						.catch(error => {
-							console.error('Error en Promise.all:', error);
-						});
-				}
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
-			});
-	}
+            Swal.fire({
+              icon: 'success',
+              title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
+              html: contenido
+            });
+          })
+          .catch(error => {
+            console.error('Error en Promise.all:', error);
+          });
+      }
+    })
+    .catch(error => {
+      console.error('Error al realizar la consulta WFS:', error);
+    });
+}
+	
+    var nombreCalleInputElement = document.createElement('input');
+	nombreCalleInputElement.setAttribute('id', 'nombre-calle-input');
+	nombreCalleInputElement.setAttribute('placeholder', 'Nombre de la calle');
+	nombreCalleInputElement.setAttribute('type', 'text');
 
-	var inputElement = document.createElement('input');
-	inputElement.setAttribute('id', 'direccion-input');
-	inputElement.setAttribute('placeholder', 'Buscar por calle y número (nombreCalle, numeroPuerta)');
-	inputElement.setAttribute('type', 'text');
+	var numeroPuertaInputElement = document.createElement('input');
+	numeroPuertaInputElement.setAttribute('id', 'numero-puerta-input');
+	numeroPuertaInputElement.setAttribute('placeholder', 'Numero de puerta');
+	numeroPuertaInputElement.setAttribute('type', 'text');
 
 	var buttonElement = document.createElement('button');
-	buttonElement.textContent = 'Buscar';
+	buttonElement.textContent = 'Solicitar';
 	buttonElement.addEventListener('click', buscarDireccion);
 	buttonElement.style.width = '100%'; // Ajusta el ancho del botón al 100%
 	buttonElement.style.padding = '6px'; // Ajusta el relleno del botón
 
-	this.mainBarCustom.element.appendChild(inputElement);
+	this.mainBarCustom.element.appendChild(nombreCalleInputElement);
+	this.mainBarCustom.element.appendChild(numeroPuertaInputElement);
 	this.mainBarCustom.element.appendChild(buttonElement);
-
-	var buttonElement2 = document.createElement('button');
-	buttonElement2.textContent = 'Dibujar Calles';
+  
+    var buttonElement2 = document.createElement('button');
+	buttonElement2.textContent = 'Solicitar Ambulancia en un cruce';
 	buttonElement2.addEventListener('click', buscarCalleDibujarLinea);
 	buttonElement2.style.width = '100%';
 	buttonElement2.style.padding = '6px';
@@ -629,7 +654,15 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	buttonElement4.style.width = '100%';
 	buttonElement4.style.padding = '6px';
 
-	this.mainBarCustom.element.appendChild(buttonElement4);
+    this.mainBarCustom.element.appendChild(buttonElement4);
+
+	var buttonElement5 = document.createElement('button');
+	buttonElement5.textContent = 'Servicio de Emergencia con más ambulancias';
+	buttonElement5.addEventListener('click', emergenciaConMayorAmbulancias);
+	buttonElement5.style.width = '100%';
+	buttonElement5.style.padding = '6px';
+
+	this.mainBarCustom.element.appendChild(buttonElement5);	
 };
 
 GeoMap.prototype.CrearControlBarraDibujo = function () {
@@ -2404,4 +2437,228 @@ function emergenciaFueraZona(coordenadasTexto) {
 			console.error('Error al realizar la consulta WFS:', error);
 			throw error;
 		});
+}
+
+GeoMap.prototype.CrearControlBarraSeleccionar = function() {
+    var self = this;
+
+    if (!this.mainBarCustom) {
+        this.mainBarCustom = new ol.control.Bar();
+        this.map.addControl(this.mainBarCustom);
+        this.mainBarCustom.setPosition('top');
+    }
+
+    var estiloDibujo = new ol.style.Style({
+        fill: new ol.style.Fill({
+            color: 'rgba(35, 163, 12, 0.5)'
+        }),
+        stroke: new ol.style.Stroke({
+            color: '#23a30c',
+            width: 5
+        }),
+        image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({
+                color: '#23a30c'
+            }),
+            stroke: new ol.style.Stroke({
+                color: 'rgba(35, 163, 12, 0.5)',
+                width: 8
+            }),
+        })
+    });
+	
+	 if(!this.vector){
+        this.vector = new ol.layer.Vector({
+            title:'Capa de dibujo',
+            displayInLayerSwitcher: false,
+            source: new ol.source.Vector(),
+            style:estiloDibujo
+        });
+        this.map.addLayer(this.vector);
+    }
+	
+    var barraSeleccionar = new ol.control.Bar({
+        group: true,
+        toggleOne: true
+    });
+    this.mainBarCustom.addControl(barraSeleccionar);
+
+    var controlModificar = new ol.interaction.Modify({ source: this.vector.getSource() });
+    this.map.addInteraction(controlModificar);
+
+    var controlSeleccionar = new ol.control.Toggle({
+        title: 'Seleccionar',
+        html: '<i class="fa fa-mouse-pointer"></i>',
+        interaction: new ol.interaction.Select({
+            layers: [this.vector]
+        }),
+        bar: new ol.control.Bar({
+            controls: [
+                new ol.control.TextButton({
+                    title: 'Ver Información',
+                    html: 'Info',
+                    handleClick: function() {
+                        var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+                        if (selectedFeatures.getLength() > 0) {
+                            var selectedFeature = selectedFeatures.item(0);
+
+                            var id = selectedFeature.getId();
+                            var nombre = selectedFeature.get('nombre');
+                            var tipo = selectedFeature.getGeometry().getType();
+
+                            // Establecer los valores de los atributos en la característica seleccionada
+                            selectedFeature.set('id', id);
+                            selectedFeature.set('tipo', tipo);
+                            selectedFeature.set('nombree', nombre);
+
+                            // Crear el Popup de OpenLayers si no existe
+                            if (!popup) {
+                                popup = new ol.Overlay.PopupFeature({
+                                    popupClass: 'default anim',
+                                    select: controlSeleccionar.getInteraction(),
+                                    template: {
+                                        attributes: {
+                                            'id': { title: 'ID: ' },
+                                            'nombree': { title: 'Nombre: ' },
+                                            'tipo': { title: 'Tipo: ' }
+                                        }
+                                    }
+                                });
+                                self.map.addOverlay(popup);
+                            }
+
+                            // Mostrar el Popup en la posición de la característica seleccionada
+                            popup.show(selectedFeature);
+                        }
+                    }
+                })
+            ]
+        })
+    });
+
+    controlSeleccionar.on('change:active', function(evt) {
+        if (evt.active) {
+            obtenerDatosCapas();
+        } else {
+            eliminarVectorSource();
+            desactivarPopup();
+        }
+    });
+
+    var popup;
+
+    function desactivarPopup() {
+        if (popup) {
+            self.map.removeOverlay(popup);
+            popup = null;
+        }
+    }
+
+    function obtenerDatosCapas() {
+        // Obtén los datos de las capas como GML
+        var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Ahospital2,tsig2023%3Arecorridos2';
+
+        fetch(url)
+            .then(function(response) {
+                return response.text();
+            })
+            .then(function(data) {
+                // Crea la fuente de vector con los datos obtenidos
+                var vectorSource = new ol.source.Vector({
+                    features: new ol.format.WFS().readFeatures(data)
+                });
+
+                vectorSource.forEachFeature(function(feature) {
+                    var geometry = feature.getGeometry();
+                    var coordinates = geometry.getCoordinates();
+                    geometry.setCoordinates(coordinates);
+                });
+
+                // Agrega la fuente de vector a la capa vectorial existente
+                if (self.vector) {
+                    self.vector.setSource(vectorSource);
+                }
+            })
+            .catch(function(error) {
+                console.error('Error al obtener los datos de las capas:', error);
+            });
+    }
+
+    function eliminarVectorSource() {
+        // Elimina la fuente de vector de la capa vectorial existente
+        if (self.vector) {
+            self.vector.setSource(null);
+        }
+    }
+
+    barraSeleccionar.addControl(controlSeleccionar);
+};
+
+function emergenciaConMayorAmbulancias() {
+    var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Ahospital2&outputFormat=application/json';
+
+    fetch(urlPuntos)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.features.length === 0) {
+                Swal.fire('No existen servicios de emergencia');
+                return;
+            }
+
+            var fetchPromises = [];
+
+            data.features.forEach(function(feature) {
+                var nombre = feature.properties.nombre;
+                var coordinates = feature.geometry.coordinates;
+                var coordenadasTexto = coordinates.join(' ');
+
+                var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azonas2&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
+
+                var fetchPromise = fetch(urlPoligonos)
+                    .then(function(response) {
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        return data.features.length;
+                    });
+
+                fetchPromises.push(fetchPromise);
+            });
+
+            return Promise.all(fetchPromises)
+                .then(function(featuresCounts) {
+                    var maxFeaturesCount = 0;
+                    var puntoConMayorFeatures = null;
+
+                    featuresCounts.forEach(function(count, index) {
+                        var feature = data.features[index];
+                        var nombre = feature.properties.nombre;
+
+                        if (count > maxFeaturesCount) {
+                            maxFeaturesCount = count;
+                            puntoConMayorFeatures = {
+                                nombre: nombre,
+                                coordinates: feature.geometry.coordinates
+                            };
+                        }
+                    });
+
+                    if (puntoConMayorFeatures) {
+                        Swal.fire('El servicio de Emergencia con mayor cantidad de ambulancias asociadas es "' + puntoConMayorFeatures.nombre + '"');
+
+                        var cqlFilter = "nombre = '" + puntoConMayorFeatures.nombre + "'";
+                        lyrPunto2.getSource().updateParams({ CQL_FILTER: cqlFilter });
+              
+                        map.getView().setCenter(puntoConMayorFeatures.coordinates);
+
+                        var zoomLevel = 18;
+                        map.getView().setZoom(zoomLevel);
+                    } else {
+                        Swal.fire('No existen ambulancias');
+                    }
+                });
+        });
 }

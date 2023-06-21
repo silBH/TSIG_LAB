@@ -5,10 +5,10 @@ function CargarMapa(){ //original para pruebas
     var layers = new GeoLayers();
    
     map.CrearMapa('map',null,16);
-    map.CrearControlBarra();
-    map.CrearControlBarraDibujo();
-	map.CrearBarraBusqueda();
-	
+    //map.CrearControlBarra();
+    //map.CrearControlBarraDibujo();
+    map.CrearControlBarraSeleccionar(); //NUEVO
+	map.CrearBarraBusqueda();	//Modificado
 }
 
 function CargarMapaAdministrador(){
