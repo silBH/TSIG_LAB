@@ -46,43 +46,24 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
 	    query.executeUpdate();		
 	}
     
+    @Override
+	public void actualizarServicio(Long idServicio, Long idHospNuevo, Long idHospViejo) {
+		System.out.println("hospitalDAO - actualizarServicio"); //----------------------------- VER SI SE CAMBIA FUNCION
+		String sql = "UPDATE hospital_servicioemergencia SET hospital_id = :idHospNuevo WHERE hospital_id = :idHospViejo AND servicios_id = :idServicio";
+	    Query query = em.createNativeQuery(sql);
+	    query.setParameter("idHospNuevo", idHospNuevo);
+	    query.setParameter("idHospViejo", idHospViejo);
+	    query.setParameter("idServicio", idServicio);
+	    query.executeUpdate();
+	    System.out.println("hospitalDAO - actualizarServicio --- FIN");
+	}
    
     @Override
 	public ServicioEmergencia obtenerPorId(Long id) {
-    	System.out.println("----------------- obtenerPorId 1 ---- NO FUNCIONA");    	
+    	System.out.println("----------------- obtenerPorId 1 ---- NO FUNCIONA");   //problema de deserealizacion 	
     	ServicioEmergencia obj = em.find(ServicioEmergencia.class, id);    	
     	return 	obj;
-	}/*
-    @Override 
-    public ServicioEmergencia obtenerPorId(Long id) {
-    	System.out.println("----------------obtenerPorId 1");
-        TypedQuery<ServicioEmergencia> query = em.createQuery(
-            "SELECT se FROM ServicioEmergencia se WHERE se.id = :id", 
-            ServicioEmergencia.class
-        );
-        query.setParameter("id", id);
-
-        try {
-        	System.out.println("----------------obtenerPorId 2");
-            return query.getSingleResult();            
-        } catch (NoResultException e) {
-        	System.out.println("----------------obtenerPorId 3");
-            return null; // El servicio de emergencia no existe con el ID proporcionado
-        }
-    }
-    @Override
-    public ServicioEmergencia obtenerPorId(Long id) {
-        String sql = "SELECT * FROM servicioemergencia WHERE id = :id";
-        @SuppressWarnings("unchecked")
-		NativeQuery<ServicioEmergencia> query = (NativeQuery<ServicioEmergencia>) em.createNativeQuery(sql, ServicioEmergencia.class);
-        query.setParameter("id", id);
-
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            return null; // El servicio de emergencia no existe con el ID proporcionado
-        }
-    }*/
+	}
     
     @Override
 	public void crear(ServicioEmergencia servicio) {

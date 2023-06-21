@@ -62,8 +62,8 @@ public class HospitalServlet extends HttpServlet {
 			case "/eliminar":
 				eliminarHospital(request, response);
 				break;
-			case "/agregarServicioEmergencia":
-				agregarServicioEmergencia(request, response);
+			case "/actualizarServicio":
+				actualizarServicioEmergencia(request, response);
 				break;
 			case "/agregarAmbulancia":
 				agregarAmbulancia(request, response);
@@ -176,10 +176,26 @@ public class HospitalServlet extends HttpServlet {
 		response.sendRedirect("hospitalMenu.jsp");		
 	}
 
-	private void agregarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
+	private void actualizarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
-		//por ahroa se usa el otro servlet hospitalServlet2
-		response.sendRedirect("");
+		String serviceId = request.getParameter("servicioId");    	
+    	String hospIdNuevo = request.getParameter("hospIdNuevo");
+    	String hospIdViejo = request.getParameter("hospIdViejo");
+    	    
+    	System.out.println("----------------- servlet serviceId: " + serviceId);
+    	System.out.println("----------------- servlet hospIdNuevo: " + hospIdNuevo);
+    	System.out.println("----------------- servlet hospIdViejo: " + hospIdViejo);
+    	
+    	try {
+    		long idServicio = Long.parseLong(serviceId);
+        	long idHospNuevo = Long.parseLong(hospIdNuevo);
+        	long idHospViejo = Long.parseLong(hospIdViejo);
+        	hospBusiness.actualizarServicioEmergencia(idServicio, idHospNuevo, idHospViejo);
+        	
+    	} catch (Exception e) {
+            // Error al parsear el ID del servicio
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
 	}
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)

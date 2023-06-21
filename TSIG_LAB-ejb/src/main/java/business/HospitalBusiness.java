@@ -104,12 +104,16 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	@Override
 	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception{//ServicioEmergencia servicio
 		System.out.println("HospitalBusiness - agregarServicioEmergencia --- ");
-		/*Hospital hosp = servicio.getHospital();	
-		List<ServicioEmergencia> servicios = hosp.getServicios();
-		servicios.add(new ServicioEmergencia(hosp, servicio.getTotalCamas(), servicio.getCamasDisponibles(),
-				servicio.getUbicacion()));*/
+		//problema de deserealizacion... se manipula directamente la base en DAO
 		servicioData.agregarServicioEmergencia(idHospital, idServicio); //----------------------- VER SI SE CAMBIA		
 	}
+	
+	@Override
+	public void actualizarServicioEmergencia(Long idServicio, Long idHospNuevo, Long idHospViejo) throws Exception {
+		//problema de deserealizacion... se manipula directamente la base en DAO
+		servicioData.actualizarServicio(idServicio, idHospNuevo, idHospViejo);
+	}
+	
 	
 	@Override
 	public void agregarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception{

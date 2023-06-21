@@ -2,6 +2,7 @@ package dao;
 
 import java.util.List;
 
+import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -9,6 +10,7 @@ import javax.persistence.Query;
 
 import persistence.Conexion;
 import entity.Hospital;
+import entity.ServicioEmergencia;
 
 //estas funciones solo se usan desde la interfaz local
 
@@ -59,5 +61,5 @@ public class HospitalDAO implements HospitalDAOLocal {
 	public void eliminar(Hospital hospital) {
 		em.remove(em.merge(hospital));
 	}
-
+		
 }

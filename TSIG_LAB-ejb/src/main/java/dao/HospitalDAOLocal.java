@@ -14,5 +14,5 @@ public interface HospitalDAOLocal {
 	public Hospital obtenerPorNombre(String nombre);
 	public void crear(Hospital hospital);
 	public void editar(Hospital hospital);
-	public void eliminar(Hospital hospital);
+	public void eliminar(Hospital hospital);	
 }
