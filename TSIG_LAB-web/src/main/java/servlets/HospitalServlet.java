@@ -148,7 +148,6 @@ public class HospitalServlet extends HttpServlet {
 		}
 		DtHospital hospital = new DtHospital(null, nombre, tipo, null, null);
 		hospBusiness.crear(hospital);
-		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void editarHospital(HttpServletRequest request, HttpServletResponse response)
@@ -166,14 +165,12 @@ public class HospitalServlet extends HttpServlet {
 		}
 		DtHospital hospital = new DtHospital(id, nombre, tipo, null, null);
 		hospBusiness.editar(hospital);
-		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void eliminarHospital(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
 		Long id = Long.parseLong(request.getParameter("id"));
 		hospBusiness.eliminar(id);
-		response.sendRedirect("hospitalMenu.jsp");		
 	}
 
 	private void actualizarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
@@ -200,7 +197,6 @@ public class HospitalServlet extends HttpServlet {
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("hospitalMenu.jsp");
 	}
 
 	private void agregarServicio(HttpServletRequest request, HttpServletResponse response)
@@ -227,6 +223,5 @@ public class HospitalServlet extends HttpServlet {
 
 	private void eliminarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.sendRedirect("hospitalMenu.jsp");
 	}
 }

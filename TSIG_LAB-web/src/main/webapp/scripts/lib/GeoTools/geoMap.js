@@ -129,7 +129,7 @@ GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 
 	this.map = new ol.Map({
 		target: _target,
-		layers: [lyrOSM, lyrLinea2, lyrPunto2, lyrzona, lyrUsuario2, lyrEjes],
+		layers: [lyrOSM, lyrZonas, lyrAmbulancias, lyrServicios],
 		view: new ol.View({
 			center: (_center),
 			zoom: _zoom
@@ -173,7 +173,7 @@ GeoMap.prototype.updateGeoserverLayer = function (cqlFilter) {
 		'CQL_FILTER': cqlFilter
 	});
 
-	lyrzona.getSource().updateParams({
+	lyrZonas.getSource().updateParams({
 		'CQL_FILTER': cqlFilter
 	});
 
