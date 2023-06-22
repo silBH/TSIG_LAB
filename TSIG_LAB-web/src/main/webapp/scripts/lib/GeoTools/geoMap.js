@@ -163,7 +163,7 @@ GeoMap.prototype.CrearMapa= function(target,center,zoom){
 
 GeoMap.prototype.CrearMapaAdmin = function (target, center, zoom) {
 	var _target = target || 'map',
-		_center = center || [-56.164269, -34.896199],
+		_center = center || [-6253611.066855117, -4141044.3788586617],
 		_zoom = zoom || 30;
 
 	this.map = new ol.Map({

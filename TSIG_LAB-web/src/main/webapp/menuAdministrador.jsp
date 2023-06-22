@@ -22,17 +22,25 @@
     <style>
         #map{
             width: 100%;
-            height: 400px;;
+            height: 700px;
+        }
+         .gradient-custom {
+        /* Chrome 10-25, Safari 5.1-6 */
+        background: -webkit-linear-gradient(to right, rgb(142, 195, 248), rgb(158, 158, 158));
+        /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+        background: linear-gradient(to right, rgb(142, 195, 248), rgb(158, 158, 158))
         }
     </style>
 
 </head>
-<body>	
-	<h3>Gestión del sistema</h3>
-	<div id="map"></div>
-    <div id="mouse-position"></div>    
-    <script>
-    	CargarMapaAdministrador();
-    </script>
+<body>
+	<%@ include file="headerAdministrador.jsp" %>    
+    <section class="vh-100 gradient-custom" style="height: 100vh;">
+        <div id="map"></div>
+        <div id="mouse-position"></div>    
+        <script>
+            CargarMapaAdministrador();
+        </script>
+    </section>
 </body>
 </html>
