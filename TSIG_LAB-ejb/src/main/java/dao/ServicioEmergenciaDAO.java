@@ -77,26 +77,26 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
 	}
     
     @Override
-	public void eliminar(ServicioEmergencia servicio) {
-		//se hace por geoserver
+	public void eliminar(ServicioEmergencia servicio) {		
+		em.remove(servicio);
 	}
     
     @Override
     public void eliminarID(Long servId) {
-    	System.out.println("servicioDAO - eliminarID --- 1");
     	
+    	em.getTransaction().begin();
     	String sql = "DELETE FROM hospital_servicioemergencia WHERE servicios_id = :servId";
     	Query query = em.createNativeQuery(sql);
 	    query.setParameter("servId", servId);
 	    query.executeUpdate();
-
-	    System.out.println("servicioDAO - eliminarID --- 2");
+	    em.getTransaction().commit();
 	    
+	    em.getTransaction().begin();
     	String sql2 = "DELETE FROM servicioemergencia WHERE id = :servId";
 	    Query query2 = em.createNativeQuery(sql2);
 	    query2.setParameter("servId", servId);
 	    query2.executeUpdate();
-	    System.out.println("servicioDAO - eliminarID --- 3");
+	    em.getTransaction().commit();
     }
     
 }

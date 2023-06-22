@@ -59,7 +59,7 @@ public class HospitalServlet extends HttpServlet {
 			case "/editar":
 				editarHospital(request, response);
 				break;
-			case "/eliminar":
+			case "/eliminarHospital":
 				eliminarHospital(request, response);
 				break;
 			case "/actualizarServicio":
@@ -169,8 +169,18 @@ public class HospitalServlet extends HttpServlet {
 
 	private void eliminarHospital(HttpServletRequest request, HttpServletResponse response)
 			throws Exception {
-		Long id = Long.parseLong(request.getParameter("id"));
-		hospBusiness.eliminar(id);
+		
+		String id = request.getParameter("id");   	    	    	    
+    	System.out.println("----------------- servlet eliminar hosp id : " + id);
+    	
+    	try {
+    		long idHosp = Long.parseLong(id);
+        	hospBusiness.eliminar(idHosp);
+        	System.out.println("----------------- servlet eliminar hosp id : FIN ");
+    	} catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+    	
 	}
 
 	private void actualizarServicioEmergencia(HttpServletRequest request, HttpServletResponse response)
