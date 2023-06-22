@@ -71,8 +71,8 @@ public class HospitalServlet extends HttpServlet {
 			case "/agregarServicio":
 				agregarServicio(request, response);
 				break;
-			case "/eliminarAmbulancia":
-				eliminarAmbulancia(request, response);
+			case "/eliminarServicio":
+				eliminarServicio(request, response);
 				break;
 			default:
 				throw new Exception("Acción desconocida: " + action);
@@ -221,7 +221,24 @@ public class HospitalServlet extends HttpServlet {
         response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
 
-	private void eliminarAmbulancia(HttpServletRequest request, HttpServletResponse response)
+	private void eliminarServicio(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		
+		String serviceId = request.getParameter("id");
+		System.out.println("----------------- servlet id serviceId: 1" + serviceId);		
+				
+		try {       	
+                     
+            long id = Long.parseLong(serviceId);
+    		System.out.println("----------------- servlet id serviceId: 2" + id);
+    		servicioBusiness.eliminarServicioId(id);
+    		System.out.println("----------------- servlet id serviceId: 3");
+            
+        } catch (Exception e) {
+            // Error al parsear el ID del servicio
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+		
+		
 	}
 }

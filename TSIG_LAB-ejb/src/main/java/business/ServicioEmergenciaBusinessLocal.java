@@ -14,4 +14,5 @@ public interface ServicioEmergenciaBusinessLocal {
 	public void crear(DtServicioEmergencia servicio);
 	public void editar(DtServicioEmergencia servicio);
 	public void eliminar(DtServicioEmergencia servicio);
+	public void eliminarServicioId(Long id);
 }

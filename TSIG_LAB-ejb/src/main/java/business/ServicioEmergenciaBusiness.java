@@ -60,4 +60,11 @@ public class ServicioEmergenciaBusiness implements ServicioEmergenciaBusinessLoc
 	public void eliminar(DtServicioEmergencia servicio) {
     	//completar
 	}
+    
+    @Override
+    public void eliminarServicioId(Long id) {
+    	System.out.println("----------------- eliminarServicioId 1");
+    	servicioData.eliminarID(id);
+    	System.out.println("----------------- eliminarServicioId 2");
+    }
 }
