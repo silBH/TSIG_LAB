@@ -38,7 +38,26 @@
         background: linear-gradient(to right, rgb(142, 195, 248), rgb(158, 158, 158))
         }
     </style>
+	
+<script>
+    function mostrarMensajeError() {
+        <% String errorMessage = (String) request.getSession().getAttribute("message"); %>
+        <% String loginError = request.getParameter("loginError"); %>
 
+        if ("<%= errorMessage %>" && "<%= loginError %>" === "true") {
+            const errorMsg = "<%= errorMessage %>";
+            const errorDiv = document.createElement("div");
+            errorDiv.classList.add("alert", "alert-danger", "mt-3");
+            errorDiv.setAttribute("role", "alert");
+            errorDiv.textContent = errorMsg;
+
+            const container = document.querySelector(".container");
+            container.appendChild(errorDiv);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", mostrarMensajeError);
+</script>
 </head>
 <body>
     <%@ include file="headerAnonimo.jsp" %>

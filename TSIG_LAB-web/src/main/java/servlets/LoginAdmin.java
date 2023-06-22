@@ -18,11 +18,6 @@ public class LoginAdmin extends HttpServlet {
     @EJB
     private AdministradorBusinessLocal administradorBusiness;
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.getWriter().append("Served at: ").append(request.getContextPath());
-    }
-
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String username = request.getParameter("username");
@@ -40,18 +35,19 @@ public class LoginAdmin extends HttpServlet {
             if (loggedInAdmin != null) {
                 // Inicio de sesión exitoso
                 request.getSession().setAttribute("loggedInAdmin", loggedInAdmin);
+                request.getSession().setAttribute("nombre", loggedInAdmin.getNombre()); // Almacena el nombre del administrador
                 request.getSession().setAttribute("message", "Inicio de sesión exitoso");
-                response.sendRedirect("index.jsp");
+                response.sendRedirect("menuAdministrador.jsp"); // Redirecciona a menuAdministrador.jsp en caso de éxito
             } else {
                 // Inicio de sesión fallido
                 request.getSession().setAttribute("message", "Nombre de usuario o contraseña incorrectos");
-                response.sendRedirect("login.jsp");
+                response.sendRedirect("index.jsp?loginError=true");
             }
         } catch (Exception e) {
             e.printStackTrace();
             // Error en el inicio de sesión
             request.getSession().setAttribute("message", "Error en el inicio de sesión");
-            response.sendRedirect("login.jsp");
+            response.sendRedirect("index.jsp?loginError=true");
         }
     }
 }

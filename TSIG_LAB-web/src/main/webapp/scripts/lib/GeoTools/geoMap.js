@@ -480,7 +480,7 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 							features.forEach(function (feature) {
 								var id = feature.id;
 								var nombre = feature.properties.nombre;
-								contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+								contenido += 'ID: ' + id + ', Codigo: ' + nombre + '<br><br>';
 							});
 							titulo = titulo1;
 						} else {
@@ -568,14 +568,14 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 						var coordenadasTexto = feature.geometry.coordinates[0]
 							.map(coordinate => coordinate.join(' '))
 							.join(', ');
-
+						console.log('Coordenadas zona Ambulancia: ', coordenadasTexto);
 						return emergenciaDentroZona(coordenadasTexto)
 							.then(resultado => {
 								if (resultado.codigoRetorno === 0) {
-									var nombreObtenido = resultado.nombre;
-									console.log('Servicio de Emergencia: ', nombreObtenido);
+									var idObtenido = resultado.id;
+									console.log('ID de Servicio de Emergencia: ', idObtenido);
 
-									return nombreObtenido;
+									return idObtenido;
 								}
 							})
 							.catch(error => {
@@ -587,7 +587,7 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 						.then(nombresObtenidos => {
 							var cqlFilter = 'IN(' + features.map(feature => "'" + feature.id + "'").join(',') + ')';
 
-							lyrzona.getSource().updateParams({
+							lyrZonas.getSource().updateParams({
 								'CQL_FILTER': cqlFilter
 							});
 
@@ -824,22 +824,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	var controlModificar = new ol.interaction.Modify({ source: this.vector.getSource() });
 	this.map.addInteraction(controlModificar);
 
-	let hospitalesArray = [];
-	function obtenerHospitales() {
-		return new Promise((resolve, reject) => {
-			fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
-				.then(response => response.json())
-				.then(data => {
-					hospitalesArray = data;
-					console.log(hospitalesArray);
-					resolve(hospitalesArray);
-				})
-				.catch(error => {
-					console.error('Error:', error);
-					reject(error);
-				});
-		});
-	}
+	
 
 	function actualizarFeature() {
 		if (lyrAmbulancias.getSource()) {
@@ -1308,7 +1293,30 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											map.addOverlay(popup);
 										}
 									} else if (geometry instanceof ol.geom.LineString) {
-
+										var nombre = selectedFeature.get('nombre');
+										var distancia = Number(selectedFeature.get('distancia'));
+										
+										selectedFeature.set('id', id);
+										selectedFeature.set('hospital', hospName);
+										selectedFeature.set('nombree', nombre);
+										selectedFeature.set('distanciaa', distancia);
+										
+										// Crear el Popup de OpenLayers si no existe
+										if (!popup) {
+											popup = new ol.Overlay.PopupFeature({
+												popupClass: 'default anim',
+												select: controlSeleccionar.getInteraction(),
+												template: {
+													attributes: {
+														'id': { title: 'Ambulancia ID: ' },
+														'hospital': { title: 'Hospital: ' },
+														'nombree': { title: 'Codigo: ' },
+														'distanciaa': { title: 'Distancia: ' }
+													}
+												}
+											});
+											map.addOverlay(popup);
+										}
 									} else if (geometry instanceof ol.geom.Polygon) {
 
 									}
@@ -1908,7 +1916,8 @@ function emergenciaDentroZona(coordenadasTexto) {
 				resultado.codigoRetorno = 1;
 			} else {
 				features.forEach(feature => {
-					resultado.nombre = feature.properties.nombre;
+					console.log(feature);
+					resultado.id = feature.id;
 					//console.log(resultado.nombre);
 				});
 				resultado.codigoRetorno = 0;
@@ -2016,37 +2025,82 @@ GeoMap.prototype.CrearControlBarraSeleccionar = function () {
 					title: 'Ver Información',
 					html: 'Info',
 					handleClick: function () {
-						var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
+					  var selectedFeatures = controlSeleccionar.getInteraction().getFeatures();
 						if (selectedFeatures.getLength() > 0) {
 							var selectedFeature = selectedFeatures.item(0);
-
 							var id = selectedFeature.getId();
-							var nombre = selectedFeature.get('nombre');
-							var tipo = selectedFeature.getGeometry().getType();
+							var geometry = selectedFeature.getGeometry();
 
-							// Establecer los valores de los atributos en la característica seleccionada
-							selectedFeature.set('id', id);
-							selectedFeature.set('tipo', tipo);
-							selectedFeature.set('nombree', nombre);
-
-							// Crear el Popup de OpenLayers si no existe
-							if (!popup) {
-								popup = new ol.Overlay.PopupFeature({
-									popupClass: 'default anim',
-									select: controlSeleccionar.getInteraction(),
-									template: {
-										attributes: {
-											'id': { title: 'ID: ' },
-											'nombree': { title: 'Nombre: ' },
-											'tipo': { title: 'Tipo: ' }
+							obtenerHospitales()
+								.then(() => {
+									var hospId = Number(selectedFeature.get('hospital_id'));
+									function obtenerNombrePorId(hospId) {
+										for (var i = 0; i < hospitalesArray.length; i++) {
+											if (hospitalesArray[i].id === hospId) {
+												return hospitalesArray[i].nombre;
+											}
 										}
+										return null;
 									}
-								});
-								self.map.addOverlay(popup);
-							}
+									var hospName = obtenerNombrePorId(hospId);
 
-							// Mostrar el Popup en la posición de la característica seleccionada
-							popup.show(selectedFeature);
+									if (geometry instanceof ol.geom.Point) {
+										var totalCamas = Number(selectedFeature.get('totalcamas'));
+										var camasDispo = Number(selectedFeature.get('camasdisponibles'));
+										// Establecer los valores de los atributos en la característica seleccionada
+										selectedFeature.set('id', id);
+										selectedFeature.set('hospital', hospName);
+										selectedFeature.set('totalCamas', totalCamas);
+										selectedFeature.set('camasDispo', camasDispo);
+
+										// Crear el Popup de OpenLayers si no existe
+										if (!popup) {
+											popup = new ol.Overlay.PopupFeature({
+												popupClass: 'default anim',
+												select: controlSeleccionar.getInteraction(),
+												template: {
+													attributes: {
+														'id': { title: 'Servicio ID: ' },
+														'hospital': { title: 'Hospital: ' },
+														'totalCamas': { title: 'Total de camas: ' },
+														'camasDispo': { title: 'Camas disponibles: ' }
+													}
+												}
+											});
+											map.addOverlay(popup);
+										}
+									} else if (geometry instanceof ol.geom.LineString) {
+										var nombre = selectedFeature.get('nombre');
+										var distancia = Number(selectedFeature.get('distancia'));
+										
+										selectedFeature.set('id', id);
+										selectedFeature.set('hospital', hospName);
+										selectedFeature.set('nombree', nombre);
+										selectedFeature.set('distanciaa', distancia);
+										
+										// Crear el Popup de OpenLayers si no existe
+										if (!popup) {
+											popup = new ol.Overlay.PopupFeature({
+												popupClass: 'default anim',
+												select: controlSeleccionar.getInteraction(),
+												template: {
+													attributes: {
+														'id': { title: 'Ambulancia ID: ' },
+														'hospital': { title: 'Hospital: ' },
+														'nombree': { title: 'Codigo: ' },
+														'distanciaa': { title: 'Distancia: ' }
+													}
+												}
+											});
+											map.addOverlay(popup);
+										}
+									} else if (geometry instanceof ol.geom.Polygon) {
+
+									}
+									// Mostrar el Popup en la posición de la característica seleccionada
+									popup.show(selectedFeature);
+								})
+
 						}
 					}
 				})
@@ -2074,7 +2128,7 @@ GeoMap.prototype.CrearControlBarraSeleccionar = function () {
 
 	function obtenerDatosCapas() {
 		// Obtén los datos de las capas como GML
-		var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia,tsig2023%3Aambulancia,tsig2023%3Azona';
+		var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia,tsig2023%3Aambulancia';
 
 		fetch(url)
 			.then(function (response) {
@@ -2114,69 +2168,79 @@ GeoMap.prototype.CrearControlBarraSeleccionar = function () {
 };
 
 function emergenciaConMayorAmbulancias() {
-	var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
+  var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
 
-	fetch(urlPuntos)
-		.then(function (response) {
-			return response.json();
-		})
-		.then(function (data) {
-			if (data.features.length === 0) {
-				Swal.fire('No existen servicios de emergencia');
-				return;
-			}
+  fetch(urlPuntos)
+    .then(function(response) {
+      return response.json();
+    })
+    .then(function(data) {
+      if (data.features.length === 0) {
+        Swal.fire('No existen servicios de emergencia');
+        return;
+      }
 
-			var fetchPromises = [];
+      var fetchPromises = [];
 
-			data.features.forEach(function (feature) {
-				var nombre = feature.properties.nombre;
-				var coordinates = feature.geometry.coordinates;
-				var coordenadasTexto = coordinates.join(' ');
+      data.features.forEach(function(feature) {
+        var id = feature.id;
+        var coordinates = feature.geometry.coordinates;
+        var coordenadasTexto = coordinates.join(' ');
 
-				var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
+        var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
 
-				var fetchPromise = fetch(urlPoligonos)
-					.then(function (response) {
-						return response.json();
-					})
-					.then(function (data) {
-						return data.features.length;
-					});
+        var fetchPromise = fetch(urlPoligonos)
+          .then(function(response) {
+            return response.json();
+          })
+          .then(function(data) {
+            return {
+              count: data.features.length,
+              id: id
+            };
+          });
 
-				fetchPromises.push(fetchPromise);
-			});
+        fetchPromises.push(fetchPromise);
+      });
 
-			return Promise.all(fetchPromises)
-				.then(function (featuresCounts) {
-					var maxFeaturesCount = 0;
-					var puntoConMayorFeatures = null;
+      return Promise.all(fetchPromises)
+        .then(function(featuresCounts) {
+          featuresCounts.sort(function(a, b) {
+            return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
+          });
 
-					featuresCounts.forEach(function (count, index) {
-						var feature = data.features[index];
-						var nombre = feature.properties.nombre;
+          var serviciosConMayorAmbulancias = featuresCounts.slice(0, 5); // Obtener los primeros 5 servicios
 
-						if (count > maxFeaturesCount) {
-							maxFeaturesCount = count;
-							puntoConMayorFeatures = {
-								nombre: nombre,
-								coordinates: feature.geometry.coordinates
-							};
-						}
-					});
+          if (serviciosConMayorAmbulancias.length > 0) {
+            var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
 
-					if (puntoConMayorFeatures) {
-						Swal.fire('El servicio de Emergencia con mayor cantidad de ambulancias asociadas es "' + puntoConMayorFeatures.nombre + '"');
+            serviciosConMayorAmbulancias.forEach(function(servicio, index) {
+              rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + '\n';
+            });
 
-						var cqlFilter = "nombre = '" + puntoConMayorFeatures.nombre + "'";
-						lyrPunto2.getSource().updateParams({ CQL_FILTER: cqlFilter });
+            Swal.fire(rankingTexto);
 
-						map.getView().setCenter(puntoConMayorFeatures.coordinates);
+            var puntoConMayorFeatures = serviciosConMayorAmbulancias[0];
+          } else {
+            Swal.fire('No existen ambulancias');
+          }
+        });
+    });
+}
 
-						var zoomLevel = 18;
-						map.getView().setZoom(zoomLevel);
-					} else {
-						Swal.fire('No existen ambulancias');
-					}
+let hospitalesArray = [];
+	function obtenerHospitales() {
+		return new Promise((resolve, reject) => {
+			fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
+				.then(response => response.json())
+				.then(data => {
+					hospitalesArray = data;
+					console.log(hospitalesArray);
+					resolve(hospitalesArray);
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					reject(error);
 				});
 		});
-}
+	}

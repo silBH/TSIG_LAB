@@ -10,14 +10,14 @@
             <div style="font-weight: bolder">LOGO</div>
             <div class="d-flex flex-row align-items-center">
                 <div class="mr-3">Bienvenido, <%= request.getSession().getAttribute("nombre") %></div>
-                <a href="#" class="btn btn-outline-danger" onclick="confirmarCerrarSesion()">Cerrar sesión</a>
+                <a href="#" class="btn btn-outline-danger" onclick="confirmarCerrarSesion()">Cerrar sesion</a>
             </div>
         </div>
     </div>
 
     <script>
         function confirmarCerrarSesion() {
-            if (confirm('¿Desea cerrar sesión?')) {
+            if (confirm('¿Desea cerrar sesion?')) {
                 window.location.href = "index.jsp";
             }
         }
