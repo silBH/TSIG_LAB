@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
-
+import javax.servlet.RequestDispatcher;
 /**
  * Servlet implementation class CrearAdmin
  */
@@ -62,7 +62,7 @@ public class CrearAdmin extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+/*
      // Configurar el mensaje de éxito
         String mensaje = "Administrador creado exitosamente.";
 
@@ -75,6 +75,10 @@ public class CrearAdmin extends HttpServlet {
         out.println("<html><body>");
         out.println("<h2>" + mensaje + "</h2>");
         out.println("</body></html>");
+ */
+        RequestDispatcher dispatcher = request.getRequestDispatcher("menuAdministrador.jsp"); 
+	    dispatcher.forward(request, response);		
+
 	}
 
 }

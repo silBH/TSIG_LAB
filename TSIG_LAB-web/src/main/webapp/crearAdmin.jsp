@@ -31,7 +31,7 @@
                   </div>
     
                   <div class="form-outline form-white mb-4">
-                    <input type="text" name="apellido" required placeholder="Password" class="form-control form-control-lg" />
+                    <input type="password" name="password" required placeholder="Password" class="form-control form-control-lg" />
                   </div>
                   <button class="btn btn-outline-light btn-lg px-5" type="submit">Crear</button>
                 </form>
