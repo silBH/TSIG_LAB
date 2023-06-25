@@ -108,11 +108,9 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 	
 	
 	@Override
-	public void agregarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception{
-		Hospital hosp = hospitalData.obtenerPorId(hospital.getId());
-		List<Ambulancia> ambulancias = hosp.getAmbulancias();
-		//ambulancias.add(new Ambulancia(hosp, ambulancia.getRecorrido(),
-			//	ambulancia.getDistancia(), ambulancia.getZona()));
+	public void agregarAmbulancia(Long idHospital, Long idAmbulancia) throws Exception{
+		//problema de deserealizacion... se manipula directamente la base en DAO
+		ambulanciaData.agregarAmbulancia(idHospital, idAmbulancia); //----------------------- VER SI SE CAMBIA
 	}
 	
 	@Override
