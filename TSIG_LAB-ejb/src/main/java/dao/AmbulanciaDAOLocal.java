@@ -15,5 +15,5 @@ public interface AmbulanciaDAOLocal {
 	public void crear(Ambulancia hospital);
 	public void editar(Ambulancia hospital);
 	public void eliminar(Ambulancia hospital);	
-	public void eliminarID(Long ambID);
+	public void eliminarID(Long id);
 }

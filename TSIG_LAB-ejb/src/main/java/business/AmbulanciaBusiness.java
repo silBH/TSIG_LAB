@@ -6,6 +6,7 @@ import javax.ejb.EJB;
 import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 
+import dao.AmbulanciaDAOLocal;
 import datatype.DtAmbulancia;
 
 
@@ -15,7 +16,7 @@ import datatype.DtAmbulancia;
 @LocalBean
 public class AmbulanciaBusiness implements AmbulanciaBusinessLocal {
 
-	@EJB AmbulanciaBusinessLocal ambulanciaData;
+	@EJB AmbulanciaDAOLocal ambulanciaData;
 	
     public AmbulanciaBusiness() {}
     
@@ -41,5 +42,12 @@ public class AmbulanciaBusiness implements AmbulanciaBusinessLocal {
 	
 	public void eliminar(DtAmbulancia hospital){
 		
+	}
+	
+	@Override
+	public void eliminarAmbulanciaId(Long id){
+		System.out.println("----------------- eliminarAmbulanciaID 1");
+		ambulanciaData.eliminarID(id);
+    	System.out.println("----------------- eliminarAmbulanciaID 2");
 	}
 }
