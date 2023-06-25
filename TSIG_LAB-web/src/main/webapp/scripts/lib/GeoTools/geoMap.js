@@ -189,7 +189,7 @@ GeoMap.prototype.CrearMapaAdmin = function (target, center, zoom) {
 };
 
 GeoMap.prototype.updateGeoserverLayer = function (cqlFilter) {
-	lyrPunto2.getSource().updateParams({
+	lyrServicios.getSource().updateParams({
 		'CQL_FILTER': cqlFilter
 	});
 
@@ -197,7 +197,7 @@ GeoMap.prototype.updateGeoserverLayer = function (cqlFilter) {
 		'CQL_FILTER': cqlFilter
 	});
 
-	lyrLinea2.getSource().updateParams({
+	lyrAmbulancias.getSource().updateParams({
 		'CQL_FILTER': cqlFilter
 	});
 };
@@ -550,113 +550,142 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	}
 
 	function buscarAmbulanciasYServiciosEmergencia() {
-		var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
-
-		return fetch(url)
-			.then(response => response.json())
-			.then(data => {
-				var features = data.features;
-				var retorno = {};
-				if (features.length === 0) {
-					// No se encontraron features
-					Swal.fire({
-						icon: 'info',
-						title: 'Sin cobertura',
-						text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
-					});
-					retorno.codigoRetorno = 1;
-				} else {
-					var promises = features.map(feature => {
-						var nombreA = feature.properties.nombre;
-						console.log('Ambulancia: ', nombreA);
-						var coordenadasTexto = feature.geometry.coordinates[0]
-							.map(coordinate => coordinate.join(' '))
-							.join(', ');
-
-						return emergenciaDentroZona(coordenadasTexto)
-							.then(resultado => {
-								if (resultado.codigoRetorno === 0) {
-									var idObtenido = resultado.id;
-									console.log('Servicio de Emergencia: ', idObtenido);
-
-									return idObtenido;
-								}
-							})
-							.catch(error => {
-								console.error('Error en la función emergenciaDentroZona:', error);
-							});
-					});
-
-					Promise.all(promises)
-						.then(idsObtenidos => {
-							var cqlFilter = 'IN(' + features.map(feature => "'" + feature.id + "'").join(',') + ')';
-
-							lyrZonas.getSource().updateParams({
-								'CQL_FILTER': cqlFilter
-							});
-
-							var contenido = 'Ambulancias en tu ubicación:<br><ul>';
-							for (var i = 0; i < features.length; i++) {
-								contenido += '<li>' + features[i].properties.nombre + '</li>';
-							}
-							contenido += '</ul><br>Servicios de Emergencia en tu ubicación:<br><ul>';
-							for (var j = 0; j < idsObtenidos.length; j++) {
-								contenido += '<li>' + idsObtenidos[j] + '</li>';
-							}
-							contenido += '</ul>';
-
-							Swal.fire({
-								icon: 'success',
-								title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
-								html: contenido
-							});
-							retorno.codigoRetorno = 0;
-						})
-						.catch(error => {
-							console.error('Error en Promise.all:', error);
-						});
-				}
-				return retorno;
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
-			});
+	  var url =
+	    'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' +
+	    ubiUsuario[0] +
+	    ' ' +
+	    ubiUsuario[1] +
+	    '))';
+	
+	  return fetch(url)
+	    .then(response => response.json())
+	    .then(data => {
+	      var features = data.features;
+	      var retorno = {};
+	      if (features.length === 0) {
+	        // No se encontraron features
+	        Swal.fire({
+	          icon: 'info',
+	          title: 'Sin cobertura',
+	          text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
+	        });
+	        retorno.codigoRetorno = 1;
+	      } else {
+	        var promises = features.map(feature => {
+	          var nombreA = feature.properties.nombre;
+	          console.log('Ambulancia: ', nombreA);
+	          var coordenadasTexto = feature.geometry.coordinates[0]
+	            .map(coordinate => coordinate.join(' '))
+	            .join(', ');
+	
+	          return IdEmergenciaDentroZona(coordenadasTexto)
+	            .then(resultadoZona => {
+	              console.log('resultadoZona: ', resultadoZona);
+	              return resultadoZona;
+	            })
+	            .catch(error => {
+	              console.error('Error en la función emergenciaDentroZona:', error);
+	            });
+	        });
+	
+	        Promise.all(promises)
+	          .then(resultados => {
+	            var idsObtenidosFinal = [];
+	
+	            resultados.forEach(resultado => {
+	              if (resultado) {
+	                idsObtenidosFinal = idsObtenidosFinal.concat(resultado);
+	              }
+	            });
+	
+	            idsObtenidosFinal = [...new Set(idsObtenidosFinal)]; // Eliminar duplicados
+	            console.log('idsObtenidosFinal sin duplicados: ', idsObtenidosFinal);
+				/*
+	            var cqlFilter = 'IN(' + idsObtenidosFinal.map(id => "'" + id + "'").join(',') + ')';
+	
+	            lyrZonas.getSource().updateParams({
+	              'CQL_FILTER': cqlFilter
+	            });
+				*/
+	            var contenido = 'Ambulancias en tu ubicación:<br><ul>';
+	            for (var i = 0; i < features.length; i++) {
+	              contenido += '<li>' + features[i].properties.nombre + '</li>';
+	            }
+	            contenido += '</ul><br>Servicios de Emergencia en tu ubicación:<br><ul>';
+	            for (var j = 0; j < idsObtenidosFinal.length; j++) {
+	              contenido += '<li>' + idsObtenidosFinal[j] + '</li>';
+	            }
+	            contenido += '</ul>';
+	
+	            Swal.fire({
+	              icon: 'success',
+	              title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
+	              html: contenido
+	            });
+	
+	            retorno.codigoRetorno = 0;
+	          })
+	          .catch(error => {
+	            console.error('Error en Promise.all:', error);
+	          });
+	      }
+	      return retorno;
+	    })
+	    .catch(error => {
+	      console.error('Error al realizar la consulta WFS:', error);
+	    });
 	}
-
+	
 	function solicitarAmbulanciaPorHospital() {
-		tieneCobertura()
-			.then(retorno => {
-				if (retorno.codigoRetorno === 0) {
-					obtenerHospitales().then(hospitalesArray => {
-						console.log(hospitalesArray);
-
-						Swal.fire({
-							title: 'Seleccione el hospital',
-							html: `<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
-	                                ${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
-	                              </select>`,
-							showCancelButton: true,
-							confirmButtonText: 'Aceptar',
-							cancelButtonText: 'Cancelar',
-						}).then((result) => {
-							if (result.isConfirmed) {
-								const inputHospital = document.getElementById('inputHospital').value;
-								console.log('ID hospital:', inputHospital);
-
-								const hospitalId = BigInt(inputHospital);
-								console.log('Tiene cobertura. Ahora buscar por ID de hospital');
-							}
-						});
-					});
-				} else {
-					Swal.fire({
-						title: 'No puedes solicitar una ambulancia',
-						text: 'No estás dentro de ninguna zona de cobertura de Ambulancias.',
-						icon: 'warning',
-						confirmButtonText: 'Aceptar'
-					});
-				}
-			});
+	  tieneCobertura().then((retorno) => {
+	    if (retorno.codigoRetorno === 0) {
+	      obtenerIdHospitalPorZonas(retorno.nombres)
+	        .then((resultadoIds) => {
+	          obtenerHospitales().then((hospitalesArray) => {
+	            console.log('arrayHospitales:', hospitalesArray);
+	
+	            // Filtrar los hospitales según los resultadoIds
+	            const hospitalesFiltrados = hospitalesArray.filter((hospital) =>
+	              resultadoIds.includes(hospital.id)
+	            );
+	
+	            console.log('hospitales filtrados:', hospitalesFiltrados);
+	
+	            Swal.fire({
+	              title: 'Seleccione el hospital',
+	              html: `
+	                <select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
+	                  ${hospitalesFiltrados
+	                    .map(
+	                      (hospital) =>
+	                        `<option value="${hospital.id}">${hospital.nombre}</option>`
+	                    )
+	                    .join('')}
+	                </select>`,
+			      showCancelButton: true,
+			      confirmButtonText: 'Aceptar',
+			      cancelButtonText: 'Cancelar',
+		          }).then((result) => {
+		            if (result.isConfirmed) {
+		              const inputHospital = document.getElementById('inputHospital').value;
+		              console.log('ID hospital:', inputHospital);
+		              const hospitalId = BigInt(inputHospital);
+		              
+		              console.log('Tiene cobertura. Ahora buscar por ID de hospital:', inputHospital);
+		              ambulanciasCercanaPorId(ubiUsuario, inputHospital);
+		            }
+		          });
+	        });
+	      });
+	    } else {
+	          Swal.fire({
+	            title: 'No puedes solicitar una ambulancia',
+	            text: 'No estás dentro de ninguna zona de cobertura de Ambulancias.',
+	            icon: 'warning',
+	            confirmButtonText: 'Aceptar'
+	          });
+	      }
+	  });
 	}
 
 	var nombreCalleInputElement = document.createElement('input');
@@ -1162,6 +1191,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 										.then(response => {
 											if (response.ok) {
 												console.log('Llamada al servlet de hospital exitosa');
+												actualizarFeature();
 											} else {
 												console.error('Error al llamar al servlet de hospital');
 											}
@@ -2115,7 +2145,44 @@ function crearCapaMapaCalor() {
 }
 crearCapaMapaCalor();
 
-function emergenciaDentroZona(coordenadasTexto) {
+	function IdEmergenciaDentroZona(coordenadasTexto) {
+	  var url =
+	    'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' +
+	    coordenadasTexto +
+	    ')))';
+	  console.log(coordenadasTexto);
+	
+	  return fetch(url)
+	    .then(response => response.json())
+	    .then(data => {
+	      var features = data.features;
+	      var resultadoZona = [];
+	
+	      if (features.length === 0) {
+	        // No se encontraron características
+	        Swal.fire({
+	          icon: 'info',
+	          title: 'Sin servicio de Emergencia',
+	          text: 'La ambulancia no tiene un Servicio de Emergencia en su zona. Intente nuevamente'
+	        });
+	        resultadoZona = []; // Reinicializar el resultado como un array vacío
+	      } else {
+	        features.forEach(feature => {
+	          console.log(feature);
+	          resultadoZona.push(feature.id); // Agregar la ID de la característica al array resultado
+	        });
+	        resultadoZona = [...new Set(resultadoZona)]; // Eliminar duplicados utilizando un Set y convertir nuevamente en array
+	      }
+	      console.log('ids de las features obtenidas de esa zona: ', resultadoZona);
+	      return resultadoZona;
+	    })
+	    .catch(error => {
+	      console.error('Error al realizar la consulta WFS:', error);
+	      throw error;
+	    });
+	}
+
+	function emergenciaDentroZona(coordenadasTexto) {
 	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))';
 	console.log(coordenadasTexto);
 
@@ -2149,7 +2216,7 @@ function emergenciaDentroZona(coordenadasTexto) {
 			console.error('Error al realizar la consulta WFS:', error);
 			throw error;
 		});
-}
+	}
 
 function emergenciaFueraZona(coordenadasTexto) {
 	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
@@ -2606,22 +2673,97 @@ function eliminarFeatureID(featureId, layername) {
 	});
 }
 
-function tieneCobertura() {
-	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
-
-	return fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			var features = data.features;
-			var retorno = {};
-			if (features.length === 0) {
-				retorno.codigoRetorno = 1;
+	function tieneCobertura() {
+	    var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
+	
+	    return fetch(url)
+	        .then(response => response.json())
+	        .then(data => {
+	            var features = data.features;
+	            var retorno = {};
+	            if (features.length === 0) {
+	                retorno.codigoRetorno = 1;
+	            } else {
+	                retorno.codigoRetorno = 0;
+	            }
+	            return retorno;
+	        })
+	        .catch(error => {
+	            console.error('Error al realizar la consulta WFS:', error);
+	        });
+	
+		function ambulanciasCercanaPorId(coords3857, idHospital) {
+	   const vectorSource = new ol.source.Vector();
+	    
+	  const cqlFilter = `hospital_id='${idHospital}'`;
+	
+	  const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;	
+	  fetch(url)
+		  .then(response => response.json())
+		  .then(data => {
+			const features = data.features;
+	  
+			// Agregar las features al VectorSource
+			const format = new ol.format.GeoJSON();
+			const featuresToAdd = format.readFeatures(data);
+			vectorSource.addFeatures(featuresToAdd);
+	  
+			// Obtener la feature más cercana a coords3857
+			const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+	  
+			if (closestFeature) {
+			  const nombre = closestFeature.get('nombre');
+			  console.log(nombre);
+	  
+			  Swal.fire({
+				title: 'Ambulancia solicitada correctamente',
+				text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+				icon: 'success',
+				showCancelButton: false,
+				confirmButtonColor: '#3085d6',
+				confirmButtonText: 'Aceptar'
+			  });
 			} else {
-				retorno.codigoRetorno = 0;
+			  console.log('No se encontraron features cercanas al punto objetivo');
 			}
-			return retorno;
-		})
-		.catch(error => {
+		  })
+		  .catch(error => {
 			console.error('Error al realizar la consulta WFS:', error);
-		});
-}
+		  });
+	}
+
+	function obtenerIdHospitalPorZonas(nombreZona) {
+	  return new Promise((resolve, reject) => {
+	    const resultadoIds = [];
+	
+	    const promises = nombreZona.map((key) => {
+	      const cqlFilter = `nombre='${key}'`;
+	      const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
+	        cqlFilter
+	      )}`;
+	
+	      return fetch(url)
+	        .then((response) => response.json())
+	        .then((data) => {
+	          const features = data.features.filter(
+	            (feature) => feature.properties.nombre === key
+	          );
+	
+	          features.forEach((feature) => {
+	            resultadoIds.push(feature.properties.hospital_id);
+	          });
+	        })
+	        .catch((error) => {
+	          console.error('Error en la solicitud HTTP:', error);
+	          reject(error);
+	        });
+	    });
+	
+	    Promise.all(promises)
+	      .then(() => {
+	        console.log('resultado de obteneridHospital:', resultadoIds);
+	        resolve(resultadoIds);
+	      })
+	      .catch((error) => reject(error));
+	  });
+	}
