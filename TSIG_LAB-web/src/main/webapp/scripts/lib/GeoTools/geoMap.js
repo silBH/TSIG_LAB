@@ -624,39 +624,55 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
  }
 	
 	function solicitarAmbulanciaPorHospital() {
-	    tieneCobertura()
-	        .then(retorno => {
-	            if (retorno.codigoRetorno === 0) {
-	                obtenerHospitales().then(hospitalesArray => {
-	                    console.log(hospitalesArray);
+	  tieneCobertura().then((retorno) => {
+	    if (retorno.codigoRetorno === 0) {
+	      obtenerIdHospitalPorZonas(retorno.nombres)
+	        .then((resultadoIds) => {
+	          obtenerHospitales().then((hospitalesArray) => {
+	            console.log('arrayHospitales:', hospitalesArray);
 	
-	                    Swal.fire({
-	                        title: 'Seleccione el hospital',
-	                        html: `<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
-	                                ${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
-	                              </select>`,
-	                        showCancelButton: true,
-	                        confirmButtonText: 'Aceptar',
-	                        cancelButtonText: 'Cancelar',
-	                    }).then((result) => {
-	                        if (result.isConfirmed) {
-	                            const inputHospital = document.getElementById('inputHospital').value;
-	                            console.log('ID hospital:', inputHospital);
+	            // Filtrar los hospitales según los resultadoIds
+	            const hospitalesFiltrados = hospitalesArray.filter((hospital) =>
+	              resultadoIds.includes(hospital.id)
+	            );
 	
-	                            const hospitalId = BigInt(inputHospital);
-	                            console.log('Tiene cobertura. Ahora buscar por ID de hospital');
-	                        }
-	                    });
-	                });
-	            } else {
-	                Swal.fire({
-	                    title: 'No puedes solicitar una ambulancia',
-	                    text: 'No estás dentro de ninguna zona de cobertura de Ambulancias.',
-	                    icon: 'warning',
-	                    confirmButtonText: 'Aceptar'
-	                });
-	            }
+	            console.log('hospitales filtrados:', hospitalesFiltrados);
+	
+	            Swal.fire({
+	              title: 'Seleccione el hospital',
+	              html: `
+	                <select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
+	                  ${hospitalesFiltrados
+	                    .map(
+	                      (hospital) =>
+	                        `<option value="${hospital.id}">${hospital.nombre}</option>`
+	                    )
+	                    .join('')}
+	                </select>`,
+			      showCancelButton: true,
+			      confirmButtonText: 'Aceptar',
+			      cancelButtonText: 'Cancelar',
+		          }).then((result) => {
+		            if (result.isConfirmed) {
+		              const inputHospital = document.getElementById('inputHospital').value;
+		              console.log('ID hospital:', inputHospital);
+		              const hospitalId = BigInt(inputHospital);
+		              
+		              console.log('Tiene cobertura. Ahora buscar por ID de hospital:', inputHospital);
+		              ambulanciasCercanaPorId(ubiUsuario, inputHospital);
+		            }
+		          });
 	        });
+	      });
+	    } else {
+	          Swal.fire({
+	            title: 'No puedes solicitar una ambulancia',
+	            text: 'No estás dentro de ninguna zona de cobertura de Ambulancias.',
+	            icon: 'warning',
+	            confirmButtonText: 'Aceptar'
+	          });
+	      }
+	  });
 	}
 		
 	var nombreCalleInputElement = document.createElement('input');
@@ -2654,4 +2670,80 @@ GeoMap.prototype.CrearControlHospital = function () {
 	        .catch(error => {
 	            console.error('Error al realizar la consulta WFS:', error);
 	        });
+	}
+	
+		function ambulanciasCercanaPorId(coords3857, idHospital) {
+	   const vectorSource = new ol.source.Vector();
+	    
+	  const cqlFilter = `hospital_id='${idHospital}'`;
+	
+	  const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;	
+	  fetch(url)
+		  .then(response => response.json())
+		  .then(data => {
+			const features = data.features;
+	  
+			// Agregar las features al VectorSource
+			const format = new ol.format.GeoJSON();
+			const featuresToAdd = format.readFeatures(data);
+			vectorSource.addFeatures(featuresToAdd);
+	  
+			// Obtener la feature más cercana a coords3857
+			const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+	  
+			if (closestFeature) {
+			  const nombre = closestFeature.get('nombre');
+			  console.log(nombre);
+	  
+			  Swal.fire({
+				title: 'Ambulancia solicitada correctamente',
+				text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+				icon: 'success',
+				showCancelButton: false,
+				confirmButtonColor: '#3085d6',
+				confirmButtonText: 'Aceptar'
+			  });
+			} else {
+			  console.log('No se encontraron features cercanas al punto objetivo');
+			}
+		  })
+		  .catch(error => {
+			console.error('Error al realizar la consulta WFS:', error);
+		  });
+	}
+
+	function obtenerIdHospitalPorZonas(nombreZona) {
+	  return new Promise((resolve, reject) => {
+	    const resultadoIds = [];
+	
+	    const promises = nombreZona.map((key) => {
+	      const cqlFilter = `nombre='${key}'`;
+	      const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
+	        cqlFilter
+	      )}`;
+	
+	      return fetch(url)
+	        .then((response) => response.json())
+	        .then((data) => {
+	          const features = data.features.filter(
+	            (feature) => feature.properties.nombre === key
+	          );
+	
+	          features.forEach((feature) => {
+	            resultadoIds.push(feature.properties.hospital_id);
+	          });
+	        })
+	        .catch((error) => {
+	          console.error('Error en la solicitud HTTP:', error);
+	          reject(error);
+	        });
+	    });
+	
+	    Promise.all(promises)
+	      .then(() => {
+	        console.log('resultado de obteneridHospital:', resultadoIds);
+	        resolve(resultadoIds);
+	      })
+	      .catch((error) => reject(error));
+	  });
 	}
