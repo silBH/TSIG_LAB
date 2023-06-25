@@ -29,7 +29,7 @@
     <style>
         #map{
             width: 100%;
-            height: 700px;;
+            height: 100%;
         }
         .gradient-custom {
         /* Chrome 10-25, Safari 5.1-6 */

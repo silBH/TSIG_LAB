@@ -1211,9 +1211,9 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 					if (result.isConfirmed) {
 						// Obtener el valor del nombre ingresado por el usuario
 						const { inputHospital, inputCodigo, inputDistancia } = result.value;
-						console.log('ID hospital:', inputHospital);
-						console.log('Cantidad de camas totales:', inputCodigo);
-						console.log('Cantidad de camas disponibles:', inputDistancia);
+						console.log('ID hospital: ', inputHospital);
+						console.log('Codigo: ', inputCodigo);
+						console.log('Distancia: ', inputDistancia);
 
 						// Validar si son numeros
 						if (isNaN(inputHospital)) {
@@ -1221,7 +1221,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 							return; // Detener la ejecución si no es válido
 						}
 						if (isNaN(inputDistancia)) {
-							Swal.showValidationMessage('Las camas diponibles debe ser un número');
+							Swal.showValidationMessage('La distancia debe ser un número');
 							return; // Detener la ejecución si no es válido
 						}
 
@@ -1270,7 +1270,26 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 									.then(data => {
 										console.log('Respuesta del servidor (ambulancia):', data);
 										console.log('FALTA funcion sevlet para tabla hospital_ambulancia', data);
-										//FALTA------------------------------------------------
+										const parser = new DOMParser();
+										const xmlDoc = parser.parseFromString(data, 'text/xml');
+										const featureIds = xmlDoc.getElementsByTagName("ogc:FeatureId");
+										if (featureIds.length > 0) {
+											const sId = featureIds[0].getAttribute("fid");
+											const puntoIndex = sId.indexOf(".");
+											const ambuId = sId.substring(puntoIndex + 1);
+											console.log("ID de ambulancia agregada: ", ambuId);
+											// fetch para llamar a la función del servlet de hospital
+											fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/agregarAmbulancia' + '&id=' + ambuId + '&hospitalId=' + hospitalId, {
+												method: 'GET'
+											})
+												.then(response => {
+													if (response.ok) {
+														console.log('Llamada al servlet de hospital exitosa');
+													} else {
+														console.error('Error al llamar al servlet de hospital');
+													}
+												})
+										}
 									})
 									.catch(error => {
 										console.error('Error al realizar la solicitud WFS (ambulancia):', error);

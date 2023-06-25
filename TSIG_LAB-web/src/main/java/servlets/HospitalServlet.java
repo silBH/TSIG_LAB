@@ -210,6 +210,22 @@ public class HospitalServlet extends HttpServlet {
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		String ambuId = request.getParameter("id");    	
+    	String hospitalId = request.getParameter("hospitalId");
+    	    
+    	System.out.println("----------------- servlet id ambuId: " + ambuId);
+    	System.out.println("----------------- servlet id hospitalId: " + hospitalId);
+        
+        try {
+        	long idAmbulancia = Long.parseLong(ambuId);
+        	long idHospital = Long.parseLong(hospitalId);
+
+            hospBusiness.agregarAmbulancia(idHospital, idAmbulancia);
+            
+        } catch (Exception e) { 
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }        	
+        response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
 
 	private void agregarServicio(HttpServletRequest request, HttpServletResponse response)
