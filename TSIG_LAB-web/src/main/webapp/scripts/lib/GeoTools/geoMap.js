@@ -426,89 +426,121 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 	var drawInteraction;
 	var dibujo;
 	var isBuscarAmbulanciasActive = false;
+	var lyrAmbulanciasEncontradas;
 	var buscarAmbulancias = function() {
-		if (drawInteraction) {
-			self.map.removeInteraction(drawInteraction);
-			drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
-		} else {
-			if (!dibujo) {
-				dibujo = new ol.layer.Vector({
-					source: new ol.source.Vector(),
-					style: new ol.style.Style({
-						fill: new ol.style.Fill({
-							color: 'rgba(0, 0, 255, 0.2)' // Color de relleno del polígono
-						}),
-						stroke: new ol.style.Stroke({
-							color: 'blue', // Color del borde del polígono
-							width: 2 // Grosor del borde del polígono
-						})
-					})
-				});
-				self.map.addLayer(dibujo);
-			}
-
-			drawInteraction = new ol.interaction.Draw({
-				type: 'Polygon',
-				source: dibujo.getSource() // Utilizar la fuente de la capa vectorial para almacenar los polígonos dibujados
-			});
-
-			drawInteraction.on('drawend', function(event) {
-				var geometry = event.feature.getGeometry();
-				var coordinates = geometry.getCoordinates();
-				//console.log(coordinates);
-
-				// Convertir las coordenadas en una cadena de texto separada por comas
-				var coordenadasTexto = coordinates[0].map(function(coordinate) {
-					return coordinate.join(' ');
-				}).join(', ');
-				//console.log(coordenadasTexto);
-
-				var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&' +
-					'CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))&outputFormat=application/json';
-				// Realizar la consulta utilizando fetch
-				fetch(url)
-					.then(function(response) {
-						if (response.ok) {
-							return response.json();
-						} else {
-							throw new Error('Error al realizar la consulta WFS');
-						}
-					})
-					.then(function(data) {
-						var features = data.features;
-						var contenido = '';
-						var titulo;
-
-						if (features.length > 0) {
-							var titulo1 = '<strong>Ambulancias Encontradas:</strong><br><br>';
-							features.forEach(function(feature) {
-								var id = feature.id;
-								var nombre = feature.properties.nombre;
-								contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
-							});
-							titulo = titulo1;
-						} else {
-							var titulo2 = 'No se encontraron ambulancias.';
-							titulo = titulo2;
-						}
-
-						Swal.fire({
-							title: titulo,
-							html: contenido,
-							icon: 'info',
-							confirmButtonText: 'Aceptar'
-						}).then(function() {
-							dibujo.getSource().clear();
-						});
-					})
-					.catch(function(error) {
-						console.error('Error al realizar la consulta WFS:', error);
-					});
-			});
-
-			self.map.addInteraction(drawInteraction);
-		}
+	  if (drawInteraction) {
+	    map.removeInteraction(drawInteraction);
+	    drawInteraction = null;
+	  } else {
+	    if (!dibujo) {
+	      dibujo = new ol.layer.Vector({
+	        source: new ol.source.Vector(),
+	        style: new ol.style.Style({
+	          fill: new ol.style.Fill({
+	            color: 'rgba(0, 0, 255, 0.2)'
+	          }),
+	          stroke: new ol.style.Stroke({
+	            color: 'blue',
+	            width: 2
+	          })
+	        })
+	      });
+	      map.addLayer(dibujo);
+	    }
+	
+	    drawInteraction = new ol.interaction.Draw({
+	      type: 'Polygon',
+	      source: dibujo.getSource()
+	    });
+	
+	    drawInteraction.on('drawend', function(event) {
+	      var geometry = event.feature.getGeometry();
+	      var coordinates = geometry.getCoordinates();
+	
+	      var coordenadasTexto = coordinates[0].map(function(coordinate) {
+	        return coordinate.join(' ');
+	      }).join(', ');
+	
+	      var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&' +
+	        'CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))&outputFormat=application/json';
+	
+	      fetch(url)
+	        .then(function(response) {
+	          if (response.ok) {
+	            return response.json();
+	          } else {
+	            throw new Error('Error al realizar la consulta WFS');
+	          }
+	        })
+	        .then(function(data) {
+	          var features = data.features;
+	          var contenido = '';
+	          var titulo;
+	
+	          if (features.length > 0) {
+	            var titulo1 = '<strong>Ambulancias Encontradas:</strong><br><br>';
+	            features.forEach(function(feature) {
+	              var id = feature.id;
+	              var nombre = feature.properties.nombre;
+	              contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+	            });
+	            titulo = titulo1;
+	          } else {
+	            var titulo2 = 'No se encontraron ambulancias.';
+	            titulo = titulo2;
+	          }
+			  mostrarCapaAmbulanciasEncontradas(data);
+			  	
+	          Swal.fire({
+	            title: titulo,
+	            html: contenido,
+	            icon: 'info',
+	            confirmButtonText: 'Aceptar'
+	          }).then(function() {
+	            dibujo.getSource().clear();
+				
+	          });
+	        })
+	        .catch(function(error) {
+	          console.error('Error al realizar la consulta WFS:', error);
+	        });
+	    });
+	
+	    map.addInteraction(drawInteraction);
+	  }
 	};
+	
+	function mostrarCapaAmbulanciasEncontradas(data) {
+	  // Remover la capa de ambulancias encontradas si ya existe
+	  if (lyrAmbulanciasEncontradas) {
+	    map.removeLayer(lyrAmbulanciasEncontradas);
+	    lyrAmbulanciasEncontradas = undefined;
+	  }
+	
+	  if (isBuscarAmbulanciasActive && data.features.length > 0) {
+	    // Crear una capa vectorial para mostrar las ambulancias encontradas
+	    lyrAmbulanciasEncontradas = new ol.layer.Vector({
+	      source: new ol.source.Vector({
+	        features: new ol.format.GeoJSON().readFeatures(data)
+	      }),
+	      style: new ol.style.Style({
+	        stroke: new ol.style.Stroke({
+	          color: 'red',
+	          width: 2
+	        })
+	      })
+	    });
+	
+	    // Ocultar la capa de ambulancias original
+	    lyrAmbulancias.setVisible(false);
+	
+	    // Agregar la capa de ambulancias encontradas al mapa
+	    map.addLayer(lyrAmbulanciasEncontradas);
+	  } else {
+	    // Mostrar la capa de ambulancias original
+	    lyrAmbulancias.setVisible(true);
+	  }
+	}
 
 	function ambulanciasCercana(coords3857) {
 		// Crear un VectorSource vacío
@@ -734,6 +766,10 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 			buttonElement3.style.backgroundColor = '';
 			self.map.removeInteraction(drawInteraction);
 			drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
+			map.removeLayer(lyrAmbulanciasEncontradas);
+			lyrAmbulanciasEncontradas = undefined;
+			lyrAmbulancias.setVisible(true); 
+			dibujo.getSource().clear();
 		}
 	}
 
