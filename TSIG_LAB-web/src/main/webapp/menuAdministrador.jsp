@@ -18,6 +18,8 @@
 	<script src="scripts/appMap.js"></script>
 	<script src="scripts/lib/GeoTools/geoMap.js"></script>
 	<script src="scripts/lib/GeoTools/geoLayers.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jsts/1.6.1/jsts.min.js"></script> <!-- JSTS -->
+	
 	<link rel="stylesheet" href="scripts/lib/ol-ext-v3.2.23/font-awesome.min.css">   	
     <style>
         #map{

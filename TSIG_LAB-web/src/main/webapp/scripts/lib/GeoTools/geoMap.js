@@ -753,7 +753,7 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 	this.mainBarCustom.element.appendChild(buttonElement5);
 
 	var isServiciosConCamasActive = false;
-	var capaEmergenciaCamasDisponibles; 
+	var capaEmergenciaCamasDisponibles;
 
 	var buttonElement6 = document.createElement('button');
 	buttonElement6.textContent = 'Servicios de Emergencia con camas disponibles';
@@ -923,7 +923,6 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function() {
 		traerZonaMontevideo();
 		traerZonasCobertura();
 	}
-
 
 	function traerZonaMontevideo() {
 		var urlMontevideo = 'http://localhost:8586/geoserver/wfs?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023:ft_00_departamento&outputFormat=application/json&CQL_FILTER=nombre=\'MONTEVIDEO\'';
@@ -1199,6 +1198,14 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 						if (!inputHospital || !inputTotalCamas || !inputCamasDisponibles) {
 							Swal.showValidationMessage('Debe ingresar todos los campos');
 						}
+						if (isNaN(inputTotalCamas)) {
+							Swal.showValidationMessage('El total de camas debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
+						if (isNaN(inputCamasDisponibles)) {
+							Swal.showValidationMessage('Las camas diponibles debe ser un número');
+							return; // Detener la ejecución si no es válido
+						}
 						return {
 							inputHospital: inputHospital,
 							inputTotalCamas: inputTotalCamas,
@@ -1212,20 +1219,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 						console.log('ID hospital:', inputHospital);
 						console.log('Cantidad de camas totales:', inputTotalCamas);
 						console.log('Cantidad de camas disponibles:', inputCamasDisponibles);
-
-						// Validar si son numeros
-						if (isNaN(inputHospital)) {
-							Swal.showValidationMessage('El ID del hospital debe ser un número válido');
-							return; // Detener la ejecución si no es válido
-						}
-						if (isNaN(inputTotalCamas)) {
-							Swal.showValidationMessage('El total de camas debe ser un número');
-							return; // Detener la ejecución si no es válido
-						}
-						if (isNaN(inputCamasDisponibles)) {
-							Swal.showValidationMessage('Las camas diponibles debe ser un número');
-							return; // Detener la ejecución si no es válido
-						}
 
 						const hospitalId = BigInt(inputHospital);
 
@@ -1292,7 +1285,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 				});
 			} else if (tipoGeometria === 'LineString') { //-------------------------------nueva ambulancia
 				geometry = new ol.geom.LineString(coords3857);
-				//------------- COMPLETAR
 				Swal.fire({
 					title: 'Nueva Ambulancia',
 					html: `
@@ -1312,6 +1304,10 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 						if (!inputHospital || !inputCodigo || !inputDistancia) {
 							Swal.showValidationMessage('Debe ingresar todos los campos');
 						}
+						// Validar si son numeros
+						if (isNaN(inputDistancia)) {
+							Swal.showValidationMessage('La distancia debe ser un número');
+						}
 						return {
 							inputHospital: inputHospital,
 							inputCodigo: inputCodigo,
@@ -1326,34 +1322,68 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 						console.log('Codigo: ', inputCodigo);
 						console.log('Distancia: ', inputDistancia);
 
-						// Validar si son numeros
-						if (isNaN(inputHospital)) {
-							Swal.showValidationMessage('El ID del hospital debe ser un número válido');
-							return; // Detener la ejecución si no es válido
-						}
-						if (isNaN(inputDistancia)) {
-							Swal.showValidationMessage('La distancia debe ser un número');
-							return; // Detener la ejecución si no es válido
-						}
-
 						const hospitalId = BigInt(inputHospital);
-						console.log(inputDistancia);
-						// Crear el buffer alrededor de la geometría LineString basado en la distancia máxima de desvío
-						var buffer = ol.extent.buffer(geometry.getExtent(), inputDistancia); // Reemplaza 100 con la distancia máxima de desvío deseada
-						// Crear la geometría de polígono para la zona de cobertura
-						var polygonGeometry = new ol.geom.Polygon.fromExtent(buffer);
-						console.log(polygonGeometry.getCoordinates());
 
-						var coords = polygonGeometry.getCoordinates();
-						var coordenadasTexto = coords[0].map(function(coordinate) {
-							return coordinate.join(' ');
-						}).join(', ');
-						//console.log(coordenadasTexto);
-						emergenciaDentroZona(coordenadasTexto).then(resultado => {
-							if (resultado.codigoRetorno === 1) {
-								//no hace nada tira popup
-							} else {
+						//-----------------------------------------------------------------------------
+						const parser = new jsts.io.OL3Parser();
+						const jstsLineString = parser.read(geometry, {
+							type: 'LineString'
+						});
+						const buffered = jstsLineString.buffer(inputDistancia);
+						// Convert the buffered geometry back to OpenLayers format
+						const bufferedGeometry = parser.write(buffered, {
+							type: 'LineString'
+						});
 
+						// Convert the buffered coordinates to a text representation
+						const bufferCoordinates = bufferedGeometry.getCoordinates();
+						let bufferCoordinatesText = "";
+						for (var i = 0; i < bufferCoordinates.length; i++) {
+							// Accediendo al array en el primer nivel
+							var arrayNivel1 = bufferCoordinates[i];
+							bufferCoordinatesText = arrayNivel1.map(row => row.join(' ')).join(', ');
+						}
+						console.log("bufferCoordinatesText " + bufferCoordinatesText);
+						serviciosHospitalEnZona(bufferCoordinatesText, inputHospital).then(resultado => {
+							const cantServicios = resultado.codigoRetorno;
+							console.log("cantServicios " + cantServicios);
+							if (cantServicios >= 1) {
+								// ser guarda zona
+								var zonaCoberturaFeature = new ol.Feature({
+									nombre: inputCodigo,
+									ubicacion: bufferedGeometry
+								});
+
+								// Crear una transacción WFS para insertar la característica de la zona de cobertura
+								var wfs = new ol.format.WFS();
+								var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
+									featureType: 'zona',
+									featureNS: 'tsig2023',
+									srsName: 'EPSG:3857',
+									version: '1.1.0'
+								});
+
+								// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
+								fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'text/xml'
+									},
+									body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
+								})
+									.then(response => response.text())
+									.then(data => {
+										console.log('Respuesta del servidor (zona de cobertura):', data);
+									})
+									.catch(error => {
+										console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
+									})
+									.catch(error => {
+										console.error('Error al realizar la solicitud WFS:', error);
+									});
+
+
+								// ser guarda ambulancia
 								var ambulanciaFeature = new ol.Feature({
 									nombre: inputCodigo,
 									ubicacion: geometry,
@@ -1409,60 +1439,16 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 									.catch(error => {
 										console.error('Error al realizar la solicitud WFS:', error);
 									});
-
-								// Crear la característica de la zona de cobertura
-								var zonaCoberturaFeature = new ol.Feature({
-									nombre: inputCodigo,
-									ubicacion: polygonGeometry
+							} else {
+								Swal.fire({
+									icon: 'info',
+									title: 'Sin Servicio de Emergencia',
+									text: 'La ambulancia no tiene un Servicio de Emergencia en su zona. Intente nuevamente.'
 								});
-
-								// Asignar cualquier otra propiedad necesaria a la característica de la zona de cobertura
-								zonaCoberturaFeature.setProperties({
-									name: nombreFeature
-								});
-
-								// Crear una transacción WFS para insertar la característica de la zona de cobertura
-								var wfs = new ol.format.WFS();
-								var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
-									featureType: 'zona',
-									featureNS: 'tsig2023',
-									srsName: 'EPSG:3857',
-									version: '1.1.0'
-								});
-
-								// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
-								fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'text/xml'
-									},
-									body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
-								})
-									.then(response => response.text())
-									.then(data => {
-										console.log('Respuesta del servidor (zona de cobertura):', data);
-										actualizarFeature();
-									})
-									.catch(error => {
-										console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
-									})
-									.catch(error => {
-										console.error('Error al realizar la solicitud WFS:', error);
-									});
-								//guardarCambios(selectedFeature, 'ambulancia');
-								//actualizarFeature();
-								//selectedFeatures.clear();
 							}
 						})
-							.catch(error => {
-								console.error('Error en la función emergenciaDentroZona:', error);
-							});
-
 					}
 				});
-			} else if (tipoGeometria === 'Polygon') {
-				geometry = new ol.geom.Polygon(coords3857);
-				//------------- COMPLETAR
 			}
 		}).catch(error => {
 			console.error('Error al obtener los hospitales:', error);
@@ -1826,6 +1812,15 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 							if (!inputHospital || !inputTotalCamas) {
 								Swal.showValidationMessage('Debe ingresar todos los campos');
 							}
+							// Validar si son numeros
+							if (isNaN(inputHospital)) {
+								Swal.showValidationMessage('El ID del hospital debe ser un número válido');
+								return; // Detener la ejecución si no es válido
+							}
+							if (isNaN(inputTotalCamas)) {
+								Swal.showValidationMessage('El total de camas debe ser un número');
+								return; // Detener la ejecución si no es válido
+							}
 							return {
 								inputHospital: inputHospital,
 								inputTotalCamas: inputTotalCamas
@@ -1838,15 +1833,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 							console.log('ID hospital:', inputHospital);
 							console.log('Cantidad de camas totales:', inputTotalCamas);
 
-							// Validar si son numeros
-							if (isNaN(inputHospital)) {
-								Swal.showValidationMessage('El ID del hospital debe ser un número válido');
-								return; // Detener la ejecución si no es válido
-							}
-							if (isNaN(inputTotalCamas)) {
-								Swal.showValidationMessage('El total de camas debe ser un número');
-								return; // Detener la ejecución si no es válido
-							}
 							const hospitalId = BigInt(inputHospital);
 
 							selectedFeature.set('totalcamas', inputTotalCamas);
@@ -2423,14 +2409,13 @@ function serviciosHospitalEnZona(coordenadasZona, idHospital) {
 				var serviciosHospitalZona = [];
 				var cant = 0;
 				features.forEach(function(feature) {
-					if (feature.properties.hospital_id === idHospital) {
+					if (feature.properties.hospital_id === Number(idHospital)) {
 						serviciosHospitalZona.push(feature);
 						cant++;
 					}
 				})
 				resultado.codigoRetorno = cant;
 				resultado.servicios = serviciosHospitalZona;
-				console.log("servicios en zona " + serviciosHospitalZona);
 			}
 			return resultado;
 		})
@@ -2787,80 +2772,119 @@ function tieneCobertura() {
 		.catch(error => {
 			console.error('Error al realizar la consulta WFS:', error);
 		});
-}
 
-function ambulanciasCercanaPorId(coords3857, idHospital) {
-	const vectorSource = new ol.source.Vector();
+	function ambulanciasCercanaPorId(coords3857, idHospital) {
+		const vectorSource = new ol.source.Vector();
 
-	const cqlFilter = `hospital_id='${idHospital}'`;
+		const cqlFilter = `hospital_id='${idHospital}'`;
 
-	const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
-	fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			const features = data.features;
+		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				const features = data.features;
 
-			// Agregar las features al VectorSource
-			const format = new ol.format.GeoJSON();
-			const featuresToAdd = format.readFeatures(data);
-			vectorSource.addFeatures(featuresToAdd);
+				// Agregar las features al VectorSource
+				const format = new ol.format.GeoJSON();
+				const featuresToAdd = format.readFeatures(data);
+				vectorSource.addFeatures(featuresToAdd);
 
-			// Obtener la feature más cercana a coords3857
-			const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+				// Obtener la feature más cercana a coords3857
+				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
 
-			if (closestFeature) {
-				const nombre = closestFeature.get('nombre');
-				console.log(nombre);
+				if (closestFeature) {
+					const nombre = closestFeature.get('nombre');
+					console.log(nombre);
 
-				Swal.fire({
-					title: 'Ambulancia solicitada correctamente',
-					text: 'Ambulancia ' + nombre + ' solicitada correctamente',
-					icon: 'success',
-					showCancelButton: false,
-					confirmButtonColor: '#3085d6',
-					confirmButtonText: 'Aceptar'
-				});
-			} else {
-				console.log('No se encontraron features cercanas al punto objetivo');
-			}
-		})
-		.catch(error => {
-			console.error('Error al realizar la consulta WFS:', error);
-		});
-}
-
-function obtenerIdHospitalPorZonas(nombreZona) {
-	return new Promise((resolve, reject) => {
-		const resultadoIds = [];
-
-		const promises = nombreZona.map((key) => {
-			const cqlFilter = `nombre='${key}'`;
-			const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
-				cqlFilter
-			)}`;
-
-			return fetch(url)
-				.then((response) => response.json())
-				.then((data) => {
-					const features = data.features.filter(
-						(feature) => feature.properties.nombre === key
-					);
-
-					features.forEach((feature) => {
-						resultadoIds.push(feature.properties.hospital_id);
+					Swal.fire({
+						title: 'Ambulancia solicitada correctamente',
+						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+						icon: 'success',
+						showCancelButton: false,
+						confirmButtonColor: '#3085d6',
+						confirmButtonText: 'Aceptar'
 					});
-				})
-				.catch((error) => {
-					console.error('Error en la solicitud HTTP:', error);
-					reject(error);
-				});
-		});
-
-		Promise.all(promises)
-			.then(() => {
-				console.log('resultado de obteneridHospital:', resultadoIds);
-				resolve(resultadoIds);
+				} else {
+					console.log('No se encontraron features cercanas al punto objetivo');
+				}
 			})
-			.catch((error) => reject(error));
-	});
-}
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+			});
+	}
+
+	function ambulanciasCercanaPorId(coords3857, idHospital) {
+		const vectorSource = new ol.source.Vector();
+
+		const cqlFilter = `hospital_id='${idHospital}'`;
+
+		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				const features = data.features;
+
+				// Agregar las features al VectorSource
+				const format = new ol.format.GeoJSON();
+				const featuresToAdd = format.readFeatures(data);
+				vectorSource.addFeatures(featuresToAdd);
+
+				// Obtener la feature más cercana a coords3857
+				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+
+				if (closestFeature) {
+					const nombre = closestFeature.get('nombre');
+					console.log(nombre);
+
+					Swal.fire({
+						title: 'Ambulancia solicitada correctamente',
+						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+						icon: 'success',
+						showCancelButton: false,
+						confirmButtonColor: '#3085d6',
+						confirmButtonText: 'Aceptar'
+					});
+				} else {
+					console.log('No se encontraron features cercanas al punto objetivo');
+				}
+			})
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+			});
+	}
+
+	function obtenerIdHospitalPorZonas(nombreZona) {
+		return new Promise((resolve, reject) => {
+			const resultadoIds = [];
+
+			const promises = nombreZona.map((key) => {
+				const cqlFilter = `nombre='${key}'`;
+				const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
+					cqlFilter
+				)}`;
+
+				return fetch(url)
+					.then((response) => response.json())
+					.then((data) => {
+						const features = data.features.filter(
+							(feature) => feature.properties.nombre === key
+						);
+
+						features.forEach((feature) => {
+							resultadoIds.push(feature.properties.hospital_id);
+						});
+					})
+					.catch((error) => {
+						console.error('Error en la solicitud HTTP:', error);
+						reject(error);
+					});
+			});
+
+			Promise.all(promises)
+				.then(() => {
+					console.log('resultado de obteneridHospital:', resultadoIds);
+					resolve(resultadoIds);
+				})
+				.catch((error) => reject(error));
+		});
+	}
