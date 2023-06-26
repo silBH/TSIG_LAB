@@ -274,8 +274,10 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 						var longitud = parseFloat(data[0].lon);
 
 						// Centrar el mapa en la ubicación encontrada
-						self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
-						self.map.getView().setZoom(15);
+						var targetCenter = ol.proj.fromLonLat([longitud, latitud]);
+						var targetZoom = 18; // Nivel de zoom deseado
+						var duration = 2500; // Duración de la animación en milisegundos
+						self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
 
 						// Crear el marcador en la ubicación encontrada
 						var marker = new ol.Feature({
@@ -390,8 +392,10 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 										});
 										vectorLayer.getSource().addFeature(point);
 										lastPointCoordinates = coordinate;
-										self.map.getView().setCenter(lastPointCoordinates);
-										self.map.getView().setZoom(19);
+										var targetCenter = lastPointCoordinates;
+										var targetZoom = 18; // Nivel de zoom deseado
+										var duration = 2500; // Duración de la animación en milisegundos
+										self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
 										var coords3857 = point.getGeometry().getCoordinates();
 										console.log('coordenada:', coords3857);
 										var coordenadasTexto = coords3857.join(' ');
@@ -639,6 +643,10 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 							  'CQL_FILTER': cqlFilter
 							});
 							*/
+							var targetCenter = ubiUsuario;
+							var targetZoom = 18; // Nivel de zoom deseado
+							var duration = 2500; // Duración de la animación en milisegundos
+							self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
 							var contenido = 'Ambulancias en tu ubicación:<br><ul>';
 							for (var i = 0; i < features.length; i++) {
 								contenido += '<li>' + features[i].properties.nombre + '</li>';
