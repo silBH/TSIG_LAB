@@ -5,8 +5,9 @@ proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0
 // Registra las definiciones de proyección en OpenLayers
 ol.proj.proj4.register(proj4);
 
-const ubiUsuario = [-6253611.066855117, -4141044.3788586617];
+var ubiUsuario = [-6253611.066855117, -4141044.3788586617];
 console.log('Ubicacion del Usuario: ', ubiUsuario);
+
 
 function GeoMap() {
 	this.map = null;
@@ -126,9 +127,9 @@ var lyrUsuario = new ol.layer.Vector({
 });
 
 // Crear un punto en la ubicación del usuario
-var point = new ol.Feature({
+/*var point = new ol.Feature({
 	geometry: new ol.geom.Point(ubiUsuario)
-});
+});*/
 
 var estiloMarcador = new ol.style.Style({
 	image: new ol.style.Icon({
@@ -137,9 +138,39 @@ var estiloMarcador = new ol.style.Style({
 	})
 });
 
-point.setStyle(estiloMarcador);
+// Crear una instancia de geolocalización
+var geolocation = new ol.Geolocation({
+	tracking: true,
+	trackingOptions: {
+		enableHighAccuracy: true,
+	},
+	projection: 'EPSG:3857'
+});
 
-lyrUsuario.getSource().addFeature(point);
+// Obtener la posición actual del usuario y mostrarla en el mapa
+geolocation.on('change:position', function() {
+	var coordinates = geolocation.getPosition();
+	var accuracy = geolocation.getAccuracy();
+
+	// Crear un marcador en la posición actual
+	var locationPoint = new ol.Feature({
+		geometry: new ol.geom.Point(coordinates),
+	});
+
+	// Crear una capa vectorial para mostrar el marcador
+	var locationFeature = new ol.layer.Vector({
+		source: new ol.source.Vector({
+			features: [locationPoint],
+		}),
+	});
+	locationFeature.setStyle(estiloMarcador);
+	lyrUsuario.getSource().addFeature(locationPoint);
+
+	ubiUsuario = locationPoint.getGeometry().getCoordinates();
+
+	console.log(ubiUsuario);
+});
+
 
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa = function(target, center, zoom) {
@@ -1374,6 +1405,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
 									.then(response => response.text())
 									.then(data => {
 										console.log('Respuesta del servidor (zona de cobertura):', data);
+										actualizarFeature();
 									})
 									.catch(error => {
 										console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
@@ -2888,3 +2920,4 @@ function tieneCobertura() {
 				.catch((error) => reject(error));
 		});
 	}
+}
