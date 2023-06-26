@@ -97,6 +97,7 @@ public class ServicioEmergenciaDAO implements ServicioEmergenciaDAOLocal {
 	    query2.setParameter("servId", servId);
 	    query2.executeUpdate();
 	    em.getTransaction().commit();
+	    System.out.println("AMB DAO - eliminarID servicio --- FIN");
     }
     
 }

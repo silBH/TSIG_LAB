@@ -13,4 +13,5 @@ public interface AmbulanciaBusinessLocal {
 	public void crear(DtAmbulancia hospital);
 	public void editar(DtAmbulancia hospital);
 	public void eliminar(DtAmbulancia hospital);
+	public void eliminarAmbulanciaId(Long id);
 }

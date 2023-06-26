@@ -34,15 +34,11 @@ public class ServicioEmergenciaBusiness implements ServicioEmergenciaBusinessLoc
 	}
 	
     @Override
-    public ServicioEmergencia obtenerPorIdObjeto(Long id) {
-    	System.out.println("----------------- obtenerPorIdObjeto 1");
-    	ServicioEmergencia servicio = servicioData.obtenerPorId(id);
-    	System.out.println("----------------- obtenerPorIdObjeto 2");
-		if (servicio != null) {
-			System.out.println("----------------- obtenerPorIdObjeto 3");
+    public ServicioEmergencia obtenerPorIdObjeto(Long id) {    	
+    	ServicioEmergencia servicio = servicioData.obtenerPorId(id);    	
+		if (servicio != null) {			
 			return servicio;
 		}
-		System.out.println("----------------- obtenerPorIdObjeto 4");
 		return null;
     }
     

@@ -68,6 +68,9 @@ public class HospitalServlet extends HttpServlet {
 			case "/agregarAmbulancia":
 				agregarAmbulancia(request, response);
 				break;
+			case "/eliminarAmbulancia":
+				eliminarAmbulancia(request, response);
+				break;
 			case "/agregarServicio":
 				agregarServicio(request, response);
 				break;
@@ -207,6 +210,22 @@ public class HospitalServlet extends HttpServlet {
 
 	private void agregarAmbulancia(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
+		String ambuId = request.getParameter("id");    	
+    	String hospitalId = request.getParameter("hospitalId");
+    	    
+    	System.out.println("----------------- servlet id ambuId: " + ambuId);
+    	System.out.println("----------------- servlet id hospitalId: " + hospitalId);
+        
+        try {
+        	long idAmbulancia = Long.parseLong(ambuId);
+        	long idHospital = Long.parseLong(hospitalId);
+
+            hospBusiness.agregarAmbulancia(idHospital, idAmbulancia);
+            
+        } catch (Exception e) { 
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }        	
+        response.getWriter().append("Served at: ").append(request.getContextPath());
 	}
 
 	private void agregarServicio(HttpServletRequest request, HttpServletResponse response)
@@ -246,6 +265,26 @@ public class HospitalServlet extends HttpServlet {
             
         } catch (Exception e) {
             // Error al parsear el ID del servicio
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+		
+		
+	}
+
+		private void eliminarAmbulancia(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		
+		String ambuId = request.getParameter("id");
+		System.out.println("----------------- servlet id ambuId: 1" + ambuId);		
+				
+		try {       	
+                     
+            long id = Long.parseLong(ambuId);
+    		System.out.println("----------------- servlet id ambuId: 2" + id);
+    		ambulanciaBusiness.eliminarAmbulanciaId(id);
+    		System.out.println("----------------- servlet id ambuId: 3");
+            
+        } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 		
