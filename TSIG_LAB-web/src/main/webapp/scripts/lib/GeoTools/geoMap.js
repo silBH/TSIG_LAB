@@ -126,11 +126,6 @@ var lyrUsuario = new ol.layer.Vector({
 	source: new ol.source.Vector()
 });
 
-// Crear un punto en la ubicación del usuario
-/*var point = new ol.Feature({
-	geometry: new ol.geom.Point(ubiUsuario)
-});*/
-
 var estiloMarcador = new ol.style.Style({
 	image: new ol.style.Icon({
 		src: 'location.png', // Ruta a la imagen del marcador
@@ -170,7 +165,6 @@ geolocation.on('change:position', function() {
 
 	console.log(ubiUsuario);
 });
-
 
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa = function(target, center, zoom) {
