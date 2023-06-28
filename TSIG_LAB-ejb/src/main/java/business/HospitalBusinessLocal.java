@@ -22,6 +22,7 @@ public interface HospitalBusinessLocal {
 	//public void agregarServicioEmergencia(ServicioEmergencia servicio ) throws Exception;
 	public void agregarServicioEmergencia(Long idHospital, Long idServicio) throws Exception;
 	public void actualizarServicioEmergencia(Long idServicio, Long idHospNuevo, Long idHospViejo) throws Exception;
+	public void actualizarAmbulancia(Long idAmbulancia) throws Exception;
 	public void agregarAmbulancia(Long idHospital, Long idAmbulancia) throws Exception;
 	public void eliminarServicioEmergencia(DtHospital hospital, DtServicioEmergencia servicio ) throws Exception;
 	public void eliminarAmbulancia(DtHospital hospital, DtAmbulancia ambulancia) throws Exception;

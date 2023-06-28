@@ -81,8 +81,26 @@ public class HospitalDAO implements HospitalDAOLocal {
 		Query query2 = em.createNativeQuery(sql2);
 		query2.setParameter("id", id);
 		query2.executeUpdate();
-		em.getTransaction().commit();
+		em.getTransaction().commit();	
 		
+		// elimina zonas
+		em.getTransaction().begin();
+	    String sqlNombre = "SELECT nombre FROM ambulancia WHERE hospital_id = :id";
+	    Query queryNombre = em.createNativeQuery(sqlNombre);
+	    queryNombre.setParameter("id", id);
+	    List<String> nombresAmbulancias = queryNombre.getResultList();
+	    em.getTransaction().commit();
+	    
+	    if (!nombresAmbulancias.isEmpty()) {
+		    // Eliminar las zonas que coinciden con los nombres de las ambulancias
+	    	em.getTransaction().begin();
+		    String sqlZona = "DELETE FROM zona WHERE nombre IN :nombresAmbulancias";
+		    Query queryZona = em.createNativeQuery(sqlZona);
+		    queryZona.setParameter("nombresAmbulancias", nombresAmbulancias);
+		    int rowsAffected = queryZona.executeUpdate();		    
+		    em.getTransaction().commit();
+	    }
+			
 		// elimina ambulancias
 		em.getTransaction().begin();
 		String sql3 = "DELETE FROM ambulancia WHERE hospital_id = :id";
