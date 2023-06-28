@@ -1492,10 +1492,17 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	//////////////////////////////////////////////////
 	function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
 		console.log('Coordenadas en SRID 3857:', coords3857);
+		
+		
+		
 		//Lista hospitales
 		obtenerHospitales().then(hospitalesArray => {
 			console.log(hospitalesArray);
-
+			if (hospitalesArray.length === 0) {
+				Swal.fire('No existe ningún hospital');
+				eliminarVectorSource()
+				return;
+			}
 			// Crear la geometría correspondiente
 			var geometry;
 			if (tipoGeometria === 'Point') { //-------------------------------nuevo servicio de emergencia
@@ -2571,7 +2578,12 @@ GeoMap.prototype.CrearControlHospital = function () {
 	function eliminarHospital() {
 		obtenerHospitales().then(hospitalesArray => {
 			console.log(hospitalesArray);
-
+	
+			if (hospitalesArray.length === 0) {
+				Swal.fire('No existe ningún hospital');
+				return;
+			}
+	
 			Swal.fire({
 				title: 'Seleccione el hospital que desea eliminar',
 				html: `<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
@@ -2582,21 +2594,20 @@ GeoMap.prototype.CrearControlHospital = function () {
 				cancelButtonText: 'Cancelar',
 			}).then((result) => {
 				if (result.isConfirmed) {
-					// Obtener el valor del nombre ingresado por el usuario					
-
+					// Obtener el valor del hospital seleccionado por el usuario
 					const inputHospital = document.getElementById('inputHospital').value;
 					console.log('ID hospital:', inputHospital);
-
+	
 					const hospitalId = BigInt(inputHospital);
-
-					// fetch para llamar a la función del servlet de hospital
+	
+					// Fetch para llamar a la función del servlet de hospital
 					fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/eliminarHospital' + '&id=' + hospitalId, {
 						method: 'POST'
 					})
 						.then(response => {
 							if (response.ok) {
 								console.log('Llamada al servlet de hospital exitosa');
-								actualizarFeature();								
+								actualizarFeature();
 							} else {
 								console.error('Error al llamar al servlet de hospital');
 							}
@@ -2606,7 +2617,7 @@ GeoMap.prototype.CrearControlHospital = function () {
 						});
 				}
 			});
-
+	
 		});
 	}
 	var buttonElement = document.createElement('button');
