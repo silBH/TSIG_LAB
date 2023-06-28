@@ -1481,7 +1481,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 					VERSION: '1.1.1',
 					FORMAT: 'image/png',
 					TRANSPARENT: true,
-					LAYERS: 'tsig2023:ambulancia',
+					LAYERS: ['tsig2023:ambulancia' , 'tsig2023:zona' ],
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
 			});
@@ -2010,7 +2010,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 									var coords = selectedFeature.getGeometry().getCoordinates();
 									var modifiedCoordsText = coords.slice(0, 2).join(' ');
 									console.log(modifiedCoordsText);
-									coberturaServicio(modifiedCoordsText, hospId)
+									coberturaServicio(modifiedCoordsText, hospId) //retorna 0 si el servicio se puede modificar/eliminar, retorna 1 si no se puede modificar/eliminar
 										.then(resultado => {
 											if (resultado.codigoRetorno === 0) { // se puede eliminar											
 												Swal.fire({
@@ -2221,6 +2221,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 				if (selectedFeatures.getLength() > 0) {
 
 					var selectedFeature = selectedFeatures.item(0);
+					var coordOriginales = selectedFeature.getGeometry().getCoordinates();
 					console.log('Coordenadas antes de la modificación:', selectedFeature.getGeometry().getCoordinates());
 					var hospId = Number(selectedFeature.get('hospital_id'));
 					// Crea la interacción de modificación y asigna la capa vectorial
@@ -2229,12 +2230,12 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 					});
 
 					// Agrega la interacción de modificación al mapa
-					map.addInteraction(modifyInteraction);					
+					map.addInteraction(modifyInteraction);
 					// Al finalizar la edición
 					modifyInteraction.on('modifyend', function (event) {
 						// Obtén la geometría modificada						
 						var modifiedGeometry = event.features.item(0).getGeometry();
-						var modifiedCoordinates = modifiedGeometry.getCoordinates();						
+						var modifiedCoordinates = modifiedGeometry.getCoordinates();
 						// Actualiza la geometría de la característica
 						selectedFeature.getGeometry().setCoordinates(modifiedCoordinates);
 						console.log('Coordenadas después de la modificación:', selectedFeature.getGeometry().getCoordinates());
@@ -2243,10 +2244,10 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 						var layerName;
 						if (modifiedGeometry instanceof ol.geom.Point) {
 							layerName = 'servicioemergencia';
-							var coords = selectedFeature.getGeometry().getCoordinates();
-							var modifiedCoordsText = coords.slice(0, 2).join(' ');
-							console.log(modifiedCoordsText);
-							coberturaServicio(modifiedCoordsText, hospId)
+							//var coords = selectedFeature.getGeometry().getCoordinates();
+							var origneCoordsText = coordOriginales.slice(0, 2).join(' ');
+							console.log(origneCoordsText);
+							coberturaServicio(origneCoordsText, hospId) //retorna 0 si el servicio se puede modificar/eliminar, retorna 1 si no se puede modificar/eliminar
 								.then(resultado => {
 									console.log("servicios en la zona " + resultado.codigoRetorno);
 									if (resultado.codigoRetorno === 0) { // se puede eliminar											
@@ -2308,7 +2309,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 								if (result.isConfirmed) {
 									//CALCULAR ZONA DE NUEVA GEOMETRIA
 									var geometry = modifiedGeometry;
-									
+
 									const hospitalId = BigInt(inputHospital);
 
 									//-----------------------------------------------------------------------------
@@ -2336,28 +2337,32 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 										const cantServicios = resultado.codigoRetorno;
 										console.log("cantServicios " + cantServicios);
 										if (cantServicios >= 1) {
-											
-											 //SE ELIMINA ZONA ANTERIOR
-											 var ambuId = selectedFeature.getId();
-												 // fetch para llamar a la función del servlet de hospital para eliminar la zona
-												 fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarAmbulancia' + '&id=' + ambuId, {
-													 method: 'GET'
-												 })
-													 .then(response => {
-														 if (response.ok) {
-															 console.log('Llamada al servlet de hospital exitosa');
-															 actualizarFeature();
-														 } else {
-															 console.error('Error al llamar al servlet de hospital');
-														 }
-													 })
-											
+
+											//SE ELIMINA ZONA ANTERIOR
+											var ambu = selectedFeature.getId();
+											const puntoIndex = ambu.indexOf(".");
+											const ambuId = ambu.substring(puntoIndex + 1);
+											console.log("ID de ambulancia:", ambuId);
+
+											// fetch para llamar a la función del servlet de hospital para eliminar la zona
+											fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarAmbulancia' + '&id=' + ambuId, {
+												method: 'GET'
+											})
+												.then(response => {
+													if (response.ok) {
+														console.log('Llamada al servlet de hospital exitosa');
+														actualizarFeature();
+													} else {
+														console.error('Error al llamar al servlet de hospital');
+													}
+												})
+
 											// ser guarda zona NUEVA
 											var zonaCoberturaFeature = new ol.Feature({
 												nombre: inputCodigo,
 												ubicacion: bufferedGeometry
 											});
-			
+
 											// Crear una transacción WFS para insertar la característica de la zona de cobertura
 											var wfs = new ol.format.WFS();
 											var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
@@ -2366,7 +2371,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 												srsName: 'EPSG:3857',
 												version: '1.1.0'
 											});
-			
+
 											// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
 											fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
 												method: 'POST',
@@ -2385,14 +2390,12 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 												.catch(error => {
 													console.error('Error al realizar la solicitud WFS:', error);
 												});
-												
+
 											// GUARDAR AMBULANCIA
 											selectedFeature.set('distancia', inputDistancia);
-											guardarCambios(selectedFeature, layerName).then(()=>{
-												console.log('Respuesta del servidor (ambulancia):', data);
-											})
+											guardarCambios(selectedFeature, layerName);
 											actualizarFeature();
-											selectedFeatures.clear();	
+											selectedFeatures.clear();
 										} else {
 											Swal.fire({
 												icon: 'info',
@@ -2815,6 +2818,7 @@ function emergenciaFueraZona(coordenadasTexto) {
 
 function coberturaServicio(coordenaServicio, idHospital) {
 	//dado un servicio, revisa las ambulancias cercanas (zonas), si pertenece al mismo hospital, chequea si tienen otros servicios en su zona
+	//retorna 0 si el servicio se puede modificar/eliminar, retorna 1 si no se puede modificar/eliminar
 	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenaServicio + '))';
 
 	return fetch(url)
@@ -2822,7 +2826,7 @@ function coberturaServicio(coordenaServicio, idHospital) {
 		.then(data => {
 			var zonas = data.features; // ambulancias
 			var res = {};
-
+			console.log("coberturaServicio zonas encontradas " + zonas.length);
 			if (zonas.length === 0) { // No tiene ambulancias dependientes
 				res.codigoRetorno = 0; // se puede eliminar
 				return res; // Retorna aquí en caso de no tener ambulancias dependientes
@@ -2835,31 +2839,33 @@ function coberturaServicio(coordenaServicio, idHospital) {
 						var promises = [];
 
 						zonas.forEach(function (zona) {
+							console.log("coberturaServicio zonas revisada " + zona.properties.nombre);
 							ambulancias.forEach(function (ambulancia) {
+								console.log("coberturaServicio ambulancia revisada " + ambulancia.properties.nombre + " hospital "+ ambulancia.properties.hospital_id);
 								if (zona.properties.nombre === ambulancia.properties.nombre && ambulancia.properties.hospital_id === idHospital) {
-									var coords = zona.geometry.coordinates;
+									console.log("ambulancia " + ambulancia.properties.nombre + " idhosp " + ambulancia.properties.hospital_id);
+									//si la ambulancia se llama igual que la zona, y la ambulancia pertenece al mismo hospital del servicio seleccionado
+									var coords = zona.geometry.coordinates; //agarra la geometria de la zona de la ambulancia
 									var coordenadasTexto = coords[0].map(function (coordinate) {
 										return coordinate.join(' ');
 									}).join(', ');
-									var coordenadas = coordenadasTexto.replace(/\s\d/g, '');
-
-									promises.push(serviciosHospitalEnZona(coordenadas, idHospital));
+									var coordenadas = coordenadasTexto.replace(/\s\d/g, '');									
+									promises.push(serviciosHospitalEnZona(coordenadas, idHospital)); //ni idea que hace esto ??									
 								}
 							});
 						});
+						return Promise.all(promises)
+							.then(resultados => {
+								for (var i = 0; i < resultados.length; i++) {
+									if (resultados[i].codigoRetorno <= 1) {
+										res.codigoRetorno = 1; // no se puede eliminar
+										return res;
+									}
+								}
 
-						return Promise.all(promises);
-					})
-					.then(resultados => {
-						for (var i = 0; i < resultados.length; i++) {
-							if (resultados[i].codigoRetorno <= 1) {
-								res.codigoRetorno = 1; // no se puede eliminar
+								res.codigoRetorno = 0; // se puede eliminar
 								return res;
-							}
-						}
-
-						res.codigoRetorno = 0; // se puede eliminar
-						return res;
+							});
 					})
 					.catch(error => {
 						console.error('Error al realizar la consulta WFS:', error);
@@ -2883,7 +2889,6 @@ function serviciosHospitalEnZona(coordenadasZona, idHospital) {
 		.then(data => {
 			var features = data.features;
 			var resultado = {};
-			var resultado = {};
 
 			if (features.length === 0) {  // No se encontraron servicios							
 				resultado.codigoRetorno = 0; //no hay servicios en la zona
@@ -2894,11 +2899,11 @@ function serviciosHospitalEnZona(coordenadasZona, idHospital) {
 					if (feature.properties.hospital_id === Number(idHospital)) {
 						serviciosHospitalZona.push(feature);
 						cant++;
-						cant++;
 					}
 				})
 				resultado.codigoRetorno = cant;
 				resultado.servicios = serviciosHospitalZona;
+				console.log("cantidad servicios de id hospital " + idHospital + " en la zona: " + cant);
 			}
 			return resultado;
 		})
