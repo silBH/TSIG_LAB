@@ -60,6 +60,25 @@ public class AmbulanciaDAO implements AmbulanciaDAOLocal {
 	public void editar(Ambulancia ambulancia) {
 		// completar
 	}
+	
+	public void actualizarAmbulancia(Long idAmbulancia) throws Exception{
+		//solo se elimina la zona con el mismo nombre, la geometria y distancia se actualiza por geoserver		
+		em.getTransaction().begin();
+		String sqlNombre = "SELECT nombre FROM ambulancia WHERE id = :idAmbulancia";
+		Query queryNombre = em.createNativeQuery(sqlNombre);
+		queryNombre.setParameter("idAmbulancia", idAmbulancia);
+		String nombreAmbulancia = (String) queryNombre.getSingleResult();
+		em.getTransaction().commit();
+		System.out.println("AMB DAO - actualizar ambu--- 1" + nombreAmbulancia);
+
+		em.getTransaction().begin();
+		String sqlZona = "DELETE FROM zona WHERE nombre = :nombreAmbulancia";
+		Query queryZona = em.createNativeQuery(sqlZona);
+		queryZona.setParameter("nombreAmbulancia", nombreAmbulancia);
+		queryZona.executeUpdate();
+		em.getTransaction().commit();
+		System.out.println("AMB DAO - actualizar ambu--- 2");
+	}
 
 	@Override
 	public void eliminar(Ambulancia ambulancia) {

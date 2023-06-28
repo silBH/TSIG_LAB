@@ -106,6 +106,10 @@ public class HospitalBusiness implements HospitalBusinessLocal {
 		servicioData.actualizarServicio(idServicio, idHospNuevo, idHospViejo);
 	}
 	
+	@Override
+	public void actualizarAmbulancia(Long idAmbulancia) throws Exception{
+		ambulanciaData.actualizarAmbulancia(idAmbulancia);
+	}
 	
 	@Override
 	public void agregarAmbulancia(Long idHospital, Long idAmbulancia) throws Exception{

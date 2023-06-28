@@ -65,6 +65,9 @@ public class HospitalServlet extends HttpServlet {
 			case "/actualizarServicio":
 				actualizarServicioEmergencia(request, response);
 				break;
+			case "/actualizarAmbulancia":
+				actualizarAmbulancia(request, response);
+				break;
 			case "/agregarAmbulancia":
 				agregarAmbulancia(request, response);
 				break;
@@ -204,6 +207,20 @@ public class HospitalServlet extends HttpServlet {
         	
     	} catch (Exception e) {
             // Error al parsear el ID del servicio
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+	}
+	
+	private void actualizarAmbulancia(HttpServletRequest request, HttpServletResponse response)
+			throws Exception {
+		String ambuId = request.getParameter("id");    	
+   	    
+    	System.out.println("----------------- servlet ambuId: " + ambuId);
+    	
+    	try {
+    		long idAmbulancia = Long.parseLong(ambuId);
+        	hospBusiness.actualizarAmbulancia(idAmbulancia);        	
+    	} catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
 	}

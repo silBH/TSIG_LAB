@@ -16,5 +16,6 @@ public interface AmbulanciaDAOLocal {
 	public void editar(Ambulancia hospital);
 	public void eliminar(Ambulancia hospital);	
 	public void eliminarID(Long id);
-	public void agregarAmbulancia(Long idHospital, Long idAmbulancia) throws Exception;  
+	public void agregarAmbulancia(Long idHospital, Long idAmbulancia) throws Exception;
+	public void actualizarAmbulancia(Long idAmbulancia) throws Exception;
 }

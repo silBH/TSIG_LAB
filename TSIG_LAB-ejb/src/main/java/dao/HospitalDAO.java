@@ -81,7 +81,7 @@ public class HospitalDAO implements HospitalDAOLocal {
 		Query query2 = em.createNativeQuery(sql2);
 		query2.setParameter("id", id);
 		query2.executeUpdate();
-		em.getTransaction().commit();
+		em.getTransaction().commit();	
 		
 		// elimina ambulancias
 		em.getTransaction().begin();
