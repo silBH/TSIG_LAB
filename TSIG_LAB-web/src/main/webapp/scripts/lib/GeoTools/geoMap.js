@@ -1218,78 +1218,92 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 	var capaRanking;
 
 	function emergenciaConMayorAmbulancias() {
-		var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
-
-		fetch(urlPuntos)
-			.then(function (response) {
-				return response.json();
-			})
-			.then(function (data) {
-				if (data.features.length === 0) {
-					Swal.fire('No existen servicios de emergencia');
-					return;
-				}
-
-				var fetchPromises = [];
-				var rankingServicios = []; // Array para almacenar los IDs de los 5 primeros servicios
-
-				data.features.forEach(function (feature) {
-					var id = feature.id;
-					var servHospId = feature.properties.hospital_id;
-					var coordinates = feature.geometry.coordinates;
-					var coordenadasTexto = coordinates.join(' ');
-
-					var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
-
-					var fetchPromise = fetch(urlPoligonos)
-						.then(function (response) {
-							return response.json();
-						})
-						.then(function (data) {
-							return {
-								count: data.features.length,
-								id: id,
-								hospId: servHospId
-							};
-						});
-
-					fetchPromises.push(fetchPromise);
-				});
-
-				return Promise.all(fetchPromises)
-					.then(function (featuresCounts) {
-						featuresCounts.sort(function (a, b) {
-							return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
-						});
-
-						var serviciosConMayorAmbulancias = featuresCounts.slice(0, 5); // Obtener los primeros 5 servicios
-
-						if (serviciosConMayorAmbulancias.length > 0) {
-							var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
-
-							serviciosConMayorAmbulancias.forEach(function (servicio, index) {
-								rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + ' - Hospital: ' + servicio.hospId + '\n';
-
-								if (index < 5) {
-									rankingServicios.push(servicio.id); // Agregar el ID del servicio al array
-								}
-							});
-
-							Swal.fire(rankingTexto);
-
-							var puntoConMayorFeatures = serviciosConMayorAmbulancias[0];
-							console.log('ids de ranking: ', rankingServicios);
-							mostrarCapaServiciosRanking(rankingServicios);
-
-						} else {
-							Swal.fire('No existen ambulancias');
-						}
-
-						return rankingServicios; // Devolver el array de IDs de los 5 primeros servicios
-					});
-			});
+	  var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
+	
+	  // Llamada a la función obtenerHospitales
+	  obtenerHospitales()
+	    .then(function() {
+	      fetch(urlPuntos)
+	        .then(function(response) {
+	          return response.json();
+	        })
+	        .then(function(data) {
+	          if (data.features.length === 0) {
+	            Swal.fire('No existen servicios de emergencia');
+	            return;
+	          }
+	
+	          var fetchPromises = [];
+	          var rankingServicios = []; // Array para almacenar los IDs de los 5 primeros servicios
+	
+	          data.features.forEach(function(feature) {
+	            var id = feature.id;
+	            var servHospId = feature.properties.hospital_id;
+	            var coordinates = feature.geometry.coordinates;
+	            var coordenadasTexto = coordinates.join(' ');
+	
+	            var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
+	
+	            var fetchPromise = fetch(urlPoligonos)
+	              .then(function(response) {
+	                return response.json();
+	              })
+	              .then(function(data) {
+	                var hospId = '';
+	                var servicioHospital = hospitalesArray.find(function(hospital) {
+	                  return hospital.id === servHospId;
+	                });
+	
+	                if (servicioHospital) {
+	                  hospId = servicioHospital.nombre;
+	                }
+	
+	                return {
+	                  count: data.features.length,
+	                  id: id,
+	                  hospId: hospId
+	                };
+	              });
+	
+	            fetchPromises.push(fetchPromise);
+	          });
+	
+	          return Promise.all(fetchPromises)
+	            .then(function(featuresCounts) {
+	              featuresCounts.sort(function(a, b) {
+	                return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
+	              });
+	
+	              var serviciosConMayorAmbulancias = featuresCounts.filter(function(servicio) {
+	                return servicio.count > 0; // Filtra los servicios con una cuenta mayor que 0
+	              }).slice(0, 5); // Obtener los primeros 5 servicios
+	
+	              if (serviciosConMayorAmbulancias.length > 0) {
+	                var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
+	
+	                serviciosConMayorAmbulancias.forEach(function(servicio, index) {
+	                  rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + ' - Hospital: ' + servicio.hospId + '\n';
+	
+	                  rankingServicios.push(servicio.id); // Agregar el ID del servicio al array
+	                });
+	
+	                Swal.fire(rankingTexto);
+	
+	                
+	                console.log('ids de ranking: ', rankingServicios);
+	                mostrarCapaServiciosRanking(rankingServicios);
+	              } else {
+	                Swal.fire('No existen ambulancias');
+	              }
+	
+	              return rankingServicios; // Devolver el array de IDs de los 5 primeros servicios
+	            });
+	        });
+	    })
+	    .catch(function(error) {
+	      console.error('Error al obtener los hospitales:', error);
+	    });
 	}
-
 
 	function mostrarCapaServiciosRanking(idsObtenidosFinal) {
 		var urlServiciosBase = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
@@ -1473,50 +1487,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 	this.map.addInteraction(controlModificar);
 
 
-	function actualizarFeature() {
-		if (lyrAmbulancias.getSource()) {
-			var sourceLinea2 = new ol.source.TileWMS({
-				url: 'http://localhost:8586/geoserver/wms?',
-				params: {
-					VERSION: '1.1.1',
-					FORMAT: 'image/png',
-					TRANSPARENT: true,
-					LAYERS: ['tsig2023:ambulancia' , 'tsig2023:zona' ],
-					_ts: Date.now() // Agregar un sello de tiempo único
-				}
-			});
-			lyrAmbulancias.setSource(sourceLinea2);
-		}
 
-		if (lyrServicios.getSource()) {
-			var sourcePunto2 = new ol.source.TileWMS({
-				url: 'http://localhost:8586/geoserver/wms?',
-				params: {
-					VERSION: '1.1.1',
-					FORMAT: 'image/png',
-					TRANSPARENT: true,
-					STYLES: 'puntoGeneral',
-					LAYERS: 'tsig2023:servicioemergencia',
-					_ts: Date.now() // Agregar un sello de tiempo único
-				}
-			});
-			lyrServicios.setSource(sourcePunto2);
-		}
-
-		if (lyrZonas.getSource()) {
-			var sourcezona = new ol.source.TileWMS({
-				url: 'http://localhost:8586/geoserver/wms?',
-				params: {
-					VERSION: '1.1.1',
-					FORMAT: 'image/png',
-					TRANSPARENT: true,
-					LAYERS: 'tsig2023:zona',
-					_ts: Date.now() // Agregar un sello de tiempo único
-				}
-			});
-			lyrZonas.setSource(sourcezona);
-		}
-	}
 
 	//////////////////////////////////////////////////
 	function insertarFeature(nombreFeatureType, nombreFeature, nombreLayer, tipoGeometria, coords3857) {
@@ -1622,6 +1593,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											if (response.ok) {
 												console.log('Llamada al servlet de hospital exitosa');
 												actualizarFeature();
+												eliminarVectorSource();
 											} else {
 												console.error('Error al llamar al servlet de hospital');
 											}
@@ -1776,6 +1748,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 													if (response.ok) {
 														console.log('Llamada al servlet de hospital exitosa');
 														actualizarFeature();
+														eliminarVectorSource();
 													} else {
 														console.error('Error al llamar al servlet de hospital');
 													}
@@ -2041,6 +2014,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 															})
 
 														actualizarFeature();
+														eliminarVectorSource();
 														selectedFeature = null;
 													}
 												});
@@ -2082,6 +2056,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 												})
 
 											actualizarFeature();
+											eliminarVectorSource();
 											selectedFeature = null;
 										}
 									});
@@ -2261,8 +2236,9 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 										}).then(function (result) {
 											if (result.isConfirmed) {
 												guardarCambios(selectedFeature, layerName);
-												actualizarFeature();
+												eliminarVectorSource();
 												selectedFeatures.clear();
+												actualizarFeature();
 											}
 										});
 									} else { //No se puede eliminar
@@ -2271,6 +2247,9 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											title: 'No es posible modificar',
 											text: 'Existe al menos una ambulancia que no tiene otro Servicio de Emergencia en la zona.'
 										});
+										actualizarFeature();
+										eliminarVectorSource();
+										selectedFeatures.clear();
 									}
 								})
 								.catch(error => {
@@ -2352,6 +2331,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 													if (response.ok) {
 														console.log('Llamada al servlet de hospital exitosa');
 														actualizarFeature();
+														eliminarVectorSource();
 													} else {
 														console.error('Error al llamar al servlet de hospital');
 													}
@@ -2395,6 +2375,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											selectedFeature.set('distancia', inputDistancia);
 											guardarCambios(selectedFeature, layerName);
 											actualizarFeature();
+											eliminarVectorSource();
 											selectedFeatures.clear();
 										} else {
 											Swal.fire({
@@ -2402,30 +2383,13 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 												title: 'Sin Servicio de Emergencia',
 												text: 'La ambulancia no tiene un Servicio de Emergencia en su zona. Intente nuevamente.'
 											});
+											eliminarVectorSource();
+											selectedFeatures.clear();
+											actualizarFeature();
 										}
 									})
 								}
 							})
-						} else if (modifiedGeometry instanceof ol.geom.Polygon) {
-							/*	layerName = 'zona';
-								var coords = selectedFeature.getGeometry().getCoordinates();
-								var coordenadasTexto = coords[0].map(function (coordinate) {
-									return coordinate.join(' ');
-								}).join(', ');
-								var coordenadas = coordenadasTexto.replace(/\s\d/g, '');
-								//console.log(coordenadas);
-								emergenciaDentroZona(coordenadas)
-									.then(resultado => {
-										if (resultado.codigoRetorno === 1) {
-											//modificar
-										}
-										guardarCambios(selectedFeature, layerName);
-										actualizarFeature();
-										selectedFeatures.clear();
-									})
-									.catch(error => {
-										console.error('Error en la función emergenciaDentroZona:', error);
-									});*/
 						}
 					});
 				}
@@ -2455,6 +2419,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 			.then(data => {
 				console.log('Respuesta del servidor:', data);
 				// Procesar la respuesta del servidor aquí
+				actualizarFeature();
 			})
 			.catch(error => {
 				console.error('Error al realizar la solicitud WFS:', error);
@@ -2484,7 +2449,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 			.then(response => response.text())
 			.then(data => {
 				console.log('Respuesta del servidor:', data);
-				// Procesar la respuesta del servidor aquí
+				actualizarFeature();
 			})
 			.catch(error => {
 				console.error('Error al realizar la solicitud WFS:', error);
@@ -2631,6 +2596,7 @@ GeoMap.prototype.CrearControlHospital = function () {
 						.then(response => {
 							if (response.ok) {
 								console.log('Llamada al servlet de hospital exitosa');
+								actualizarFeature();								
 							} else {
 								console.error('Error al llamar al servlet de hospital');
 							}
@@ -3414,3 +3380,47 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 			console.error('Error al realizar la consulta WFS:', error);
 		});
 }
+
+	function actualizarFeature() {
+		if (lyrAmbulancias.getSource()) {
+			var sourceLinea2 = new ol.source.TileWMS({
+				url: 'http://localhost:8586/geoserver/wms?',
+				params: {
+					VERSION: '1.1.1',
+					FORMAT: 'image/png',
+					TRANSPARENT: true,
+					LAYERS: 'tsig2023:ambulancia',
+					_ts: Date.now() // Agregar un sello de tiempo único
+				}
+			});
+			lyrAmbulancias.setSource(sourceLinea2);
+		}
+
+		if (lyrServicios.getSource()) {
+			var sourcePunto2 = new ol.source.TileWMS({
+				url: 'http://localhost:8586/geoserver/wms?',
+				params: {
+					VERSION: '1.1.1',
+					FORMAT: 'image/png',
+					TRANSPARENT: true,
+					LAYERS: 'tsig2023:servicioemergencia',
+					_ts: Date.now() // Agregar un sello de tiempo único
+				}
+			});
+			lyrServicios.setSource(sourcePunto2);
+		}
+
+		if (lyrZonas.getSource()) {
+			var sourcezona = new ol.source.TileWMS({
+				url: 'http://localhost:8586/geoserver/wms?',
+				params: {
+					VERSION: '1.1.1',
+					FORMAT: 'image/png',
+					TRANSPARENT: true,
+					LAYERS: 'tsig2023:zona',
+					_ts: Date.now() // Agregar un sello de tiempo único
+				}
+			});
+			lyrZonas.setSource(sourcezona);
+		}
+	}
