@@ -36,48 +36,6 @@ var lyrEjes = new ol.layer.Tile({
 	})
 });
 
-var lyrLinea2 = new ol.layer.Tile({
-	title: 'Recorrido',
-	visible: true,
-	source: new ol.source.TileWMS({
-		url: 'http://localhost:8586/geoserver/wms?',
-		params: {
-			VERSION: '1.1.1',
-			FORMAT: 'image/png',
-			TRANSPARENT: true,
-			LAYERS: 'tsig2023:ambulancia'
-		}
-	})
-})
-
-var lyrPunto2 = new ol.layer.Tile({
-	title: 'Hospital',
-	visible: true,
-	source: new ol.source.TileWMS({
-		url: 'http://localhost:8586/geoserver/wms?',
-		params: {
-			VERSION: '1.1.1',
-			FORMAT: 'image/png',
-			TRANSPARENT: true,
-			STYLES: 'puntoGeneral',
-			LAYERS: 'tsig2023:servicioemergencia'
-		}
-	})
-})
-
-var lyrUsuario2 = new ol.layer.Tile({
-	title: 'Usuario',
-	visible: true,
-	source: new ol.source.TileWMS({
-		url: 'http://localhost:8586/geoserver/wms?',
-		params: {
-			VERSION: '1.1.1',
-			FORMAT: 'image/png',
-			TRANSPARENT: true,
-			LAYERS: 'tsig2023:usuario2'
-		}
-	})
-})
 
 var lyrServicios = new ol.layer.Tile({
 	title: 'Servicios Emergencia',
@@ -174,21 +132,34 @@ GeoMap.prototype.CrearMapa = function(target, center, zoom) {
 
 	this.map = new ol.Map({
 		target: _target,
-		layers: [lyrOSM, lyrZonas, lyrAmbulancias, lyrServicios, lyrUsuario],
+		layers: [lyrOSM, lyrAmbulancias, lyrServicios, lyrUsuario],
 		view: new ol.View({
 			center: (_center),
 			zoom: _zoom
 		})
 	});
-	/*
+	
 	  var layerSwitcher = new ol.control.LayerSwitcher({
 		  tipLabel: 'Leyenda', 
 		  groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
 	  });
   
 	  this.map.addControl(layerSwitcher);
-	  */
+	  
 	map = this.map;
+	
+	// Crea el filtro DWithin para el radio cercano del usuario
+	var filtroDWithin = 'DWithin(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '), 1000, meters)';
+	
+	// Modifica la capa lyrServicios
+	lyrServicios.getSource().updateParams({
+	  CQL_FILTER: filtroDWithin
+	});
+	
+	// Modifica la capa lyrAmbulancias
+	lyrAmbulancias.getSource().updateParams({
+	  CQL_FILTER: filtroDWithin
+	});
 };
 
 GeoMap.prototype.CrearMapaAdmin = function(target, center, zoom) {
@@ -299,37 +270,41 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 						var longitud = parseFloat(data[0].lon);
 
 						// Centrar el mapa en la ubicación encontrada
-						self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
-						self.map.getView().setZoom(15);
-
-						// Crear el marcador en la ubicación encontrada
-						var marker = new ol.Feature({
-							geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
-						});
-
-						vectorLayer.getSource().clear();
-						vectorLayer.getSource().addFeature(marker);
-
-						// Obtener las coordenadas del marcador
-						var coords3857 = marker.getGeometry().getCoordinates();
-
-						// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
-						// var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
-
-						// Mostrar las coordenadas transformadas en la consola
-						console.log('Coordenadas 3857:', coords3857);
-						// console.log('Coordenadas 32721:', coords32721);
-						var coordenadasTexto = coords3857.join(' ');
-						console.log(coordenadasTexto);
-						emergenciaFueraZona(coordenadasTexto)
-							.then(resultado => {
-								if (resultado.codigoRetorno === 0) {
-									ambulanciasCercana(coords3857);
-								}
-							})
-						// Construir el filtro CQL utilizando las coordenadas transformadas
-						var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
-						self.updateGeoserverLayer(cqlFilter);
+						var targetCenter = ol.proj.fromLonLat([longitud, latitud]);
+						var targetZoom = 18; // Nivel de zoom deseado
+						var duration = 2500; // Duración de la animación en milisegundos
+						self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
+						setTimeout(function() {
+							// Crear el marcador en la ubicación encontrada
+							var marker = new ol.Feature({
+								geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
+							});
+	
+							vectorLayer.getSource().clear();
+							vectorLayer.getSource().addFeature(marker);
+	
+							// Obtener las coordenadas del marcador
+							var coords3857 = marker.getGeometry().getCoordinates();
+	
+							// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
+							// var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+	
+							// Mostrar las coordenadas transformadas en la consola
+							console.log('Coordenadas 3857:', coords3857);
+							// console.log('Coordenadas 32721:', coords32721);
+							var coordenadasTexto = coords3857.join(' ');
+							console.log(coordenadasTexto);
+							emergenciaFueraZona(coordenadasTexto)
+								.then(resultado => {
+									if (resultado.codigoRetorno === 0) {
+										ambulanciasCercana(coords3857);
+									}
+								})
+							// Construir el filtro CQL utilizando las coordenadas transformadas
+							//var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
+							//self.updateGeoserverLayer(cqlFilter);
+						}, duration);
+						
 					} else {
 						alert('No se pudo encontrar la dirección.');
 					}
@@ -344,196 +319,240 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 	};
 
 	var buscarCalleDibujarLinea = function() {
-		Swal.fire({
-			title: 'Ingresa los nombres de las calles',
-			html:
-				'<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
-				'<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
-			focusConfirm: false,
-			preConfirm: function() {
-				var calle1 = document.getElementById('calle1-input').value;
-				var calle2 = document.getElementById('calle2-input').value;
-
-				if (calle1 && calle2) {
-					// Realizar la solicitud WFS para obtener la información de las calles
-					var wfsUrl = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Aft_01_ejes&CQL_FILTER=(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle1) + '%25%27)%20or%20(nom_calle%20ilike%20%27%25' + encodeURIComponent(calle2) + '%25%27)&outputFormat=application/json';
-					fetch(wfsUrl)
-						.then(function(response) {
-							return response.json();
-						})
-						.then(function(data) {
-							// Obtener las coordenadas del MultiLineString
-							var features = data.features;
-							var coordinates = [];
-							for (var i = 0; i < features.length; i++) {
-								var geometry = features[i].geometry;
-								if (geometry && geometry.type === 'MultiLineString') {
-									coordinates = coordinates.concat(geometry.coordinates);
-								}
-							}
-
-							// Transformar las coordenadas de CRS 32721 a CRS 3857
-							var transformedCoordinates = [];
-							for (var i = 0; i < coordinates.length; i++) {
-								var subCoordinates = coordinates[i];
-								var transformedSubCoordinates = [];
-								for (var j = 0; j < subCoordinates.length; j++) {
-									var coordinate = subCoordinates[j];
-									var transformedCoordinate = proj4("EPSG:32721", "EPSG:3857", coordinate);
-
-									transformedSubCoordinates.push(transformedCoordinate);
-								}
-								transformedCoordinates.push(transformedSubCoordinates);
-							}
-							// Crear el MultiLineString
-							var multiLineString = new ol.geom.MultiLineString(transformedCoordinates);
-
-							// Crear una nueva feature con el MultiLineString
-							var feature = new ol.Feature(multiLineString);
-
-							// Añadir la feature a la fuente de datos de la capa multiLineStringLayer
-							multiLineStringLayer.getSource().addFeature(feature);
-
-							var pointCount = {}; // Objeto para realizar un seguimiento de la cantidad de linestrings en los que aparece cada punto
-
-							// Recorrer las coordenadas del MultiLineString y contar la cantidad de apariciones de cada punto
-							multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
-								lineStringCoordinates.forEach(function(coordinate) {
-									var coordinateKey = coordinate.toString();
-									pointCount[coordinateKey] = (pointCount[coordinateKey] || 0) + 1;
-								});
-							});
-							var lastPointCoordinates = null;
-							var point;
-							// Recorrer las coordenadas y crear los puntos para aquellos que cruzan con 3 o más linestrings
-							multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
-								lineStringCoordinates.forEach(function(coordinate) {
-									var coordinateKey = coordinate.toString();
-									if (pointCount[coordinateKey] >= 3) {
-										point = new ol.Feature({
-											geometry: new ol.geom.Point(coordinate)
-										});
-										vectorLayer.getSource().addFeature(point);
-										lastPointCoordinates = coordinate;
-										self.map.getView().setCenter(lastPointCoordinates);
-										self.map.getView().setZoom(19);
-										var coords3857 = point.getGeometry().getCoordinates();
-										console.log('coordenada:', coords3857);
-										var coordenadasTexto = coords3857.join(' ');
-										console.log(coordenadasTexto);
-										emergenciaFueraZona(coordenadasTexto)
-											.then(resultado => {
-												if (resultado.codigoRetorno === 0) {
-													ambulanciasCercana(coords3857);
-												}
-											})
-									} else {
-										Swal.fire({
-											title: 'Error',
-											text: 'Las calles no tienen una intersección',
-											icon: 'error',
-											confirmButtonText: 'Aceptar'
-										});
-									}
-								});
-							});
-						})
-						.catch(function(error) {
-							console.log('Error en la solicitud WFS:', error);
-						});
-				} else {
-					alert('Por favor, ingresa los nombres de las calles.');
-				}
-			},
-		});
+	  Swal.fire({
+	    title: 'Ingresa los nombres de las calles',
+	    html:
+	      '<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
+	      '<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
+	    focusConfirm: false,
+	    preConfirm: function() {
+	      var calle1 = document.getElementById('calle1-input').value;
+	      var calle2 = document.getElementById('calle2-input').value;
+	
+	      if (calle1 && calle2) {
+	        // Realizar la solicitud WFS para obtener la información de las calles
+	        var wfsUrl =
+	          'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=tsig2023%3Aft_01_ejes&CQL_FILTER=(nom_calle%20ilike%20%27%25' +
+	          encodeURIComponent(calle1) +
+	          '%25%27)%20or%20(nom_calle%20ilike%20%27%25' +
+	          encodeURIComponent(calle2) +
+	          '%25%27)&outputFormat=application/json';
+	        fetch(wfsUrl)
+	          .then(function(response) {
+	            return response.json();
+	          })
+	          .then(function(data) {
+	            // Obtener las coordenadas del MultiLineString
+	            var features = data.features;
+	            var coordinates = [];
+	            for (var i = 0; i < features.length; i++) {
+	              var geometry = features[i].geometry;
+	              if (geometry && geometry.type === 'MultiLineString') {
+	                coordinates = coordinates.concat(geometry.coordinates);
+	              }
+	            }
+	
+	            // Transformar las coordenadas de CRS 32721 a CRS 3857
+	            var transformedCoordinates = [];
+	            for (var i = 0; i < coordinates.length; i++) {
+	              var subCoordinates = coordinates[i];
+	              var transformedSubCoordinates = [];
+	              for (var j = 0; j < subCoordinates.length; j++) {
+	                var coordinate = subCoordinates[j];
+	                var transformedCoordinate = proj4("EPSG:32721", "EPSG:3857", coordinate);
+	
+	                transformedSubCoordinates.push(transformedCoordinate);
+	              }
+	              transformedCoordinates.push(transformedSubCoordinates);
+	            }
+	            // Crear el MultiLineString
+	            var multiLineString = new ol.geom.MultiLineString(transformedCoordinates);
+	
+	            // Crear una nueva feature con el MultiLineString
+	            var feature = new ol.Feature(multiLineString);
+	
+	            // Añadir la feature a la fuente de datos de la capa multiLineStringLayer
+	            multiLineStringLayer.getSource().addFeature(feature);
+	
+	            var pointCount = {}; // Objeto para realizar un seguimiento de la cantidad de linestrings en los que aparece cada punto
+	
+	            // Recorrer las coordenadas del MultiLineString y contar la cantidad de apariciones de cada punto
+	            multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+	              lineStringCoordinates.forEach(function(coordinate) {
+	                var coordinateKey = coordinate.toString();
+	                pointCount[coordinateKey] = (pointCount[coordinateKey] || 0) + 1;
+	              });
+	            });
+	            var lastPointCoordinates = null;
+	            var point;
+	            // Recorrer las coordenadas y crear los puntos para aquellos que cruzan con 3 o más linestrings
+	            multiLineString.getCoordinates().forEach(function(lineStringCoordinates) {
+	              lineStringCoordinates.forEach(function(coordinate) {
+	                var coordinateKey = coordinate.toString();
+	                if (pointCount[coordinateKey] >= 3) {
+	                  point = new ol.Feature({
+	                    geometry: new ol.geom.Point(coordinate)
+	                  });
+	                  vectorLayer.getSource().addFeature(point);
+	                  lastPointCoordinates = coordinate;
+	                  var coords3857 = point.getGeometry().getCoordinates();
+	                  console.log('coordenada:', coords3857);
+	                  var coordenadasTexto = coords3857.join(' ');
+	                  console.log(coordenadasTexto);
+	                  emergenciaFueraZona(coordenadasTexto)
+	                    .then(resultado => {
+	                      if (resultado.codigoRetorno === 0) {
+	                        var targetCenter = coords3857;
+	                        var targetZoom = 18; // Nivel de zoom deseado
+	                        var duration = 2500; // Duración de la animación en milisegundos
+	                        self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
+	                        setTimeout(function() {
+	                          ambulanciasCercana(coords3857);
+	                        }, duration);
+	                      }
+	                    });
+	                }
+	              });
+	            });
+	
+	            // Verificar si no se creó ningún punto y mostrar el Swal.fire correspondiente
+	            if (!point) {
+	              Swal.fire({
+	                title: 'Error',
+	                text: 'Las calles no tienen una intersección',
+	                icon: 'error',
+	                confirmButtonText: 'Aceptar'
+	              });
+	            }
+	          })
+	          .catch(function(error) {
+	            console.log('Error en la solicitud WFS:', error);
+	          });
+	      } else {
+	        alert('Por favor, ingresa los nombres de las calles.');
+	      }
+	    },
+	  });
 	};
 
 	var drawInteraction;
 	var dibujo;
 	var isBuscarAmbulanciasActive = false;
+	var lyrAmbulanciasEncontradas;
 	var buscarAmbulancias = function() {
-		if (drawInteraction) {
-			self.map.removeInteraction(drawInteraction);
-			drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
-		} else {
-			if (!dibujo) {
-				dibujo = new ol.layer.Vector({
-					source: new ol.source.Vector(),
-					style: new ol.style.Style({
-						fill: new ol.style.Fill({
-							color: 'rgba(0, 0, 255, 0.2)' // Color de relleno del polígono
-						}),
-						stroke: new ol.style.Stroke({
-							color: 'blue', // Color del borde del polígono
-							width: 2 // Grosor del borde del polígono
-						})
-					})
-				});
-				self.map.addLayer(dibujo);
-			}
-
-			drawInteraction = new ol.interaction.Draw({
-				type: 'Polygon',
-				source: dibujo.getSource() // Utilizar la fuente de la capa vectorial para almacenar los polígonos dibujados
-			});
-
-			drawInteraction.on('drawend', function(event) {
-				var geometry = event.feature.getGeometry();
-				var coordinates = geometry.getCoordinates();
-				//console.log(coordinates);
-
-				// Convertir las coordenadas en una cadena de texto separada por comas
-				var coordenadasTexto = coordinates[0].map(function(coordinate) {
-					return coordinate.join(' ');
-				}).join(', ');
-				//console.log(coordenadasTexto);
-
-				var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&' +
-					'CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))&outputFormat=application/json';
-				// Realizar la consulta utilizando fetch
-				fetch(url)
-					.then(function(response) {
-						if (response.ok) {
-							return response.json();
-						} else {
-							throw new Error('Error al realizar la consulta WFS');
-						}
-					})
-					.then(function(data) {
-						var features = data.features;
-						var contenido = '';
-						var titulo;
-
-						if (features.length > 0) {
-							var titulo1 = '<strong>Ambulancias Encontradas:</strong><br><br>';
-							features.forEach(function(feature) {
-								var id = feature.id;
-								var nombre = feature.properties.nombre;
-								contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
-							});
-							titulo = titulo1;
-						} else {
-							var titulo2 = 'No se encontraron ambulancias.';
-							titulo = titulo2;
-						}
-
-						Swal.fire({
-							title: titulo,
-							html: contenido,
-							icon: 'info',
-							confirmButtonText: 'Aceptar'
-						}).then(function() {
-							dibujo.getSource().clear();
-						});
-					})
-					.catch(function(error) {
-						console.error('Error al realizar la consulta WFS:', error);
-					});
-			});
-
-			self.map.addInteraction(drawInteraction);
-		}
+	  if (drawInteraction) {
+	    map.removeInteraction(drawInteraction);
+	    drawInteraction = null;
+	  } else {
+	    if (!dibujo) {
+	      dibujo = new ol.layer.Vector({
+	        source: new ol.source.Vector(),
+	        style: new ol.style.Style({
+	          fill: new ol.style.Fill({
+	            color: 'rgba(0, 0, 255, 0.2)'
+	          }),
+	          stroke: new ol.style.Stroke({
+	            color: 'blue',
+	            width: 2
+	          })
+	        })
+	      });
+	      map.addLayer(dibujo);
+	    }
+	
+	    drawInteraction = new ol.interaction.Draw({
+	      type: 'Polygon',
+	      source: dibujo.getSource()
+	    });
+	
+	    drawInteraction.on('drawend', function(event) {
+	      var geometry = event.feature.getGeometry();
+	      var coordinates = geometry.getCoordinates();
+	
+	      var coordenadasTexto = coordinates[0].map(function(coordinate) {
+	        return coordinate.join(' ');
+	      }).join(', ');
+	
+	      var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&' +
+	        'CQL_FILTER=INTERSECTS(ubicacion, POLYGON((' + coordenadasTexto + ')))&outputFormat=application/json';
+	
+	      fetch(url)
+	        .then(function(response) {
+	          if (response.ok) {
+	            return response.json();
+	          } else {
+	            throw new Error('Error al realizar la consulta WFS');
+	          }
+	        })
+	        .then(function(data) {
+	          var features = data.features;
+	          var contenido = '';
+	          var titulo;
+	
+	          if (features.length > 0) {
+	            var titulo1 = '<strong>Ambulancias Encontradas:</strong><br><br>';
+	            features.forEach(function(feature) {
+	              var id = feature.id;
+	              var nombre = feature.properties.nombre;
+	              contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+	            });
+	            titulo = titulo1;
+	          } else {
+	            var titulo2 = 'No se encontraron ambulancias.';
+	            titulo = titulo2;
+	          }
+			  mostrarcapaAmbulanciasCercaEncontradas(data);
+			  	
+	          Swal.fire({
+	            title: titulo,
+	            html: contenido,
+	            icon: 'info',
+	            confirmButtonText: 'Aceptar'
+	          }).then(function() {
+	            dibujo.getSource().clear();
+				
+	          });
+	        })
+	        .catch(function(error) {
+	          console.error('Error al realizar la consulta WFS:', error);
+	        });
+	    });
+	
+	    map.addInteraction(drawInteraction);
+	  }
 	};
+	
+	function mostrarcapaAmbulanciasCercaEncontradas(data) {
+	  // Remover la capa de ambulancias encontradas si ya existe
+	  if (lyrAmbulanciasEncontradas) {
+	    map.removeLayer(lyrAmbulanciasEncontradas);
+	    lyrAmbulanciasEncontradas = undefined;
+	  }
+	
+	  if (isBuscarAmbulanciasActive && data.features.length > 0) {
+	    // Crear una capa vectorial para mostrar las ambulancias encontradas
+	    lyrAmbulanciasEncontradas = new ol.layer.Vector({
+	      source: new ol.source.Vector({
+	        features: new ol.format.GeoJSON().readFeatures(data)
+	      }),
+	      style: new ol.style.Style({
+	        stroke: new ol.style.Stroke({
+	          color: 'red',
+	          width: 2
+	        })
+	      })
+	    });
+	
+	    // Ocultar la capa de ambulancias original
+	    lyrAmbulancias.setVisible(false);
+	
+	    // Agregar la capa de ambulancias encontradas al mapa
+	    map.addLayer(lyrAmbulanciasEncontradas);
+	  } else {
+	    // Mostrar la capa de ambulancias original
+	    lyrAmbulancias.setVisible(true);
+	  }
+	}
 
 	function ambulanciasCercana(coords3857) {
 		// Crear un VectorSource vacío
@@ -574,93 +593,244 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 			});
 	}
 
+	var isAmbulanciasYServicios = false;
+	var capaAmbulanciasCerca;
+	var capaServiciosCerca;
+	
 	function buscarAmbulanciasYServiciosEmergencia() {
-		var url =
-			'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' +
-			ubiUsuario[0] +
-			' ' +
-			ubiUsuario[1] +
-			'))';
-
-		return fetch(url)
-			.then(response => response.json())
-			.then(data => {
-				var features = data.features;
-				var retorno = {};
-				if (features.length === 0) {
-					// No se encontraron features
-					Swal.fire({
-						icon: 'info',
-						title: 'Sin cobertura',
-						text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
-					});
-					retorno.codigoRetorno = 1;
-				} else {
-					var promises = features.map(feature => {
-						var nombreA = feature.properties.nombre;
-						console.log('Ambulancia: ', nombreA);
-						var coordenadasTexto = feature.geometry.coordinates[0]
-							.map(coordinate => coordinate.join(' '))
-							.join(', ');
-
-						return IdEmergenciaDentroZona(coordenadasTexto)
-							.then(resultadoZona => {
-								console.log('resultadoZona: ', resultadoZona);
-								return resultadoZona;
-							})
-							.catch(error => {
-								console.error('Error en la función emergenciaDentroZona:', error);
-							});
-					});
-
-					Promise.all(promises)
-						.then(resultados => {
-							var idsObtenidosFinal = [];
-
-							resultados.forEach(resultado => {
-								if (resultado) {
-									idsObtenidosFinal = idsObtenidosFinal.concat(resultado);
-								}
-							});
-
-							idsObtenidosFinal = [...new Set(idsObtenidosFinal)]; // Eliminar duplicados
-							console.log('idsObtenidosFinal sin duplicados: ', idsObtenidosFinal);
-							/*
-							var cqlFilter = 'IN(' + idsObtenidosFinal.map(id => "'" + id + "'").join(',') + ')';
+	  var url =
+	    'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' +
+	    ubiUsuario[0] +
+	    ' ' +
+	    ubiUsuario[1] +
+	    '))';
+	
+	  return fetch(url)
+	    .then(response => response.json())
+	    .then(data => {
+	      var features = data.features;
+	      var retorno = {};
+	      if (features.length === 0) {
+	        // No se encontraron features
+	        Swal.fire({
+	          icon: 'info',
+	          title: 'Sin cobertura',
+	          text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
+	        });
+	        retorno.codigoRetorno = 1;
+	      } else {
+	        var promises = features.map(feature => {
+	          var nombreA = feature.properties.nombre;     
+	          console.log('Ambulancia: ', nombreA);
+	          var coordenadasTexto = feature.geometry.coordinates[0]
+	            .map(coordinate => coordinate.join(' '))
+	            .join(', ');
+	
+	          return IdEmergenciaDentroZona(coordenadasTexto)
+	            .then(resultadoZona => {
+	              console.log('resultadoZona: ', resultadoZona);
+	              return resultadoZona;
+	            })
+	            .catch(error => {
+	              console.error('Error en la función emergenciaDentroZona:', error);
+	            });
+	        });
+	
+	        return Promise.all(promises)
+	          .then(resultados => {
+	            var idsObtenidosFinal = [];
+	            var nombresAmbulancias = [];
+	
+	            resultados.forEach(resultado => {
+	              if (resultado) {
+	                idsObtenidosFinal = idsObtenidosFinal.concat(resultado);
+	              }
+	            });
+	
+	            idsObtenidosFinal = [...new Set(idsObtenidosFinal)];
+	            console.log('idsObtenidosFinal sin duplicados: ', idsObtenidosFinal);
+	
+	            features.forEach(feature => {
+	              nombresAmbulancias.push(feature.properties.nombre);
+	            });
+				console.log('array nombre de ambulancias: ', nombresAmbulancias);
+				mostrarcapaAmbulanciasCercaEncontradas2(nombresAmbulancias);
+				mostrarcapaServiciosCercaEncontradas(idsObtenidosFinal);
+	            var targetCenter = ubiUsuario;
+	            var targetZoom = 18;
+	            var duration = 2500;
+	            self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
+				// Esperar a que termine la animación antes de mostrar Swal.fire
+				setTimeout(function() {
+				  var contenido = 'Ambulancias en tu ubicación:<br><ul>';
+				  for (var i = 0; i < features.length; i++) {
+				    contenido += '<li>' + features[i].properties.nombre + '</li>';
+				  }
+				  contenido += '</ul><br>Servicios de Emergencia en tu ubicación:<br><ul>';
+				  for (var j = 0; j < idsObtenidosFinal.length; j++) {
+				    contenido += '<li>' + idsObtenidosFinal[j] + '</li>';
+				  }
+				  contenido += '</ul>';
 				
-							lyrZonas.getSource().updateParams({
-							  'CQL_FILTER': cqlFilter
-							});
-							*/
-							var contenido = 'Ambulancias en tu ubicación:<br><ul>';
-							for (var i = 0; i < features.length; i++) {
-								contenido += '<li>' + features[i].properties.nombre + '</li>';
-							}
-							contenido += '</ul><br>Servicios de Emergencia en tu ubicación:<br><ul>';
-							for (var j = 0; j < idsObtenidosFinal.length; j++) {
-								contenido += '<li>' + idsObtenidosFinal[j] + '</li>';
-							}
-							contenido += '</ul>';
-
-							Swal.fire({
-								icon: 'success',
-								title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
-								html: contenido
-							});
-
-							retorno.codigoRetorno = 0;
-						})
-						.catch(error => {
-							console.error('Error en Promise.all:', error);
-						});
-				}
-				return retorno;
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
-			});
+				  Swal.fire({
+				    icon: 'success',
+				    title: 'Ambulancias y Servicios de Emergencia en tu ubicación',
+				    html: contenido
+				  });
+				}, duration);
+	
+	            retorno.codigoRetorno = 0;
+	            return { nombresAmbulancias, idsObtenidosFinal }; // Retornar los arrays de nombresAmbulancias y idsObtenidosFinal
+	          })
+	          .catch(error => {
+	            console.error('Error en Promise.all:', error);
+	          });
+	      }
+	      return retorno;
+	    })
+	    .catch(error => {
+	      console.error('Error al realizar la consulta WFS:', error);
+	    });
 	}
+	
+function mostrarcapaAmbulanciasCercaEncontradas2(nombreAmbulancias) {
+  var urlAmbulanciasBase = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json';
 
+  // Remover la capa de ambulancias encontradas si ya existe
+  if (capaAmbulanciasCerca) {
+    map.removeLayer(capaAmbulanciasCerca);
+    capaAmbulanciasCerca = undefined;
+  }
+
+  if (isAmbulanciasYServicios && nombreAmbulancias.length > 0) {
+    // Realizar la solicitud para obtener las características de las ambulancias
+    var promises = nombreAmbulancias.map(nombre => {
+      var urlAmbulancia = urlAmbulanciasBase + '&CQL_FILTER=nombre=\'' + nombre + '\'';
+      return fetch(urlAmbulancia)
+        .then(response => response.json())
+        .then(data => {
+          return data.features;
+        })
+        .catch(error => {
+          console.error('Error al obtener las características de la ambulancia:', error);
+          return [];
+        });
+    });
+
+    Promise.all(promises)
+      .then(results => {
+        // Obtener todas las características de las ambulancias encontradas
+        var featuresAmbulancias = results.flat();
+        console.log('featuresambulancias', featuresAmbulancias);
+
+        // Crear una capa vectorial para mostrar las ambulancias encontradas
+        var vectorSource = new ol.source.Vector({
+          features: featuresAmbulancias.map(feature => {
+            // Crear una geometría de tipo LineString a partir de las coordenadas de la ambulancia
+            var coordinates = feature.geometry.coordinates;
+            var lineString = new ol.geom.LineString(coordinates);
+
+            // Crear la característica correspondiente con la geometría
+            return new ol.Feature({
+              geometry: lineString
+            });
+          })
+        });
+
+        capaAmbulanciasCerca = new ol.layer.Vector({
+          source: vectorSource,
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({
+              color: 'red',
+              width: 2
+            })
+          })
+        });
+
+        // Ocultar la capa de ambulancias original
+        lyrAmbulancias.setVisible(false);
+
+        // Agregar la capa de ambulancias encontradas al mapa
+        map.addLayer(capaAmbulanciasCerca);
+      })
+      .catch(error => {
+        console.error('Error al obtener las características de las ambulancias:', error);
+      });
+  } else {
+    // Mostrar la capa de ambulancias original
+    lyrAmbulancias.setVisible(true);
+  }
+}
+
+	function mostrarcapaServiciosCercaEncontradas(idsObtenidosFinal) {
+	  var urlServiciosBase = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
+	
+	  // Remover la capa de servicios cercanos si ya existe
+	  if (capaServiciosCerca) {
+	    map.removeLayer(capaServiciosCerca);
+	    capaServiciosCerca = undefined;
+	  }
+	
+	  if (idsObtenidosFinal.length > 0) {
+	    // Obtener solo el número después del punto en cada ID
+	    var featureIDs = idsObtenidosFinal.map(id => id.split('.')[1]);
+	
+	    // Construir la URL con el parámetro featureID
+	    var urlServicios = urlServiciosBase + '&featureID=' + featureIDs.join(',');
+	
+	    // Realizar la solicitud para obtener las características de los servicios de emergencia
+	    fetch(urlServicios)
+	      .then(response => response.json())
+	      .then(data => {
+	        // Obtener todas las características de los servicios de emergencia encontrados
+	        var featuresServicios = data.features;
+	        console.log('featuresservicios', featuresServicios);
+	
+	        // Crear una capa vectorial para mostrar los servicios de emergencia encontrados
+	        var vectorSource = new ol.source.Vector({
+	          features: featuresServicios.map(feature => {
+	            // Crear una geometría de tipo Point a partir de las coordenadas del servicio de emergencia
+	            var coordinates = feature.geometry.coordinates;
+	            var point = new ol.geom.Point(coordinates);
+	
+	            // Crear la característica correspondiente con la geometría
+	            return new ol.Feature({
+	              geometry: point
+	            });
+	          })
+	        });
+	
+	        capaServiciosCerca = new ol.layer.Vector({
+	          source: vectorSource,
+	          style: new ol.style.Style({
+	            image: new ol.style.Circle({
+	              radius: 6,
+	              fill: new ol.style.Fill({
+	                color: 'blue'
+	              }),
+	              stroke: new ol.style.Stroke({
+	                color: 'white',
+	                width: 2
+	              })
+	            })
+	          })
+	        });
+			lyrServicios.setVisible(false);
+	        // Agregar la capa de servicios de emergencia encontrados al mapa
+	        map.addLayer(capaServiciosCerca);
+	      })
+	      .catch(error => {
+	        console.error('Error al obtener las características de los servicios de emergencia:', error);
+	      });
+	  } else {
+		    lyrServicios.setVisible(false);
+		    if (capaServiciosCerca) {
+		      map.removeLayer(capaServiciosCerca);
+		      capaServiciosCerca = undefined;
+		    }
+	  }
+	}
+	
 	function solicitarAmbulanciaPorHospital() {
 		tieneCobertura().then((retorno) => {
 			if (retorno.codigoRetorno === 0) {
@@ -759,16 +929,35 @@ GeoMap.prototype.CrearBarraBusqueda = function() {
 			buttonElement3.style.backgroundColor = '';
 			self.map.removeInteraction(drawInteraction);
 			drawInteraction = null; // Establecer drawInteraction como null para indicar que no hay interacción activa
+			map.removeLayer(lyrAmbulanciasEncontradas);
+			lyrAmbulanciasEncontradas = undefined;
+			lyrAmbulancias.setVisible(true); 
+			dibujo.getSource().clear();
 		}
 	}
 
 	var buttonElement4 = document.createElement('button');
 	buttonElement4.textContent = 'Buscar Ambulancias y S. Emergencia cerca';
-	buttonElement4.addEventListener('click', buscarAmbulanciasYServiciosEmergencia);
+	buttonElement4.addEventListener('click', toggleBuscarAmbulanciasYServicios);
 	buttonElement4.style.width = '100%';
 	buttonElement4.style.padding = '6px';
-
 	this.mainBarCustom.element.appendChild(buttonElement4);
+	
+	function toggleBuscarAmbulanciasYServicios() {
+		isAmbulanciasYServicios = !isAmbulanciasYServicios;
+	
+		if (isAmbulanciasYServicios) {
+			buttonElement4.style.backgroundColor = 'green';
+			buscarAmbulanciasYServiciosEmergencia();
+		} else {
+			buttonElement4.style.backgroundColor = '';
+			map.removeLayer(capaAmbulanciasCerca);
+			map.removeLayer(capaServiciosCerca);
+			capaServiciosCerca = undefined;
+			lyrAmbulancias.setVisible(true);
+			lyrServicios.setVisible(true); 
+		}
+	}
 
 	var buttonElement5 = document.createElement('button');
 	buttonElement5.textContent = 'Solicitar Ambulancia dado un Hospital';
@@ -904,30 +1093,34 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function() {
 						var longitud = parseFloat(data[0].lon);
 
 						// Centrar el mapa en la ubicación encontrada
-						self.map.getView().setCenter(ol.proj.fromLonLat([longitud, latitud]));
-						self.map.getView().setZoom(10);
-
-						// Crear el marcador en la ubicación encontrada
-						var marker = new ol.Feature({
-							geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
-						});
-
-						vectorLayer.getSource().clear();
-						vectorLayer.getSource().addFeature(marker);
-
-						// Obtener las coordenadas del marcador
-						var coords3857 = marker.getGeometry().getCoordinates();
-
-						// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
-						// var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
-
-						// Mostrar las coordenadas transformadas en la consola
-						console.log('Coordenadas 3857:', coords3857);
-						// console.log('Coordenadas 32721:', coords32721);
-
-						// Construir el filtro CQL utilizando las coordenadas transformadas
-						//var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
-						//self.updateGeoserverLayer(cqlFilter);
+						var targetCenter = ol.proj.fromLonLat([longitud, latitud]);
+						var targetZoom = 18; // Nivel de zoom deseado
+						var duration = 2500; // Duración de la animación en milisegundos
+						self.map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
+						setTimeout(function() {
+							// Crear el marcador en la ubicación encontrada
+							var marker = new ol.Feature({
+								geometry: new ol.geom.Point(ol.proj.fromLonLat([longitud, latitud])),
+							});
+	
+							vectorLayer.getSource().clear();
+							vectorLayer.getSource().addFeature(marker);
+	
+							// Obtener las coordenadas del marcador
+							var coords3857 = marker.getGeometry().getCoordinates();
+							buscarAmbulanciasYServiciosEmergenciaAdmin(coords3857);
+							// Convertir las coordenadas de EPSG:3857 a EPSG:32721 utilizando proj4
+							// var coords32721 = proj4('EPSG:3857', 'EPSG:32721', coords3857);
+	
+							// Mostrar las coordenadas transformadas en la consola
+							console.log('Coordenadas de la direccion:', coords3857);
+							// console.log('Coordenadas 32721:', coords32721);
+	
+							// Construir el filtro CQL utilizando las coordenadas transformadas
+							//var cqlFilter = "DWITHIN(ubicacion, POINT(" + coords3857[0] + " " + coords3857[1] + "), 1000, meters)";
+							//self.updateGeoserverLayer(cqlFilter);
+						}, duration);
+						
 					} else {
 						alert('No se pudo encontrar la dirección.');
 					}
@@ -1046,6 +1239,152 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function() {
 				return null;
 			});
 	}
+	
+	isEmergenciaAmbulanciasActive = false;
+	var capaRanking;
+	
+	function emergenciaConMayorAmbulancias() {
+	  var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
+	
+	  fetch(urlPuntos)
+	    .then(function(response) {
+	      return response.json();
+	    })
+	    .then(function(data) {
+	      if (data.features.length === 0) {
+	        Swal.fire('No existen servicios de emergencia');
+	        return;
+	      }
+	
+	      var fetchPromises = [];
+	      var rankingServicios = []; // Array para almacenar los IDs de los 5 primeros servicios
+	
+	      data.features.forEach(function(feature) {
+	        var id = feature.id;
+	        var servHospId = feature.properties.hospital_id;
+	        var coordinates = feature.geometry.coordinates;
+	        var coordenadasTexto = coordinates.join(' ');
+	
+	        var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
+	
+	        var fetchPromise = fetch(urlPoligonos)
+	          .then(function(response) {
+	            return response.json();
+	          })
+	          .then(function(data) {
+	            return {
+	              count: data.features.length,
+	              id: id,
+	              hospId: servHospId
+	            };
+	          });
+	
+	        fetchPromises.push(fetchPromise);
+	      });
+	
+	      return Promise.all(fetchPromises)
+	        .then(function(featuresCounts) {
+	          featuresCounts.sort(function(a, b) {
+	            return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
+	          });
+	
+	          var serviciosConMayorAmbulancias = featuresCounts.slice(0, 5); // Obtener los primeros 5 servicios
+	
+	          if (serviciosConMayorAmbulancias.length > 0) {
+	            var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
+	
+	            serviciosConMayorAmbulancias.forEach(function(servicio, index) {
+	              rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + ' - Hospital: ' + servicio.hospId +'\n';
+	
+	              if (index < 5) {
+	                rankingServicios.push(servicio.id); // Agregar el ID del servicio al array
+	              }
+	            });
+	
+	            Swal.fire(rankingTexto);
+				
+	            var puntoConMayorFeatures = serviciosConMayorAmbulancias[0];
+	            console.log('ids de ranking: ', rankingServicios);
+	            mostrarCapaServiciosRanking(rankingServicios);
+	            
+	          } else {
+	            Swal.fire('No existen ambulancias');
+	          }
+	
+	          return rankingServicios; // Devolver el array de IDs de los 5 primeros servicios
+	        });
+	    });
+	}
+	
+	
+	function mostrarCapaServiciosRanking(idsObtenidosFinal) {
+	  var urlServiciosBase = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
+	
+	  // Remover la capa de servicios cercanos si ya existe
+	  if (capaRanking) {
+	    map.removeLayer(capaRanking);
+	    capaRanking = undefined;
+	  }
+	
+	  if (idsObtenidosFinal.length > 0) {
+	    // Obtener solo el número después del punto en cada ID
+	    var featureIDs = idsObtenidosFinal.map(id => id.split('.')[1]);
+	
+	    // Construir la URL con el parámetro featureID
+	    var urlServicios = urlServiciosBase + '&featureID=' + featureIDs.join(',');
+	
+	    // Realizar la solicitud para obtener las características de los servicios de emergencia
+	    fetch(urlServicios)
+	      .then(response => response.json())
+	      .then(data => {
+	        // Obtener todas las características de los servicios de emergencia encontrados
+	        var featuresServicios = data.features;
+	        console.log('featuresservicios', featuresServicios);
+	
+	        // Crear una capa vectorial para mostrar los servicios de emergencia encontrados
+	        var vectorSource = new ol.source.Vector({
+	          features: featuresServicios.map(feature => {
+	            // Crear una geometría de tipo Point a partir de las coordenadas del servicio de emergencia
+	            var coordinates = feature.geometry.coordinates;
+	            var point = new ol.geom.Point(coordinates);
+	
+	            // Crear la característica correspondiente con la geometría
+	            return new ol.Feature({
+	              geometry: point
+	            });
+	          })
+	        });
+	
+	        capaRanking = new ol.layer.Vector({
+	          source: vectorSource,
+	          style: new ol.style.Style({
+	            image: new ol.style.Circle({
+	              radius: 6,
+	              fill: new ol.style.Fill({
+	                color: 'green'
+	              }),
+	              stroke: new ol.style.Stroke({
+	                color: 'black',
+	                width: 2
+	              })
+	            })
+	          })
+	        });
+			lyrServicios.setVisible(false);
+	        // Agregar la capa de servicios de emergencia encontrados al mapa
+	        map.addLayer(capaRanking);
+	      })
+	      .catch(error => {
+	        console.error('Error al obtener las características de los servicios de emergencia:', error);
+	      });
+	  } else {
+		    lyrServicios.setVisible(false);
+		    if (capaRanking) {
+		      map.removeLayer(capaRanking);
+		      capaRanking = undefined;
+		    }
+	  }
+	}
 
 	var nombreCalleInputElement = document.createElement('input');
 	nombreCalleInputElement.setAttribute('id', 'nombre-calle-input');
@@ -1072,7 +1411,6 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function() {
 	buttonElement6.addEventListener('click', toggleZonasSinCobertura);
 	buttonElement6.style.width = '100%';
 	buttonElement6.style.padding = '6px';
-
 	this.mainBarCustom.element.appendChild(buttonElement6);
 
 	function toggleZonasSinCobertura() {
@@ -1091,11 +1429,24 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function() {
 
 	var buttonElement5 = document.createElement('button');
 	buttonElement5.textContent = 'Servicio de Emergencia con más ambulancias';
-	buttonElement5.addEventListener('click', emergenciaConMayorAmbulancias);
+	buttonElement5.addEventListener('click', toggleEmergenciaMayorAmbulancias);
 	buttonElement5.style.width = '100%';
 	buttonElement5.style.padding = '6px';
-
 	this.mainBarCustom.element.appendChild(buttonElement5);
+	
+	function toggleEmergenciaMayorAmbulancias() {
+		isEmergenciaAmbulanciasActive = !isEmergenciaAmbulanciasActive; // Alternar el estado al hacer clic
+	
+		if (isEmergenciaAmbulanciasActive) {
+			buttonElement5.style.backgroundColor = 'green'; // Aplicar estilo cuando el botón está seleccionado
+			emergenciaConMayorAmbulancias();
+		} else {
+			buttonElement5.style.backgroundColor = '';
+			map.removeLayer(capaRanking);
+			capaRanking = undefined;
+			lyrServicios.setVisible(true); 
+		}
+	}
 };
 
 GeoMap.prototype.CrearControlBarraDibujoAdmin = function() {
@@ -2653,265 +3004,302 @@ GeoMap.prototype.CrearControlBarraSeleccionar = function() {
 	barraSeleccionar.addControl(controlSeleccionar);
 };
 
-function emergenciaConMayorAmbulancias() {
-	var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
 
-	fetch(urlPuntos)
-		.then(function(response) {
-			return response.json();
-		})
-		.then(function(data) {
-			if (data.features.length === 0) {
-				Swal.fire('No existen servicios de emergencia');
-				return;
-			}
-
-			var fetchPromises = [];
-
-			data.features.forEach(function(feature) {
-				var id = feature.id;
-				var coordinates = feature.geometry.coordinates;
-				var coordenadasTexto = coordinates.join(' ');
-
-				var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
-
-				var fetchPromise = fetch(urlPoligonos)
-					.then(function(response) {
-						return response.json();
-					})
-					.then(function(data) {
-						return {
-							count: data.features.length,
-							id: id
-						};
-					});
-
-				fetchPromises.push(fetchPromise);
-			});
-
-			return Promise.all(fetchPromises)
-				.then(function(featuresCounts) {
-					featuresCounts.sort(function(a, b) {
-						return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
-					});
-
-					var serviciosConMayorAmbulancias = featuresCounts.slice(0, 5); // Obtener los primeros 5 servicios
-
-					if (serviciosConMayorAmbulancias.length > 0) {
-						var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
-
-						serviciosConMayorAmbulancias.forEach(function(servicio, index) {
-							rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + '\n';
-						});
-
-						Swal.fire(rankingTexto);
-
-						var puntoConMayorFeatures = serviciosConMayorAmbulancias[0];
-					} else {
-						Swal.fire('No existen ambulancias');
-					}
+	let hospitalesArray = [];
+	function obtenerHospitales() {
+		return new Promise((resolve, reject) => {
+			fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
+				.then(response => response.json())
+				.then(data => {
+					hospitalesArray = data;
+					console.log(hospitalesArray);
+					resolve(hospitalesArray);
+				})
+				.catch(error => {
+					console.error('Error:', error);
+					reject(error);
 				});
 		});
-}
-
-let hospitalesArray = [];
-function obtenerHospitales() {
-	return new Promise((resolve, reject) => {
-		fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
-			.then(response => response.json())
-			.then(data => {
-				hospitalesArray = data;
-				console.log(hospitalesArray);
-				resolve(hospitalesArray);
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				reject(error);
-			});
-	});
-}
-
-let ambulanciasArray = [];
-function obtenerAmbulancias() {
-	return new Promise((resolve, reject) => {
-		fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
-			.then(response => response.json())
-			.then(data => {
-				hospitalesArray = data;
-				console.log(hospitalesArray);
-				resolve(hospitalesArray);
-			})
-			.catch(error => {
-				console.error('Error:', error);
-				reject(error);
-			});
-	});
-}
-
-function obtenerDatosCapaAmbulancia() {
-	// URL para obtener los datos de la capa "ambulancia"
-	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json';
-
-	return fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			features = data.features;
-			console.log("ambulancias todas..." + feature);
-			return features;
-		})
-		.catch(error => {
-			console.error('Error al realizar la consulta WFS:', error);
-			throw error;
-		});
-}
-
-function eliminarFeatureID(featureId, layername) {
-	console.log(featureId);
-
-	var deleteFeatureUrl = 'http://localhost:8586/geoserver/wfs';
-	var xmlData = '<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" service="WFS" version="1.1.0" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"><wfs:Delete typeName="' + layername + '"><ogc:Filter><ogc:FeatureId fid="' + featureId + '"/></ogc:Filter></wfs:Delete></wfs:Transaction>';
-
-	var deleteFeatureRequest = fetch(deleteFeatureUrl, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'text/xml'
-		},
-		body: xmlData
-	});
-}
-
-function tieneCobertura() {
-	var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
-
-	return fetch(url)
-		.then(response => response.json())
-		.then(data => {
-			var features = data.features;
-			var retorno = {};
-			if (features.length === 0) {
-				retorno.codigoRetorno = 1;
-			} else {
-				retorno.codigoRetorno = 0;
-			}
-			return retorno;
-		})
-		.catch(error => {
-			console.error('Error al realizar la consulta WFS:', error);
-		});
-
-	function ambulanciasCercanaPorId(coords3857, idHospital) {
-		const vectorSource = new ol.source.Vector();
-
-		const cqlFilter = `hospital_id='${idHospital}'`;
-
-		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
-		fetch(url)
-			.then(response => response.json())
-			.then(data => {
-				const features = data.features;
-
-				// Agregar las features al VectorSource
-				const format = new ol.format.GeoJSON();
-				const featuresToAdd = format.readFeatures(data);
-				vectorSource.addFeatures(featuresToAdd);
-
-				// Obtener la feature más cercana a coords3857
-				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
-
-				if (closestFeature) {
-					const nombre = closestFeature.get('nombre');
-					console.log(nombre);
-
-					Swal.fire({
-						title: 'Ambulancia solicitada correctamente',
-						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
-						icon: 'success',
-						showCancelButton: false,
-						confirmButtonColor: '#3085d6',
-						confirmButtonText: 'Aceptar'
-					});
-				} else {
-					console.log('No se encontraron features cercanas al punto objetivo');
-				}
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
-			});
 	}
 
-	function ambulanciasCercanaPorId(coords3857, idHospital) {
-		const vectorSource = new ol.source.Vector();
-
-		const cqlFilter = `hospital_id='${idHospital}'`;
-
-		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
-		fetch(url)
-			.then(response => response.json())
-			.then(data => {
-				const features = data.features;
-
-				// Agregar las features al VectorSource
-				const format = new ol.format.GeoJSON();
-				const featuresToAdd = format.readFeatures(data);
-				vectorSource.addFeatures(featuresToAdd);
-
-				// Obtener la feature más cercana a coords3857
-				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
-
-				if (closestFeature) {
-					const nombre = closestFeature.get('nombre');
-					console.log(nombre);
-
-					Swal.fire({
-						title: 'Ambulancia solicitada correctamente',
-						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
-						icon: 'success',
-						showCancelButton: false,
-						confirmButtonColor: '#3085d6',
-						confirmButtonText: 'Aceptar'
-					});
-				} else {
-					console.log('No se encontraron features cercanas al punto objetivo');
-				}
-			})
-			.catch(error => {
-				console.error('Error al realizar la consulta WFS:', error);
-			});
-	}
-
-	function obtenerIdHospitalPorZonas(nombreZona) {
+	let ambulanciasArray = [];
+	function obtenerAmbulancias() {
 		return new Promise((resolve, reject) => {
-			const resultadoIds = [];
-
-			const promises = nombreZona.map((key) => {
-				const cqlFilter = `nombre='${key}'`;
-				const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
-					cqlFilter
-				)}`;
-
-				return fetch(url)
-					.then((response) => response.json())
-					.then((data) => {
-						const features = data.features.filter(
-							(feature) => feature.properties.nombre === key
-						);
-
-						features.forEach((feature) => {
-							resultadoIds.push(feature.properties.hospital_id);
-						});
-					})
-					.catch((error) => {
-						console.error('Error en la solicitud HTTP:', error);
-						reject(error);
-					});
-			});
-
-			Promise.all(promises)
-				.then(() => {
-					console.log('resultado de obteneridHospital:', resultadoIds);
-					resolve(resultadoIds);
+			fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/listar')
+				.then(response => response.json())
+				.then(data => {
+					hospitalesArray = data;
+					console.log(hospitalesArray);
+					resolve(hospitalesArray);
 				})
-				.catch((error) => reject(error));
+				.catch(error => {
+					console.error('Error:', error);
+					reject(error);
+				});
 		});
 	}
-}
+
+	function obtenerDatosCapaAmbulancia() {
+		// URL para obtener los datos de la capa "ambulancia"
+		var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json';
+	
+		return fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				features = data.features;
+				console.log("ambulancias todas..." + feature);
+				return features;
+			})
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+				throw error;
+			});
+	}
+
+	function eliminarFeatureID(featureId, layername) {
+		console.log(featureId);
+	
+		var deleteFeatureUrl = 'http://localhost:8586/geoserver/wfs';
+		var xmlData = '<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" service="WFS" version="1.1.0" xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd"><wfs:Delete typeName="' + layername + '"><ogc:Filter><ogc:FeatureId fid="' + featureId + '"/></ogc:Filter></wfs:Delete></wfs:Transaction>';
+	
+		var deleteFeatureRequest = fetch(deleteFeatureUrl, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'text/xml'
+			},
+			body: xmlData
+		});
+	}
+
+	function tieneCobertura() {
+	  var url = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '))';
+	
+	  return fetch(url)
+	    .then(response => response.json())
+	    .then(data => {
+	      var features = data.features;
+	      var retorno = {};
+	
+	      if (features.length === 0) {
+	        retorno.codigoRetorno = 1;
+	      } else {
+	        retorno.codigoRetorno = 0;
+	        retorno.nombres = features.map(feature => feature.properties.nombre);
+	      }
+		  console.log('retorno zonas cobertura: ',retorno);
+	      return retorno;
+	    })
+	    .catch(error => {
+	      console.error('Error al realizar la consulta WFS:', error);
+	    });
+	}
+	
+	function ambulanciasCercanaPorId(coords3857, idHospital) {
+		const vectorSource = new ol.source.Vector();
+
+		const cqlFilter = `hospital_id='${idHospital}'`;
+
+		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				const features = data.features;
+
+				// Agregar las features al VectorSource
+				const format = new ol.format.GeoJSON();
+				const featuresToAdd = format.readFeatures(data);
+				vectorSource.addFeatures(featuresToAdd);
+
+				// Obtener la feature más cercana a coords3857
+				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+
+				if (closestFeature) {
+					const nombre = closestFeature.get('nombre');
+					console.log(nombre);
+
+					Swal.fire({
+						title: 'Ambulancia solicitada correctamente',
+						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+						icon: 'success',
+						showCancelButton: false,
+						confirmButtonColor: '#3085d6',
+						confirmButtonText: 'Aceptar'
+					});
+				} else {
+					console.log('No se encontraron features cercanas al punto objetivo');
+				}
+			})
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+			});
+	}
+
+	function ambulanciasCercanaPorId(coords3857, idHospital) {
+		const vectorSource = new ol.source.Vector();
+	
+		const cqlFilter = `hospital_id='${idHospital}'`;
+	
+		const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				const features = data.features;
+	
+				// Agregar las features al VectorSource
+				const format = new ol.format.GeoJSON();
+				const featuresToAdd = format.readFeatures(data);
+				vectorSource.addFeatures(featuresToAdd);
+	
+				// Obtener la feature más cercana a coords3857
+				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
+	
+				if (closestFeature) {
+					const nombre = closestFeature.get('nombre');
+					console.log(nombre);
+	
+					Swal.fire({
+						title: 'Ambulancia solicitada correctamente',
+						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
+						icon: 'success',
+						showCancelButton: false,
+						confirmButtonColor: '#3085d6',
+						confirmButtonText: 'Aceptar'
+					});
+				} else {
+					console.log('No se encontraron features cercanas al punto objetivo');
+				}
+			})
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+			});
+	}
+	
+	function obtenerIdHospitalPorZonas(nombreZona) {
+	  return new Promise((resolve, reject) => {
+	    const resultadoIds = [];
+
+	    const promises = nombreZona.map((key) => {
+	      const cqlFilter = `nombre='${key}'`;
+	      const url = `http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json&CQL_FILTER=${encodeURIComponent(
+	        cqlFilter
+	      )}`;
+
+	      return fetch(url)
+	        .then((response) => response.json())
+	        .then((data) => {
+	          const features = data.features.filter(
+	            (feature) => feature.properties.nombre === key
+	          );
+
+	          features.forEach((feature) => {
+	            resultadoIds.push(feature.properties.hospital_id);
+	          });
+	        })
+	        .catch((error) => {
+	          console.error('Error en la solicitud HTTP:', error);
+	          reject(error);
+	        });
+	    });
+
+	    Promise.all(promises)
+	      .then(() => {
+	        console.log('resultado de obteneridHospital:', resultadoIds);
+	        resolve(resultadoIds);
+	      })
+	      .catch((error) => reject(error));
+	  });
+	}
+	
+		function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
+		var url =
+			'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' +
+			coordenadas[0] +
+			' ' +
+			coordenadas[1] +
+			'))';
+	
+		return fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				var features = data.features;
+				var retorno = {};
+				if (features.length === 0) {
+					// No se encontraron features
+					Swal.fire({
+						icon: 'info',
+						title: 'Sin cobertura',
+						text: 'No hay ambulancias ni servicios de emergencia con cobertura en tu ubicación.'
+					});
+					retorno.codigoRetorno = 1;
+				} else {
+					var promises = features.map(feature => {
+						var nombreA = feature.properties.nombre;
+						console.log('Ambulancia: ', nombreA);
+						var coordenadasTexto = feature.geometry.coordinates[0]
+							.map(coordinate => coordinate.join(' '))
+							.join(', ');
+	
+						return IdEmergenciaDentroZona(coordenadasTexto)
+							.then(resultadoZona => {
+								console.log('resultadoZona: ', resultadoZona);
+								return resultadoZona;
+							})
+							.catch(error => {
+								console.error('Error en la función emergenciaDentroZona:', error);
+							});
+					});
+	
+					Promise.all(promises)
+						.then(resultados => {
+							var idsObtenidosFinal = [];
+	
+							resultados.forEach(resultado => {
+								if (resultado) {
+									idsObtenidosFinal = idsObtenidosFinal.concat(resultado);
+								}
+							});
+	
+							idsObtenidosFinal = [...new Set(idsObtenidosFinal)]; // Eliminar duplicados
+							console.log('idsObtenidosFinal sin duplicados: ', idsObtenidosFinal);
+							/*
+							var cqlFilter = 'IN(' + idsObtenidosFinal.map(id => "'" + id + "'").join(',') + ')';
+				
+							lyrZonas.getSource().updateParams({
+							  'CQL_FILTER': cqlFilter
+							});
+							*/
+							var targetCenter = coordenadas;
+							var targetZoom = 18; // Nivel de zoom deseado
+							var duration = 2500; // Duración de la animación en milisegundos
+							map.getView().animate({ center: targetCenter, zoom: targetZoom, duration: duration });
+							setTimeout(function() {
+								var contenido = 'Ambulancias en ubicación:<br><ul>';
+								for (var i = 0; i < features.length; i++) {
+									contenido += '<li>' + features[i].properties.nombre + '</li>';
+								}
+								contenido += '</ul><br>Servicios de Emergencia en ubicación:<br><ul>';
+								for (var j = 0; j < idsObtenidosFinal.length; j++) {
+									contenido += '<li>' + idsObtenidosFinal[j] + '</li>';
+								}
+								contenido += '</ul>';
+		
+								Swal.fire({
+									icon: 'success',
+									title: 'Ambulancias y Servicios de Emergencia en ubicación',
+									html: contenido
+								});
+		
+								retorno.codigoRetorno = 0;
+							}, duration);
+							
+						})
+						.catch(error => {
+							console.error('Error en Promise.all:', error);
+						});
+				}
+				return retorno;
+			})
+			.catch(error => {
+				console.error('Error al realizar la consulta WFS:', error);
+			});
+	}
