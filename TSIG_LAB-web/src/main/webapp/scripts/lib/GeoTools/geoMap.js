@@ -1217,92 +1217,112 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 
 	isEmergenciaAmbulanciasActive = false;
 	var capaRanking;
-
-	function emergenciaConMayorAmbulancias() {
-	  var urlPuntos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
 	
-	  // Llamada a la función obtenerHospitales
-	  obtenerHospitales()
-	    .then(function() {
-	      fetch(urlPuntos)
-	        .then(function(response) {
-	          return response.json();
-	        })
-	        .then(function(data) {
-	          if (data.features.length === 0) {
-	            Swal.fire('No existen servicios de emergencia');
-	            return;
-	          }
+	function coberturaServicioRanking() {
+	  return obtenerHospitales()
+	    .then(function(hospitalesArray) {
+	      var urlServicios = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aservicioemergencia&outputFormat=application/json';
 	
+	      return fetch(urlServicios)
+	        .then(response => response.json())
+	        .then(dataServicios => {
+	          var servicios = dataServicios.features;
 	          var fetchPromises = [];
-	          var rankingServicios = []; // Array para almacenar los IDs de los 5 primeros servicios
+	          var arrayServicios = []; // Array para almacenar los serviciosId
 	
-	          data.features.forEach(function(feature) {
-	            var id = feature.id;
-	            var servHospId = feature.properties.hospital_id;
-	            var coordinates = feature.geometry.coordinates;
-	            var coordenadasTexto = coordinates.join(' ');
+	          servicios.forEach(function(servicio) {
+	            var coordenaServicio = servicio.geometry.coordinates.join(' ');
+	            var idHospital = servicio.properties.hospital_id;
+	            var urlZonas = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenaServicio + '))';
 	
-	            var urlPoligonos = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Azona&outputFormat=application/json&CQL_FILTER=INTERSECTS(ubicacion, POINT(' + coordenadasTexto + '))';
+	            var fetchPromise = fetch(urlZonas)
+	              .then(response => response.json())
+	              .then(dataZonas => {
+	                var zonas = dataZonas.features;
 	
-	            var fetchPromise = fetch(urlPoligonos)
-	              .then(function(response) {
-	                return response.json();
-	              })
-	              .then(function(data) {
-	                var hospId = '';
-	                var servicioHospital = hospitalesArray.find(function(hospital) {
-	                  return hospital.id === servHospId;
-	                });
+	                if (zonas.length === 0) {
+	                  return 0; // No hay zonas asociadas
+	                } else {
+	                  var urlAmbulancias = 'http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json';
 	
-	                if (servicioHospital) {
-	                  hospId = servicioHospital.nombre;
+	                  return fetch(urlAmbulancias)
+	                    .then(response => response.json())
+	                    .then(dataAmbulancias => {
+	                      var ambulancias = dataAmbulancias.features;
+	                      var contadorAmbulancias = 0;
+	
+	                      zonas.forEach(function(zona) {
+	                        ambulancias.forEach(function(ambulancia) {
+	                          if (zona.properties.nombre === ambulancia.properties.nombre && ambulancia.properties.hospital_id === idHospital) {
+	                            contadorAmbulancias++;
+	                          }
+	                        });
+	                      });
+	
+	                      if (contadorAmbulancias > 0) {
+	                        var servicioHospital = hospitalesArray.find(function(hospital) {
+	                          return hospital.id === idHospital;
+	                        });
+	                        var hospitalId = servicioHospital ? servicioHospital.nombre : '';
+	
+	                        var servicioObj = {
+	                          servicioId: servicio.id,
+	                          cantidadAmbulancias: contadorAmbulancias,
+	                          hospitalId: hospitalId
+	                        };
+	
+	                        arrayServicios.push(servicioObj.servicioId); // Agregar el servicioId al array
+	
+	                        return servicioObj;
+	                      } else {
+	                        return null;
+	                      }
+	                    })
+	                    .catch(error => {
+	                      console.error('Error al realizar la consulta WFS:', error);
+	                      throw error;
+	                    });
 	                }
-	
-	                return {
-	                  count: data.features.length,
-	                  id: id,
-	                  hospId: hospId
-	                };
+	              })
+	              .catch(error => {
+	                console.error('Error al realizar la consulta WFS:', error);
+	                throw error;
 	              });
 	
 	            fetchPromises.push(fetchPromise);
 	          });
 	
 	          return Promise.all(fetchPromises)
-	            .then(function(featuresCounts) {
-	              featuresCounts.sort(function(a, b) {
-	                return b.count - a.count; // Ordena de forma descendente según la cantidad de ambulancias
+	            .then(results => {
+	              var serviciosRanking = results.filter(result => result !== null && result.cantidadAmbulancias >= 1)
+	                .sort((a, b) => b.cantidadAmbulancias - a.cantidadAmbulancias)
+	                .slice(0, 5);
+	
+	              var rankingText = '';
+	              serviciosRanking.forEach(function(servicio, index) {
+	                rankingText += (index + 1) + '. ';
+	                rankingText += '<b>ID:</b> ' + servicio.servicioId + ' ';
+	                rankingText += '<b>Cant. Ambulancias:</b> ' + servicio.cantidadAmbulancias + ' ';
+	                rankingText += '<b>Hospital:</b> ' + servicio.hospitalId + '<br><br>';
 	              });
 	
-	              var serviciosConMayorAmbulancias = featuresCounts.filter(function(servicio) {
-	                return servicio.count > 0; // Filtra los servicios con una cuenta mayor que 0
-	              }).slice(0, 5); // Obtener los primeros 5 servicios
-	
-	              if (serviciosConMayorAmbulancias.length > 0) {
-	                var rankingTexto = 'Servicios de Emergencia con mayor cantidad de ambulancias asociadas:\n\n';
-	
-	                serviciosConMayorAmbulancias.forEach(function(servicio, index) {
-	                  rankingTexto += (index + 1) + '. ' + servicio.id + ' - Cantidad: ' + servicio.count + ' - Hospital: ' + servicio.hospId + '\n';
-	
-	                  rankingServicios.push(servicio.id); // Agregar el ID del servicio al array
-	                });
-	
-	                Swal.fire(rankingTexto);
-	
-	                
-	                console.log('ids de ranking: ', rankingServicios);
-	                mostrarCapaServiciosRanking(rankingServicios);
-	              } else {
-	                Swal.fire('No existen ambulancias');
-	              }
-	
-	              return rankingServicios; // Devolver el array de IDs de los 5 primeros servicios
+	              Swal.fire({
+	                title: 'Ranking de Servicios de Emergencia',
+	                html: rankingText,
+	                icon: 'info'
+	              });
+	              console.log(arrayServicios);
+	              mostrarCapaServiciosRanking(arrayServicios); // Llamar a la función mostrarCapaServiciosRanking con el array de serviciosId
 	            });
+	        })
+	        .catch(error => {
+	          console.error('Error al realizar la consulta WFS:', error);
+	          throw error;
 	        });
 	    })
-	    .catch(function(error) {
+	    .catch(error => {
 	      console.error('Error al obtener los hospitales:', error);
+	      throw error;
 	    });
 	}
 
@@ -1428,7 +1448,7 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 
 		if (isEmergenciaAmbulanciasActive) {
 			buttonElement5.style.backgroundColor = 'green'; // Aplicar estilo cuando el botón está seleccionado
-			emergenciaConMayorAmbulancias();
+			coberturaServicioRanking();
 		} else {
 			buttonElement5.style.backgroundColor = '';
 			map.removeLayer(capaRanking);
