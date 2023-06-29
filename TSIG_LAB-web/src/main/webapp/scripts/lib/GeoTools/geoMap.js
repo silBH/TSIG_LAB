@@ -3430,6 +3430,7 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
 			});
+
 			lyrAmbulancias.setSource(sourceLinea2);
 		}
 
@@ -3461,3 +3462,4 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 			lyrZonas.setSource(sourcezona);
 		}
 	}
+>>>>>>> 15ea9c8b7783989cb036aff5e6621d4b34fa830c
