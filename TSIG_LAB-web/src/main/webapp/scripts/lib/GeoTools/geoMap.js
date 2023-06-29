@@ -81,15 +81,16 @@ var lyrZonas = new ol.layer.Tile({
 	})
 });
 
-var lyrUsuario = new ol.layer.Vector({
-	source: new ol.source.Vector()
-});
-
 var estiloMarcador = new ol.style.Style({
 	image: new ol.style.Icon({
 		src: 'location.png', // Ruta a la imagen del marcador
 		anchor: [0.5, 1] // Punto de anclaje del icono del marcador
 	})
+});
+
+var lyrUsuario = new ol.layer.Vector({
+	source: new ol.source.Vector(),
+	style: estiloMarcador
 });
 
 // Crear una instancia de geolocalización
@@ -104,7 +105,6 @@ var geolocation = new ol.Geolocation({
 // Obtener la posición actual del usuario y mostrarla en el mapa
 geolocation.on('change:position', function() {
 	var coordinates = geolocation.getPosition();
-	var accuracy = geolocation.getAccuracy();
 
 	// Crear un marcador en la posición actual
 	var locationPoint = new ol.Feature({
@@ -117,7 +117,7 @@ geolocation.on('change:position', function() {
 			features: [locationPoint],
 		}),
 	});
-	locationFeature.setStyle(estiloMarcador);
+	//locationFeature.setStyle(estiloMarcador);
 	lyrUsuario.getSource().addFeature(locationPoint);
 
 	ubiUsuario = locationPoint.getGeometry().getCoordinates();
@@ -3517,4 +3517,3 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 			lyrZonas.setSource(sourcezona);
 		}
 	}
->>>>>>> 15ea9c8b7783989cb036aff5e6621d4b34fa830c
