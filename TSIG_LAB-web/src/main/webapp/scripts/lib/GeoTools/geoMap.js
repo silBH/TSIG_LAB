@@ -297,9 +297,12 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	var buscarCalleDibujarLinea = function () {
 		Swal.fire({
 			title: 'Ingresa los nombres de las calles',
-			html:
-				'<input id="calle1-input" class="swal2-input" placeholder="Calle 1">' +
-				'<input id="calle2-input" class="swal2-input" placeholder="Calle 2">',
+			html:`
+			    <label for="calle1-input">Calle 1:</label>
+			    <input id="calle1-input" class="swal2-input"><br>
+			    <label for="calle2-input">Calle 2:</label>
+			    <input id="calle2-input" class="swal2-input"><br>
+			  `,
 			focusConfirm: false,
 			preConfirm: function () {
 				var calle1 = document.getElementById('calle1-input').value;
@@ -470,7 +473,8 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 							features.forEach(function (feature) {
 								var id = feature.id;
 								var nombre = feature.properties.nombre;
-								contenido += 'ID: ' + id + ', Nombre: ' + nombre + '<br><br>';
+								var hospital = feature.properties.hospital_id;
+								contenido += '<strong>ID:</strong> ' + id + ' <strong>Codigo:</strong> ' + nombre + '<br><br>';
 							});
 							titulo = titulo1;
 						} else {
@@ -533,33 +537,43 @@ GeoMap.prototype.CrearBarraBusqueda = function () {
 	function ambulanciasCercana(coords3857) {
 		// Crear un VectorSource vacío
 		const vectorSource = new ol.source.Vector();
-
+	
 		// Realizar la consulta WFS y agregar las features al VectorSource
 		fetch('http://localhost:8586/geoserver/tsig2023/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=tsig2023%3Aambulancia&outputFormat=application/json')
 			.then(response => response.json())
 			.then(data => {
 				const features = data.features;
-
+	
 				// Agregar las features al VectorSource
 				const format = new ol.format.GeoJSON();
 				const featuresToAdd = format.readFeatures(data);
 				vectorSource.addFeatures(featuresToAdd);
-
+	
 				// Obtener la feature más cercana a coords3857
 				const closestFeature = vectorSource.getClosestFeatureToCoordinate(coords3857);
-
+	
 				if (closestFeature) {
 					const nombre = closestFeature.get('nombre');
-					console.log(nombre);
-
-					Swal.fire({
-						title: 'Ambulancia solicitada correctamente',
-						text: 'Ambulancia ' + nombre + ' solicitada correctamente',
-						icon: 'success',
-						showCancelButton: false,
-						confirmButtonColor: '#3085d6',
-						confirmButtonText: 'Aceptar'
-					});
+					const hospId = closestFeature.get('hospital_id');
+					
+					// Obtener el nombre del hospital correspondiente a hospId
+					obtenerHospitales()
+						.then(hospitalesArray => {
+							const hospital = hospitalesArray.find(hospital => hospital.id === hospId);
+							const nombreHospital = hospital ? hospital.nombre : 'Desconocido';
+	
+							Swal.fire({
+								title: 'Ambulancia solicitada correctamente',
+								html: `<b>Codigo:</b> ${nombre}<br><b>Hospital:</b> ${nombreHospital}`,
+								icon: 'success',
+								showCancelButton: false,
+								confirmButtonColor: '#3085d6',
+								confirmButtonText: 'Aceptar'
+							});
+						})
+						.catch(error => {
+							console.error('Error al obtener los hospitales:', error);
+						});
 				} else {
 					console.log('No se encontraron features cercanas al punto objetivo');
 				}
@@ -1531,11 +1545,15 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 				Swal.fire({
 					title: 'Nuevo Servicio de Emergencia',
 					html: `
-					<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
-						${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
-				  	</select>
-					<input id="inputTotalCamas" class="swal2-input" placeholder="Camas totales" type="text">
-					<input id="inputCamasDisponibles" class="swal2-input" placeholder="Cantidad disponibles" type="text">  `,
+					    <label for="inputHospital">Hospital:</label><br>
+					    <select id="inputHospital" class="swal2-select">
+					      ${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
+					    </select><br>
+					    <label for="inputTotalCamas">Camas totales:</label>
+					    <input id="inputTotalCamas" class="swal2-input" type="text"><br>
+					    <label for="inputCamasDisponibles">Cantidad disponibles:</label>
+					    <input id="inputCamasDisponibles" class="swal2-input" type="text">
+					  `,
 					showCancelButton: true,
 					confirmButtonText: 'Guardar',
 					cancelButtonText: 'Cancelar',
@@ -1638,11 +1656,19 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 				Swal.fire({
 					title: 'Nueva Ambulancia',
 					html: `
-					<select id="inputHospital" class="swal2-select" placeholder="Seleccione un hospital">
-						${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
-				  	</select>
-					<input id="inputCodigo" class="swal2-input" placeholder="Codigo" type="text">
-					<input id="inputDistancia" class="swal2-input" placeholder="Distancia" type="text">  `,
+					    <div style="display: flex; flex-direction: column;">
+					      <label for="inputHospital">Hospital</label>
+					      <select id="inputHospital" class="swal2-select">
+					        ${hospitalesArray.map(hospital => `<option value="${hospital.id}">${hospital.nombre}</option>`).join('')}
+					      </select>
+					      
+					      <label for="inputCodigo">Código</label>
+					      <input id="inputCodigo" class="swal2-input" type="text">
+					      
+					      <label for="inputDistancia">Distancia</label>
+					      <input id="inputDistancia" class="swal2-input" type="text">
+					    </div>
+					  `,
 					showCancelButton: true,
 					confirmButtonText: 'Guardar',
 					cancelButtonText: 'Cancelar',
@@ -2540,13 +2566,20 @@ GeoMap.prototype.CrearControlHospital = function () {
 
 		Swal.fire({
 			title: 'Ingrese los datos del nuevo Hospital',
-			html: `<input id="inputNombre" class="swal2-input" placeholder="Nombre" type="text">
-				<select id="inputTipo" class="swal2-select" placeholder="Seleccione el tipo">
-					<option value="Mutualista">Mutualista</option>
-					<option value="Seguro Privado">Seguro Privado</option>
-					<option value="Servicio Estatal">Servicio Estatal</option>
-			  	</select>   
-    			`,
+			html:  `
+    <div>
+      <label for="inputNombre" class="swal2-label">Nombre</label>
+      <input id="inputNombre" class="swal2-input" type="text">
+    </div>
+    <div>
+      <label for="inputTipo" class="swal2-label">Tipo</label>
+      <select id="inputTipo" class="swal2-select">
+        <option value="Mutualista">Mutualista</option>
+        <option value="Seguro Privado">Seguro Privado</option>
+        <option value="Servicio Estatal">Servicio Estatal</option>
+      </select>
+    </div>
+  `,
 			showCancelButton: true,
 			confirmButtonText: 'Guardar',
 			cancelButtonText: 'Cancelar',
