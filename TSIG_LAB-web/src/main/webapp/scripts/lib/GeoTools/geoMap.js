@@ -45,6 +45,7 @@ var lyrServicios = new ol.layer.Tile({
 			VERSION: '1.1.1',
 			FORMAT: 'image/png',
 			TRANSPARENT: true,
+			STYLES:'tsig2023:siren',
 			LAYERS: 'tsig2023:servicioemergencia'
 		}
 	})
@@ -66,7 +67,7 @@ var lyrAmbulancias = new ol.layer.Tile({
 
 var lyrZonas = new ol.layer.Tile({
 	title: 'zonas',
-	visible: true,
+	visible: false,
 	opacity: 0.4,
 	source: new ol.source.TileWMS({
 		url: 'http://localhost:8586/geoserver/wms?',
@@ -113,14 +114,14 @@ GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 			zoom: _zoom
 		})
 	});
-
+	/*
 	var layerSwitcher = new ol.control.LayerSwitcher({
 		tipLabel: 'Leyenda',
 		groupSelectStyle: 'children' // Can be 'children' [default], 'group' or 'none'
 	});
 
 	this.map.addControl(layerSwitcher);
-
+	*/
 	map = this.map;
 
 	// Crea el filtro DWithin para el radio cercano del usuario
@@ -3414,6 +3415,7 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 					VERSION: '1.1.1',
 					FORMAT: 'image/png',
 					TRANSPARENT: true,
+					STYLES: 'tsig2023:siren',
 					LAYERS: 'tsig2023:servicioemergencia',
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
