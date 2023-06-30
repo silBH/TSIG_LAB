@@ -1,59 +1,42 @@
-This project was created from the archetype "wildfly-jakartaee-ear-archetype".
+Necesario para ejecutar la aplicacion localmente:
+- JDK v11 
+- PostgreSQL v14 con extensión PostGIS
+- Wildfly v26.1.0
+- Geoserver asignandole el puerto 8586
+- Eclipse IDE 2023
+- Maven
+- PgAdmin 4
 
-To deploy it:
-Run the maven goals "install wildfly:deploy"
+Crear la base de datos con nombre tsig:2023 puerto:5432
 
-To undeploy it:
-Run the maven goals "wildfly:undeploy"
+Configuracion Eclipse con Wildfly:
+- Asignarle el puerto 8080
+- Agregar a la configuracion de Wildfly la Base de Datos.
 
-==========================
+Una vez creada la base de datos se debe ejecutar la aplicacion para crear las tablas correspondientes a:
+-administrador
+-servicioemergencia
+-ambulancia
+-zona
+-hospital
+-hospital_ambulancia
+-hospital_servicioemergencia
 
-DataSource:
-This sample includes a "persistence.xml" file in the EJB project. This file defines
-a persistence unit "TSIG_LABPersistenceUnit" which uses the JakartaEE default database.
+Luego cargamos sus scripts correspondientes a cada tabla para tener los datos de prueba.
 
-In production environment, you should define a database in WildFly config and point to this database
-in "persistence.xml".
+A traves de shp2pgsql-gui importar los shapefiles de las siguientes tablas (utilizando como SRID 32721):
+-ft_01_ejes
+-ft_00_departamento
 
-If you don't use entity beans, you can delete "persistence.xml".
-==========================
+A continuación, publicaremos las capas necesarias a Geoserver para su correcto funcionamiento. Pasos a seguir:
+-Crear un nuevo Almacen de datos y Espacio de Trabajo con los datos de la Base de Datos
+- En la sección Capas agregaremos las siguientes de nuestra BD: 
+	-servicioemergencia
+	-ambulancia
+	-zona
+	-ft_01_ejes
+	-ft_00_departamento
+- A cada capa es necesario permitir el acceso a cualquier rol dentro de la seccion 'Seguridad'.
 
-JSF:
-The web application is prepared for JSF 2.3 by bundling an empty "faces-config.xml" in "src/main/webapp/WEB-INF".
-In case you don't want to use JSF, simply delete this file and "src/main/webapp/beans.xml" and "src/main/java/TSIG_LAB/TSIG_LAB/Jsf23Activator.java"
-==========================
-
-Testing:
-This sample is prepared for running unit tests with the Arquillian framework.
-
-The configuration can be found in "TSIG_LAB/pom.xml":
-
-Three profiles are defined:
--"default": no integration tests are executed.
--"arq-remote": you have to start a WildFly server on your machine. The tests are executed by deploying 
- the application to this server.
- Here the "maven-failsafe-plugin" is enabled so that integration tests can be run.
- Run maven with these arguments: "clean verify -Parq-remote"
--"arq-managed": this requires the environment variable "JBOSS_HOME" to be set: 
- The server found in this path is started and the tests are executed by deploying the application to this server.
- Instead of using this environment variable, you can also define the path in "arquillian.xml".
- Here the "maven-failsafe-plugin" is enabled so that integration tests can be run.
- Run maven with these arguments: "clean verify -Parq-managed"
-
-The Arquillian test runner is configured with the file "src/test/resources/arquillian.xml" 
-(duplicated in EJB and WEB project, depending where your tests are placed).
-The profile "arq-remote" uses the container qualifier "remote" in this file.
-The profile "arq-managed" uses the container qualifier "managed" in this file.
-
-
-Unit tests can be added to EJB project and/or to Web project.
-
-The web project contains an integration test "SampleIT" which shows how to create the deployable EAR file using the ShrinkWrap API.
-You can delete this test file if no tests are necessary.
-
-Why integration tests instead of the "maven-surefire-plugin" testrunner?
-The Arquillian test runner deploys the EAR file to the WildFly server and thus you have to build it yourself with the ShrinkWrap API.
-The goal "verify" (which triggers the maven-surefire-plugin) is executed later in the maven build lifecyle than the "test" goal so that the target 
-artifacts ("TSIG_LAB-ejb.jar" and "TSIG_LAB-web.war") are already built. You can build
-the final EAR by including those files. The "maven-surefire-plugin" is executed before the JAR/WAR files
-are created, so those JAR/WAR files would have to be built in the "@Deployment" method, too. 
+-Para lograr tener el icono de los servicios de emergencia sera necesario tener el icono 'siren.png' ubicado en 'C:\ProgramData\GeoServer\styles\icons'
+-Cargar el archivo SLD en la seccion de crear un nuevo estilo, a continuación aplicarle el estilo a la capa servicioemergencia.
