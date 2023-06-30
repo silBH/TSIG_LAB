@@ -33,7 +33,9 @@
                   <div class="form-outline form-white mb-4">
                     <input type="password" name="password" required placeholder="Password" class="form-control form-control-lg" />
                   </div>
-                  <button class="btn btn-outline-light btn-lg px-5" type="submit">Crear</button>
+                  <button class="btn btn-outline-light btn-lg px-5" type="submit">Crear</button><br>
+                  <br>
+                  <a href="menuAdministrador.jsp" class="btn btn-outline-light mr-2">Volver</a>
                 </form>
               </div>
             </div>
