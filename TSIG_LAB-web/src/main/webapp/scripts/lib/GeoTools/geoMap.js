@@ -5,8 +5,9 @@ proj4.defs("EPSG:3857", "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0
 // Registra las definiciones de proyección en OpenLayers
 ol.proj.proj4.register(proj4);
 
-const ubiUsuario = [-6253611.066855117, -4141044.3788586617];
+var ubiUsuario = [-6253611.066855117, -4141044.3788586617];
 console.log('Ubicacion del Usuario: ', ubiUsuario);
+
 
 function GeoMap() {
 	this.map = null;
@@ -80,15 +81,6 @@ var lyrZonas = new ol.layer.Tile({
 	})
 });
 
-var lyrUsuario = new ol.layer.Vector({
-	source: new ol.source.Vector()
-});
-
-// Crear un punto en la ubicación del usuario
-var point = new ol.Feature({
-	geometry: new ol.geom.Point(ubiUsuario)
-});
-
 var estiloMarcador = new ol.style.Style({
 	image: new ol.style.Icon({
 		src: 'location.png', // Ruta a la imagen del marcador
@@ -96,14 +88,43 @@ var estiloMarcador = new ol.style.Style({
 	})
 });
 
-point.setStyle(estiloMarcador);
+var lyrUsuario = new ol.layer.Vector({
+	source: new ol.source.Vector(),
+	style: estiloMarcador
+});
 
-lyrUsuario.getSource().addFeature(point);
+// Crear una instancia de geolocalización
+var geolocation = new ol.Geolocation({
+	tracking: true,
+	trackingOptions: {
+		enableHighAccuracy: true,
+	},
+	projection: 'EPSG:3857'
+});
+
+// Obtener la posición actual del usuario y mostrarla en el mapa
+geolocation.on('change:position', function() {
+	var coordinates = geolocation.getPosition();
+	
+	// Eliminar las capas existentes antes de añadir el nuevo marcador
+	lyrUsuario.getSource().clear();
+
+	// Crear un marcador en la posición actual
+	var locationPoint = new ol.Feature({
+		geometry: new ol.geom.Point(coordinates),
+	});
+
+	lyrUsuario.getSource().addFeature(locationPoint);
+
+	ubiUsuario = locationPoint.getGeometry().getCoordinates();
+
+	console.log(ubiUsuario);
+});
 
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 	var _target = target || 'map',
-		_center = center || [-6253611.066855117, -4141044.3788586617],
+		_center = center || ubiUsuario,
 		_zoom = zoom || 10;
 
 	this.map = new ol.Map({
@@ -125,7 +146,7 @@ GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 	map = this.map;
 
 	// Crea el filtro DWithin para el radio cercano del usuario
-	var filtroDWithin = 'DWithin(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '), 1000, meters)';
+	var filtroDWithin = 'DWithin(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '), 2500, meters)';
 
 	// Modifica la capa lyrServicios
 	lyrServicios.getSource().updateParams({
@@ -1165,7 +1186,7 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 							title: 'MONTEVIDEO ZONA',
 							style: new ol.style.Style({
 								stroke: new ol.style.Stroke({
-									color: 'green',
+									color: 'red',
 									width: 2
 								}),
 								fill: new ol.style.Fill({
@@ -1208,7 +1229,7 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 						title: 'ZonasWFS',
 						style: new ol.style.Style({
 							stroke: new ol.style.Stroke({
-								color: 'red',
+								color: 'green',
 								width: 2
 							}),
 							fill: new ol.style.Fill({
@@ -1750,6 +1771,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 									.then(response => response.text())
 									.then(data => {
 										console.log('Respuesta del servidor (zona de cobertura):', data);
+										actualizarFeature();
 									})
 									.catch(error => {
 										console.error('Error al realizar la solicitud WFS (zona de cobertura):', error);
@@ -2160,7 +2182,7 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 		}
 	}
 
-	function modificarAtributosServicios(selectedFeatures) {
+function modificarAtributosServicios(selectedFeatures) {
 		if (selectedFeatures.getLength() > 0) {
 			obtenerHospitales()
 				.then(() => {
@@ -2213,25 +2235,46 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 
 							const hospitalId = BigInt(inputHospital);
 
-							selectedFeature.set('totalcamas', inputTotalCamas);
-							selectedFeature.set('hospital_id', hospitalId);
+							if (hospIdOri != Number(inputHospital)) { //chequear cobertura
 
-							guardarCambios(selectedFeature, 'servicioemergencia');
+								var coordOriginales = selectedFeature.getGeometry().getCoordinates();
+								var origneCoordsText = coordOriginales.slice(0, 2).join(' ');
+								coberturaServicio(origneCoordsText, hospIdOri) //retorna 0 si el servicio se puede modificar/eliminar, retorna 1 si no se puede modificar/eliminar
+									.then(resultado => {
+										console.log("servicios en la zona " + resultado.codigoRetorno);
+										if (resultado.codigoRetorno === 0) { // se puede eliminar											
+											selectedFeature.set('totalcamas', inputTotalCamas);
+											selectedFeature.set('hospital_id', hospitalId);
 
-							const puntoIndex = servicio_id.indexOf(".");
-							const serviceId = servicio_id.substring(puntoIndex + 1);
-							console.log("ID del servicio de emergencia:", serviceId);
+											guardarCambios(selectedFeature, 'servicioemergencia');
 
-							fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarServicio' + '&servicioId=' + serviceId + '&hospIdNuevo=' + hospitalId + '&hospIdViejo=' + hospIdOri, {
-								method: 'GET'
-							})
-								.then(response => {
-									if (response.ok) {
-										console.log('Llamada al servlet de hospital exitosa');
-									} else {
-										console.error('Error al llamar al servlet de hospital');
-									}
-								})
+											const puntoIndex = servicio_id.indexOf(".");
+											const serviceId = servicio_id.substring(puntoIndex + 1);
+											console.log("ID del servicio de emergencia:", serviceId);
+
+											fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarServicio' + '&servicioId=' + serviceId + '&hospIdNuevo=' + hospitalId + '&hospIdViejo=' + hospIdOri, {
+												method: 'GET'
+											})
+												.then(response => {
+													if (response.ok) {
+														console.log('Llamada al servlet de hospital exitosa');
+													} else {
+														console.error('Error al llamar al servlet de hospital');
+													}
+												})
+										} else { //No se puede eliminar
+											Swal.fire({
+												icon: 'error',
+												title: 'No es posible modificar el hospital.',
+												text: 'Existe al menos una ambulancia que no tiene otro Servicio de Emergencia en la zona.'
+											});
+											selectedFeatures.clear();
+										}
+									})
+									.catch(error => {
+										console.error('Error en la función coberturaServicio:', error);
+									});
+							}
 						}
 						modificarUbicacion(selectedFeatures);
 					});
@@ -2377,7 +2420,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											const ambuId = ambu.substring(puntoIndex + 1);
 											console.log("ID de ambulancia:", ambuId);
 
-											// fetch para llamar a la función del servlet de hospital para eliminar la zona
 											fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarAmbulancia' + '&id=' + ambuId, {
 												method: 'GET'
 											})
@@ -2386,34 +2428,32 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 														console.log('Llamada al servlet de hospital exitosa');
 														actualizarFeature();
 														eliminarVectorSource();
+
+														// Insertar zona de cobertura después de que la llamada al servlet de hospital sea exitosa
+														var zonaCoberturaFeature = new ol.Feature({
+															nombre: inputCodigo,
+															ubicacion: bufferedGeometry
+														});
+
+														var wfs = new ol.format.WFS();
+														var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
+															featureType: 'zona',
+															featureNS: 'tsig2023',
+															srsName: 'EPSG:3857',
+															version: '1.1.0'
+														});
+
+														return fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+															method: 'POST',
+															headers: {
+																'Content-Type': 'text/xml'
+															},
+															body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
+														});
 													} else {
 														console.error('Error al llamar al servlet de hospital');
 													}
 												})
-
-											// ser guarda zona NUEVA
-											var zonaCoberturaFeature = new ol.Feature({
-												nombre: inputCodigo,
-												ubicacion: bufferedGeometry
-											});
-
-											// Crear una transacción WFS para insertar la característica de la zona de cobertura
-											var wfs = new ol.format.WFS();
-											var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
-												featureType: 'zona',
-												featureNS: 'tsig2023',
-												srsName: 'EPSG:3857',
-												version: '1.1.0'
-											});
-
-											// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
-											fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-												method: 'POST',
-												headers: {
-													'Content-Type': 'text/xml'
-												},
-												body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
-											})
 												.then(response => response.text())
 												.then(data => {
 													console.log('Respuesta del servidor (zona de cobertura):', data);
@@ -3458,6 +3498,7 @@ function buscarAmbulanciasYServiciosEmergenciaAdmin(coordenadas) {
 					_ts: Date.now() // Agregar un sello de tiempo único
 				}
 			});
+
 			lyrAmbulancias.setSource(sourceLinea2);
 		}
 
