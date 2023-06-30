@@ -1264,7 +1264,8 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 	          var servicios = dataServicios.features;
 	          var fetchPromises = [];
 	          var arrayServicios = []; // Array para almacenar los serviciosId
-	
+			  var arrayLimitado = arrayServicios.splice(4);//arrayServicios.slice(0, 4);	
+
 	          servicios.forEach(function(servicio) {
 	            var coordenaServicio = servicio.geometry.coordinates.join(' ');
 	            var idHospital = servicio.properties.hospital_id;
@@ -1306,7 +1307,7 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 	                          hospitalId: hospitalId
 	                        };
 	
-	                        arrayServicios.push(servicioObj.servicioId); // Agregar el servicioId al array
+	
 	
 	                        return servicioObj;
 	                      } else {
@@ -1337,6 +1338,7 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 	              serviciosRanking.forEach(function(servicio, index) {
 	                rankingText += (index + 1) + '. ';
 	                rankingText += '<b>ID:</b> ' + servicio.servicioId + ' ';
+					arrayServicios.push(servicio.servicioId); // Agregar el servicioId al array
 	                rankingText += '<b>Cant. Ambulancias:</b> ' + servicio.cantidadAmbulancias + ' ';
 	                rankingText += '<b>Hospital:</b> ' + servicio.hospitalId + '<br><br>';
 	              });
@@ -1346,7 +1348,8 @@ GeoMap.prototype.CrearBarraBusquedaCalleNumeroSeparado = function () {
 	                html: rankingText,
 	                icon: 'info'
 	              });
-	              console.log(arrayServicios);
+	              console.log(arrayServicios + "arrserv");
+				  console.log(arrayLimitado + "arrlimit");
 	              mostrarCapaServiciosRanking(arrayServicios); // Llamar a la función mostrarCapaServiciosRanking con el array de serviciosId
 	            });
 	        })

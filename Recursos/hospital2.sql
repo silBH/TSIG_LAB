@@ -1,0 +1,16 @@
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (2, 'COSEM', 0);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (3, 'CASMU', 0);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (4, 'Medica Uruguaya', 0);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (7, 'SURA Seguros', 1);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (8, 'MAPFRE Seguros', 1);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (9, 'Porto Seguro', 1);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (10, 'SANCOR Seguros', 1);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (14, 'Hospital Pasteur', 2);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (15, 'Hospital Maciel', 2);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (16, 'Hospital Pereira Rossell', 2);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (18, 'Hospital Saint Bois', 2);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (1, 'Asociacion Española', 0);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (5, 'Circulo Catolico', 0);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (6, 'Banco de Seguros del Estado', 1);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (13, 'Hospital de Clinicas', 2);
+INSERT INTO public.hospital (id, nombre, tipo) VALUES (17, 'Hospital Vilardebo', 2);
