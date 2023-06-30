@@ -146,7 +146,7 @@ GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 	map = this.map;
 
 	// Crea el filtro DWithin para el radio cercano del usuario
-	var filtroDWithin = 'DWithin(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '), 1000, meters)';
+	var filtroDWithin = 'DWithin(ubicacion, POINT(' + ubiUsuario[0] + ' ' + ubiUsuario[1] + '), 2500, meters)';
 
 	// Modifica la capa lyrServicios
 	lyrServicios.getSource().updateParams({
