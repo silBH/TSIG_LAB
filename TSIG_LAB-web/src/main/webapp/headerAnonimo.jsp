@@ -5,8 +5,11 @@
 
 <header class="p-3 mb-3 border-bottom">
     <div class="container">
-        <div class="d-flex align-items-center justify-content-between">
-            <img src="amb.png" alt="Logo" style="height: 48px; width: 48px;">
+        <div class="d-flex align-items-center justify-content-between">            
+            <div style="display: block; text-align: center;">
+                <img src="amb.png" alt="Logo" style="height: 48px; width: 48px;">
+                <div style="font-weight: bolder;">AmbulanceTrack</div>
+              </div>
             <div class="d-flex flex-row align-items-center">
                 <form class="form-inline" action="LoginAdmin" method="post">
                     <input type="text"  class="form-control mr-2" placeholder="Usuario" name="username" id="username" required>
