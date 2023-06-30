@@ -46,7 +46,7 @@ var lyrServicios = new ol.layer.Tile({
 			VERSION: '1.1.1',
 			FORMAT: 'image/png',
 			TRANSPARENT: true,
-			STYLES:'tsig2023:siren',
+			//STYLES:'tsig2023:siren',
 			LAYERS: 'tsig2023:servicioemergencia'
 		}
 	})
@@ -105,19 +105,15 @@ var geolocation = new ol.Geolocation({
 // Obtener la posición actual del usuario y mostrarla en el mapa
 geolocation.on('change:position', function() {
 	var coordinates = geolocation.getPosition();
+	
+	// Eliminar las capas existentes antes de añadir el nuevo marcador
+	lyrUsuario.getSource().clear();
 
 	// Crear un marcador en la posición actual
 	var locationPoint = new ol.Feature({
 		geometry: new ol.geom.Point(coordinates),
 	});
 
-	// Crear una capa vectorial para mostrar el marcador
-	var locationFeature = new ol.layer.Vector({
-		source: new ol.source.Vector({
-			features: [locationPoint],
-		}),
-	});
-	//locationFeature.setStyle(estiloMarcador);
 	lyrUsuario.getSource().addFeature(locationPoint);
 
 	ubiUsuario = locationPoint.getGeometry().getCoordinates();
@@ -128,7 +124,7 @@ geolocation.on('change:position', function() {
 ////CAPAS//////////
 GeoMap.prototype.CrearMapa = function (target, center, zoom) {
 	var _target = target || 'map',
-		_center = center || [-6253611.066855117, -4141044.3788586617],
+		_center = center || ubiUsuario,
 		_zoom = zoom || 10;
 
 	this.map = new ol.Map({
