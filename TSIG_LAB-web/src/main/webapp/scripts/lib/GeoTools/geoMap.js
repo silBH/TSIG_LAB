@@ -46,7 +46,7 @@ var lyrServicios = new ol.layer.Tile({
 			VERSION: '1.1.1',
 			FORMAT: 'image/png',
 			TRANSPARENT: true,
-			//STYLES:'tsig2023:siren',
+			STYLES:'tsig2023:siren',
 			LAYERS: 'tsig2023:servicioemergencia'
 		}
 	})
@@ -2399,7 +2399,6 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 											const ambuId = ambu.substring(puntoIndex + 1);
 											console.log("ID de ambulancia:", ambuId);
 
-											// fetch para llamar a la función del servlet de hospital para eliminar la zona
 											fetch('http://localhost:8080/TSIG_LAB-web/HospitalServlet?action=/actualizarAmbulancia' + '&id=' + ambuId, {
 												method: 'GET'
 											})
@@ -2408,34 +2407,32 @@ GeoMap.prototype.CrearControlBarraDibujoAdmin = function () {
 														console.log('Llamada al servlet de hospital exitosa');
 														actualizarFeature();
 														eliminarVectorSource();
+
+														// Insertar zona de cobertura después de que la llamada al servlet de hospital sea exitosa
+														var zonaCoberturaFeature = new ol.Feature({
+															nombre: inputCodigo,
+															ubicacion: bufferedGeometry
+														});
+
+														var wfs = new ol.format.WFS();
+														var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
+															featureType: 'zona',
+															featureNS: 'tsig2023',
+															srsName: 'EPSG:3857',
+															version: '1.1.0'
+														});
+
+														return fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
+															method: 'POST',
+															headers: {
+																'Content-Type': 'text/xml'
+															},
+															body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
+														});
 													} else {
 														console.error('Error al llamar al servlet de hospital');
 													}
 												})
-
-											// ser guarda zona NUEVA
-											var zonaCoberturaFeature = new ol.Feature({
-												nombre: inputCodigo,
-												ubicacion: bufferedGeometry
-											});
-
-											// Crear una transacción WFS para insertar la característica de la zona de cobertura
-											var wfs = new ol.format.WFS();
-											var zonaCoberturaInsertRequest = wfs.writeTransaction([zonaCoberturaFeature], null, null, {
-												featureType: 'zona',
-												featureNS: 'tsig2023',
-												srsName: 'EPSG:3857',
-												version: '1.1.0'
-											});
-
-											// Enviar la solicitud WFS al servidor para insertar la característica de la zona de cobertura
-											fetch('http://localhost:8586/geoserver/tsig2023/wfs', {
-												method: 'POST',
-												headers: {
-													'Content-Type': 'text/xml'
-												},
-												body: new XMLSerializer().serializeToString(zonaCoberturaInsertRequest)
-											})
 												.then(response => response.text())
 												.then(data => {
 													console.log('Respuesta del servidor (zona de cobertura):', data);
